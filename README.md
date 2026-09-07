@@ -23,9 +23,10 @@ This lab contains:
 - an approved report contract for confidential analyses outside the product
   repository.
 
-No source skill is installed as a personal runtime snapshot. The representative
-POC remains blocked until its conventions, product-write approval, validation
-plan and runtime publication have been separately reviewed and approved.
+Reviewed personal runtime snapshots are installed under `~\.copilot\skills`;
+the repository remains their versioned source of truth. The representative POC
+remains blocked until its conventions, product-write approval, validation plan
+and runtime publication have been separately reviewed and approved.
 
 ## Safety boundary
 
