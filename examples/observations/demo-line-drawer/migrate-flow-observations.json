@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "skill-run-observations",
+  "skill": "migrate-flow",
+  "skillVersion": "0.5.0",
+  "runId": "demo-line-drawer-migration-001",
+  "flowId": "demo-line-drawer",
+  "capturedAt": "2026-09-07T08:00:00Z",
+  "primaryOutcome": {
+    "status": "completed",
+    "summary": "The bounded migration completed and its declared validation passed.",
+    "artifactPath": "examples\\handoff\\demo-line-drawer\\migration-result.json",
+    "sha256": "55a25bf80f8c5516ce74ffd039f5268a9f2aa89e41917dacc587b0c96147f4b9"
+  },
+  "observations": [
+    {
+      "id": "validation-command-preflight",
+      "category": "skill-caused-tool-failure",
+      "observation": "The run attempted a declared validation command before confirming that the command was available.",
+      "effect": "cost",
+      "evidence": [
+        "The first validation call failed with command-not-found; the retry used the same declared command after the environment was corrected."
+      ],
+      "skillLocations": [
+        "SKILL.md workflow step 6"
+      ],
+      "causality": "inferred",
+      "occurrenceCount": 1
+    }
+  ]
+}

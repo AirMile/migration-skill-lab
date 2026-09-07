@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 3,
+  "artifactType": "work-item-handoff",
+  "handoffPhase": "verification",
+  "skill": "verify-flow",
+  "skillVersion": "0.5.0",
+  "runId": "demo-line-drawer-verification-001",
+  "flowId": "demo-line-drawer",
+  "primaryArtifact": {
+    "artifactType": "verification-result",
+    "path": "examples\\handoff\\demo-line-drawer\\verification-result.json",
+    "sha256": "8e706a3752a9b8ce3e9dadc37decb7d16d86a3e14a01ad68b7a463e9eb9f567b"
+  },
+  "previousHandoff": {
+    "path": "examples\\handoff\\demo-line-drawer\\work-item-migration.json",
+    "sha256": "68eb183168338ba8758ef8a6bdf0c5e2ff5c2ca22e3a1bfdaf41bb34d010a3e0"
+  },
+  "previousApplication": {
+    "handoffSha256": "68eb183168338ba8758ef8a6bdf0c5e2ff5c2ca22e3a1bfdaf41bb34d010a3e0",
+    "status": "confirmed-applied",
+    "recordedByRole": "implementer",
+    "recordedAt": "2026-09-07T08:30:00Z",
+    "summary": "The migration progress update was applied manually."
+  },
+  "epic": {
+    "localId": "react-angular-migration",
+    "externalId": "522482",
+    "action": "update",
+    "title": "Migration from React to Angular using AI (internship)",
+    "currentState": "Open",
+    "currentProgress": 5,
+    "proposedState": "Open",
+    "proposedProgress": 10,
+    "fields": {
+      "currentSituation": "The first bounded Detail Drawer POC passed independent and host verification.",
+      "desiredOutcome": "Review the verified POC and choose the next bounded migration slice.",
+      "whyMatters": "The first complete evidence chain establishes whether the migration method can be reused.",
+      "successCriteria": [
+        "Stakeholders review the verified Detail Drawer result.",
+        "The next slice receives a separate bounded Story and approval."
+      ],
+      "richReleaseNotes": "First bounded Angular POC completed and verified."
+    },
+    "structureComment": "EPIC - Migrate frontend from React to Angular\n|\n+-- Feature - Map Making\n    |\n    +-- User Story - Detail drawer\n    +-- User Story - Right side drawer / toolbox\n    +-- User Story - Line drawing\n    +-- User Story - Add objects\n    +-- User Story - Lidar image overlay"
+  },
+  "feature": {
+    "localId": "map-making-page",
+    "externalId": "522511",
+    "action": "update",
+    "parentEpicLocalId": "react-angular-migration",
+    "parentEpicExternalId": "522482",
+    "title": "Migrate Map Making Page",
+    "currentState": "In Progress",
+    "currentProgress": 35,
+    "proposedState": "In Progress",
+    "proposedProgress": 40,
+    "fields": {
+      "currentSituation": "The Detail Drawer slice passed independent verification and was pushed after confirmation.",
+      "desiredOutcome": "Use the verified POC evidence to select and approve the next bounded map-making slice.",
+      "whyMatters": "The Feature remains broader than the completed Detail Drawer User Story.",
+      "successCriteria": [
+        "The verified Detail Drawer evidence is reviewed.",
+        "The next slice receives a separate approved boundary."
+      ],
+      "richReleaseNotes": "First bounded Detail Drawer POC passed; the broader Map Making Page migration continues."
+    }
+  },
+  "stories": [
+    {
+      "localId": "migrate-detail-drawer",
+      "externalId": "522512",
+      "action": "update",
+      "parentFeatureLocalId": "map-making-page",
+      "parentFeatureExternalId": "522511",
+      "title": "Migrate Detail Drawer",
+      "currentState": "In development",
+      "currentProgress": 75,
+      "proposedState": "Done",
+      "proposedProgress": 100,
+      "fields": {
+        "userValue": "As a map editor, I can edit a selected line in an Angular drawer without losing the agreed behavior.",
+        "currentBehavior": "All contract scenarios and the representative host validation passed.",
+        "desiredBehavior": "The verified Angular drawer remains the bounded owner of the selected-line editing UI.",
+        "acceptanceCriteria": [
+          "The drawer shows the selected line identifier, length and angle.",
+          "Valid edits update the SVG and preserve undo and redo.",
+          "Invalid edits show the agreed visible validation outcome.",
+          "Closing and reopening does not retain stale state or duplicate listeners."
+        ],
+        "attentionPoints": [
+          "Monitor follow-up slices for reuse of the typed adapter and cleanup pattern."
+        ],
+        "attachmentInformation": "Reference the verification result and pushed commit SHA; do not attach source copies.",
+        "richReleaseNotes": "Detail Drawer POC passed automated and host verification and was pushed after confirmation."
+      },
+      "tasks": [
+        {
+          "localId": "detail-drawer-baseline",
+          "kind": "baseline",
+          "externalId": "700001",
+          "action": "update",
+          "parentStoryLocalId": "migrate-detail-drawer",
+          "parentStoryExternalId": "522512",
+          "title": "Establish Detail Drawer behavior baseline",
+          "description": "Document current behavior, acceptance scenarios, evidence gaps, scope and approval requirements.",
+          "doneWhen": [
+            "The baseline report and approved Flow Contract validate.",
+            "Acceptance scenarios and decisions are visible."
+          ],
+          "ownerRole": "Engineer",
+          "contributionPercent": 20,
+          "currentState": "Done",
+          "currentProgress": 100,
+          "proposedState": "Done",
+          "proposedProgress": 100,
+          "checkpointMilestones": [],
+          "evidence": [
+            "Approved Flow Contract validated."
+          ],
+          "blockers": []
+        },
+        {
+          "localId": "detail-drawer-implementation",
+          "kind": "implementation",
+          "externalId": "700002",
+          "action": "update",
+          "parentStoryLocalId": "migrate-detail-drawer",
+          "parentStoryExternalId": "522512",
+          "title": "Implement the bounded Angular Detail Drawer",
+          "description": "Add missing React characterization evidence and implement the approved Angular slice with scoped checkpoints.",
+          "doneWhen": [
+            "Required React behavior evidence passes.",
+            "The Angular slice and matching tests pass.",
+            "Every product checkpoint is allowlisted and verified."
+          ],
+          "ownerRole": "Engineer",
+          "contributionPercent": 55,
+          "currentState": "Done",
+          "currentProgress": 100,
+          "proposedState": "Done",
+          "proposedProgress": 100,
+          "checkpointMilestones": [
+            "react-characterization",
+            "angular-drawer"
+          ],
+          "evidence": [
+            "Scoped checkpoint abcdef1234567890abcdef1234567890abcdef12.",
+            "Declared implementation validation passed."
+          ],
+          "blockers": []
+        },
+        {
+          "localId": "detail-drawer-verification",
+          "kind": "verification",
+          "externalId": "700003",
+          "action": "update",
+          "parentStoryLocalId": "migrate-detail-drawer",
+          "parentStoryExternalId": "522512",
+          "title": "Verify the Detail Drawer migration",
+          "description": "Independently verify all contract scenarios and the required host scenario before proposing Done.",
+          "doneWhen": [
+            "Every contract scenario passes independently.",
+            "The required host validation passes.",
+            "The verified branch push outcome is recorded."
+          ],
+          "ownerRole": "Engineer and host tester",
+          "contributionPercent": 25,
+          "currentState": "To Do",
+          "currentProgress": 0,
+          "proposedState": "Done",
+          "proposedProgress": 100,
+          "checkpointMilestones": [],
+          "evidence": [
+            "Overall verification PASS.",
+            "Representative host validation passed.",
+            "Verified branch push recorded."
+          ],
+          "blockers": []
+        }
+      ]
+    }
+  ],
+  "standup": {
+    "date": "2026-09-07",
+    "storyLocalId": "migrate-detail-drawer",
+    "storyExternalId": "522512",
+    "currentBoardProgress": 75,
+    "proposedBoardProgress": 100,
+    "completedSincePreviousUpdate": [
+      "Completed independent and host verification and recorded the confirmed branch push."
+    ],
+    "next": [
+      "Review the POC evidence and select the next bounded Map Making Story."
+    ],
+    "blockers": [],
+    "summary": "Detail Drawer is at 100% and verified. Next is stakeholder review and selection of the next bounded Map Making Story."
+  },
+  "manualApplication": {
+    "status": "copy-ready",
+    "summary": "Copy the verified Epic-to-Task final state and standup update into TopDesk and confirm what was applied."
+  },
+  "evidence": [
+    "Overall verification PASS.",
+    "Representative host validation passed.",
+    "Verified checkpoint pushed after explicit confirmation."
+  ],
+  "openQuestions": []
+}

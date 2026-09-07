@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.invalid/migration-skill-lab/migration-result.schema.json",
+  "title": "Migration Flow Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "skill",
+    "skillVersion",
+    "runId",
+    "flowId",
+    "status",
+    "flowContract",
+    "repository",
+    "changedPaths",
+    "validation",
+    "coverageDelta",
+    "rollback",
+    "limitations",
+    "checkpoints"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "artifactType": { "const": "migration-result" },
+    "skill": { "const": "migrate-flow" },
+    "skillVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "flowId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "blocked"]
+    },
+    "flowContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "revisionBefore", "revisionAfter"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "revisionBefore": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,64}$"
+        },
+        "revisionAfter": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,64}$"
+        }
+      }
+    },
+    "changedPaths": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "validation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "status", "summary"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed", "blocked", "not-run"]
+          },
+          "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "coverageDelta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "summary"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["measured", "not-measured", "blocked"]
+        },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "instructions"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["available", "not-needed", "blocked"]
+        },
+        "instructions": { "type": "string", "minLength": 1 }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "milestone",
+          "status",
+          "paths",
+          "validationSummary"
+        ],
+        "properties": {
+          "milestone": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["committed", "skipped", "blocked"]
+          },
+          "commitSha": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{7,64}$"
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1
+          },
+          "paths": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "validationSummary": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

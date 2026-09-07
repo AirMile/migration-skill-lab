@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.invalid/migration-skill-lab/debug-result.schema.json",
+  "title": "Migration Debug Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "skill",
+    "skillVersion",
+    "runId",
+    "flowId",
+    "status",
+    "flowContract",
+    "migrationResult",
+    "verificationResult",
+    "debugHandoff",
+    "repository",
+    "selectedStartTier",
+    "selectionReason",
+    "attempts",
+    "nextAction",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "debug-result" },
+    "skill": { "const": "debug-flow" },
+    "skillVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "flowId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["repaired", "parked", "blocked"]
+    },
+    "flowContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "migrationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "verificationResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "debugHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "revisionBefore", "revisionAfter"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "revisionBefore": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,64}$"
+        },
+        "revisionAfter": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,64}$"
+        }
+      }
+    },
+    "selectedStartTier": {
+      "type": "string",
+      "enum": ["immediate", "light", "heavy"]
+    },
+    "selectionReason": { "type": "string", "minLength": 1 },
+    "attempts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tier",
+          "status",
+          "hypothesis",
+          "reproductionEvidence",
+          "changedPaths",
+          "validation",
+          "summary"
+        ],
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": ["immediate", "light", "heavy"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["repaired", "failed", "blocked"]
+          },
+          "hypothesis": { "type": "string", "minLength": 1 },
+          "reproductionEvidence": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "changedPaths": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "validation": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["command", "status", "summary"],
+              "properties": {
+                "command": { "type": "string", "minLength": 1 },
+                "status": {
+                  "type": "string",
+                  "enum": ["passed", "failed", "blocked", "not-run"]
+                },
+                "summary": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "checkpoint": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "commitSha",
+              "subject",
+              "paths",
+              "stagedDiffSha256"
+            ],
+            "properties": {
+              "commitSha": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{7,64}$"
+              },
+              "subject": { "type": "string", "minLength": 1 },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "stagedDiffSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "summary": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "nextAction": {
+      "type": "string",
+      "enum": ["reverify", "park"]
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 3,
+  "artifactType": "flow-contract",
+  "skill": "flow-baseline",
+  "skillVersion": "0.5.0",
+  "runId": "demo-line-drawer-baseline-001",
+  "flowId": "demo-line-drawer",
+  "status": "approved",
+  "repository": {
+    "root": "C:\\Example\\frontend",
+    "revision": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "baselineReport": {
+    "path": "baseline-report.md",
+    "sha256": "3dbb2e2f25fb0516d7cb0cdbd78a1997035a5d7c4ae7ba362b3b02cbfd81580a"
+  },
+  "scope": {
+    "startState": "A line is selected.",
+    "endState": "The edited line is displayed.",
+    "includedPaths": [
+      "src/features/demo-line-drawer"
+    ],
+    "excludedPaths": [
+      "src/auth"
+    ],
+    "allowedWritePaths": [
+      "src/features/demo-line-drawer"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "valid-edit",
+      "given": "A selected line has a valid length.",
+      "when": "The user submits a new valid length.",
+      "then": [
+        "The view shows the new length."
+      ],
+      "evidence": [
+        "C:\\Example\\frontend\\src\\features\\demo-line-drawer\\Drawer.test.ts:20"
+      ]
+    }
+  ],
+  "testGaps": [
+    "No automated invalid-input scenario exists."
+  ],
+  "openQuestions": [],
+  "approval": {
+    "status": "approved",
+    "approvedByRole": "feature-owner",
+    "approvedAt": "2026-09-04"
+  },
+  "workItemContext": {
+    "epicExternalId": "522482",
+    "featureExternalId": "522511",
+    "storyExternalIds": [
+      "522512"
+    ]
+  },
+  "checkpointPolicy": {
+    "mode": "auto-local",
+    "expectedBranch": "feature/migrate-detail-drawer",
+    "externalRef": "TP522512",
+    "authorizedByRole": "feature-owner",
+    "authorizedAt": "2026-09-07",
+    "pushPolicy": "confirm-after-pass",
+    "milestones": [
+      "angular-drawer"
+    ]
+  },
+  "validationPlan": {
+    "testCommands": [
+      "npm run test -- Drawer.test.ts"
+    ],
+    "typecheckCommand": "npm run typecheck",
+    "buildCommand": "npm run build",
+    "browserValidation": {
+      "required": true,
+      "owner": "browser-tester",
+      "scenarios": [
+        "Edit a selected line in the regular browser and verify the visible map update."
+      ]
+    },
+    "manualValidation": {
+      "required": true,
+      "owner": "host-tester",
+      "environment": "representative-host",
+      "scenario": "Edit one selected line and confirm the visible map update."
+    }
+  },
+  "rollback": "Revert only the checkpoint SHAs recorded by migration-result.json."
+}

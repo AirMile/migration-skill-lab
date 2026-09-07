@@ -1,0 +1,810 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "migration-skill-lab",
+    "objective": "Build and validate an evidence-first Copilot workflow for React-to-Angular migration research.",
+    "confidentiality": "internal"
+  },
+  "updatedAt": "2026-09-07",
+  "sources": [
+    {
+      "id": "skill-architecture",
+      "label": "Angular migration skill architecture",
+      "kind": "internal-document",
+      "location": "C:\\Obsidian\\Notes 2025\\Lely\\Angular migratie - skillarchitectuur.md"
+    },
+    {
+      "id": "conventions-research",
+      "label": "Angular migration conventions research",
+      "kind": "internal-document",
+      "location": "C:\\Obsidian\\Notes 2025\\Lely\\Angular migratie - conventions onderzoek.md"
+    },
+    {
+      "id": "stage-approach",
+      "label": "Angular migration stage approach and feasibility",
+      "kind": "internal-document",
+      "location": "C:\\Obsidian\\Notes 2025\\Lely\\Angular migratie - stageaanpak en haalbaarheid.md"
+    },
+    {
+      "id": "product-frontend",
+      "label": "Route Assistant frontend",
+      "kind": "product-repository",
+      "location": "C:\\Project\\frontend",
+      "revision": "b1b0ab9da6ea4e3dd8aa31176841a6ac8a0b6dfe"
+    },
+    {
+      "id": "airmile-claude-config",
+      "label": "AirMile claude-config design source",
+      "kind": "public-upstream",
+      "location": "https://github.com/AirMile/claude-config",
+      "revision": "a25190fb494efa37ce09f3377cae994d33db9529"
+    },
+    {
+      "id": "github-agent-skills",
+      "label": "GitHub Docs: About agent skills",
+      "kind": "official-documentation",
+      "location": "https://docs.github.com/copilot/concepts/agents/about-agent-skills"
+    },
+    {
+      "id": "airmile-core-audit",
+      "label": "AirMile core-audit design reference",
+      "kind": "public-upstream",
+      "location": "https://github.com/AirMile/claude-config/tree/1205499dfec8ae2498d68c1a65d9ae0d25c1b327/skills/core-audit",
+      "revision": "1205499dfec8ae2498d68c1a65d9ae0d25c1b327"
+    },
+    {
+      "id": "airmile-core-commit",
+      "label": "AirMile core-commit design reference",
+      "kind": "public-upstream",
+      "location": "https://github.com/AirMile/claude-config/tree/1205499dfec8ae2498d68c1a65d9ae0d25c1b327/skills/core-commit",
+      "revision": "1205499dfec8ae2498d68c1a65d9ae0d25c1b327"
+    },
+    {
+      "id": "airmile-dev-manual",
+      "label": "AirMile dev-manual debug-flow design reference",
+      "kind": "public-upstream",
+      "location": "https://github.com/AirMile/claude-config/tree/1205499dfec8ae2498d68c1a65d9ae0d25c1b327/skills/dev-manual",
+      "revision": "1205499dfec8ae2498d68c1a65d9ae0d25c1b327"
+    }
+  ],
+  "items": [
+    {
+      "id": "preserve-analyze-v0-reference",
+      "title": "Preserve migration-analyze v0.1 reference",
+      "type": "governance",
+      "status": "done",
+      "phase": "P1",
+      "description": "Record the exact migration-analyze v0.1.0 source hashes and retain it unchanged as the historical read-only benchmark reference.",
+      "dependencies": [
+        "author-migration-analyze-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "low",
+      "acceptanceCriteria": [
+        "The v0.1 source files remain unchanged.",
+        "Every source file has a recorded SHA-256 hash.",
+        "New baseline work uses a separate flow-baseline skill."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "build-versioned-handoff-protocol",
+      "title": "Build versioned three-skill handoff protocol",
+      "type": "skill",
+      "status": "done",
+      "phase": "P1",
+      "description": "Define compact Flow Contract, migration-result and verification-result artifacts, examples and a dependency-free validator without storing product code in artifacts.",
+      "dependencies": [
+        "build-lab-foundation"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Every artifact has an explicit schema version and content hash pointers.",
+        "The full example handoff chain validates.",
+        "The negative validator self-test rejects an invalid contract."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "author-flow-baseline-v0",
+      "title": "Author flow-baseline v0.1",
+      "type": "skill",
+      "status": "done",
+      "phase": "P1",
+      "description": "Create a read-only skill that transforms a human-selected flow into a cited behavior baseline and draft Flow Contract without changing product code or tests.",
+      "dependencies": [
+        "preserve-analyze-v0-reference",
+        "build-versioned-handoff-protocol"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The skill requires a human-selected flow and declared artifact locations.",
+        "The contract is draft and pending human approval.",
+        "Coverage is evidence of test gaps, not a standalone target."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "author-migrate-flow-v0",
+      "title": "Author migrate-flow v0.1",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Create a bounded writing skill that requires an approved Flow Contract, available convention evidence, write allowlist, rollback and validation before it can change a product slice.",
+      "dependencies": [
+        "author-flow-baseline-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "The skill refuses draft or unapproved contracts.",
+        "The skill writes React characterization tests before the Angular slice.",
+        "Dependencies and host-contract changes remain outside v0.1 scope."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach",
+        "conventions-research"
+      ],
+      "openQuestions": [
+        "Which available Angular conventions and explicit POC design choices should be recorded for the representative POC?"
+      ]
+    },
+    {
+      "id": "author-verify-flow-v0",
+      "title": "Author verify-flow v0.1",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Create an independent read-only verifier that evaluates the approved Flow Contract and migration result per criterion without repairing product code.",
+      "dependencies": [
+        "author-migrate-flow-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "Every criterion receives PASS, FAIL or BLOCKED.",
+        "A PASS result cannot contain a non-passing criterion.",
+        "Required manual host validation remains BLOCKED when unperformed."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "validate-three-skill-workflow-v0",
+      "title": "Validate three-skill workflow v0.1",
+      "type": "benchmark",
+      "status": "done",
+      "phase": "P2",
+      "description": "Validate schemas, example handoff chain, source metadata, backlog rendering and the absence of product-repository changes caused by skill authoring.",
+      "dependencies": [
+        "author-flow-baseline-v0",
+        "author-migrate-flow-v0",
+        "author-verify-flow-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The handoff validator accepts the valid chain and rejects its negative case.",
+        "The backlog renderer self-test and consistency check pass.",
+        "No source skill is installed, published or given unapproved product-write access."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "run-line-drawer-poc-workflow",
+      "title": "Run selected-line drawer POC workflow",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Run the migration skill chain for the selected floor-plan line detail-drawer POC after scope, target architecture, product-write authorization, browser automation, host validation and available convention evidence are confirmed.",
+      "dependencies": [
+        "collect-angular-conventions",
+        "validate-three-skill-workflow-v0",
+        "build-work-item-checkpoint-flow",
+        "build-debug-flow"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "A human approves the POC Flow Contract and write allowlist.",
+        "The migration and verification artifacts provide evidence for every POC criterion.",
+        "The representative flow is validated in the agreed Maui host environment."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "conventions-research",
+        "product-frontend"
+      ],
+      "openQuestions": [
+        "Who approves the POC scope, product writes and rollback?",
+        "Which available Angular conventions and POC-specific design choices apply to the embedded detail drawer?",
+        "Which Maui environment and owner provide the required manual validation?"
+      ]
+    },
+    {
+      "id": "build-debug-flow",
+      "title": "Build bounded debug and re-verify flow",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Add a verify-produced failure dossier and fresh debug-flow agent with finite immediate, light and heavy repair tiers followed by mandatory independent re-verification.",
+      "dependencies": [
+        "build-work-item-checkpoint-flow"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "Verify remains read-only and classifies failures as repairable or external-blocked.",
+        "Debug selects the cheapest tier, attempts each tier at most once and parks after heavy failure.",
+        "Every repaired result uses allowlisted checkpoint evidence and requires a fresh independent re-verification."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach",
+        "product-frontend",
+        "airmile-dev-manual"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "build-work-item-checkpoint-flow",
+      "title": "Build work-item and checkpoint flow",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Extend the three-skill workflow with schema-valid Epic/Feature/Story/Task and daily standup copy/paste handoffs, scoped automatic local checkpoint commits and a confirmed post-PASS push gate.",
+      "dependencies": [
+        "validate-three-skill-workflow-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "Every phase produces a validated immutable Epic/Feature/Story/Task and standup snapshot plus deterministic copy/paste Markdown without updating TopDesk.",
+        "Story progress is calculated from stakeholder-readable weighted Tasks while checkpoint commits remain implementation evidence.",
+        "Automatic local commits contain only green allowlisted product changes and preserve pre-existing work.",
+        "Push requires overall PASS, passed host validation, matching checkpoints and explicit confirmation."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach",
+        "product-frontend",
+        "airmile-core-commit",
+        "github-agent-skills"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "approve-storage-architecture",
+      "title": "Approve storage architecture",
+      "type": "governance",
+      "status": "done",
+      "phase": "P0",
+      "description": "Use a local internal lab repository as source of truth and publish only reviewed personal-skill snapshots later.",
+      "dependencies": [],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The product repository remains separate and read-only.",
+        "No public or remote repository is configured.",
+        "No live symlink to a public source is used."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "github-agent-skills"
+      ],
+      "openQuestions": [
+        "Which private Lely GitLab namespace and owner will be approved later?"
+      ]
+    },
+    {
+      "id": "build-lab-foundation",
+      "title": "Build local lab foundation",
+      "type": "governance",
+      "status": "done",
+      "phase": "P0",
+      "description": "Create the seed, acceptance criteria, canonical backlog, strict renderer, and standalone read-only HTML snapshot.",
+      "dependencies": [
+        "approve-storage-architecture"
+      ],
+      "evidenceValue": "high",
+      "risk": "low",
+      "acceptanceCriteria": [
+        "The repository has no remote or commit.",
+        "The renderer validates the backlog and produces deterministic standalone HTML.",
+        "C:\\Project\\frontend has no changes caused by this work."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "airmile-claude-config"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "approve-analyze-contract",
+      "title": "Approve migration-analyze v0 contract",
+      "type": "governance",
+      "status": "done",
+      "phase": "P0",
+      "description": "Review the proposed inputs, read boundaries, approved writes, output schema, hard gates, and benchmark threshold before authoring the skill.",
+      "dependencies": [
+        "build-lab-foundation"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Every read and write surface is explicit.",
+        "Unknowns and stop conditions are explicit.",
+        "The report schema covers all required analysis sections."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "confirm-run-report-storage",
+      "title": "Confirm confidential run-report storage",
+      "type": "governance",
+      "status": "done",
+      "phase": "P0",
+      "description": "Store canonical confidential reports under the Lely Angular migration analyses folder, retain them until explicit human cleanup, and allow only compact non-sensitive benchmark state under the ignored local runs folder.",
+      "dependencies": [
+        "build-lab-foundation"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "The location is outside the product repository.",
+        "Credentials, full code copies, and unnecessary personal data are forbidden.",
+        "Failure to persist a report is surfaced explicitly."
+      ],
+      "sourceIds": [
+        "skill-architecture"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "curate-react-review-criteria",
+      "title": "Curate current React review criteria",
+      "type": "research",
+      "status": "done",
+      "phase": "P0",
+      "description": "Create a compact source that separates enforced rules, documented rules, provisional concrete team input, general review questions, and contradictions.",
+      "dependencies": [
+        "build-lab-foundation"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The five concrete 2 September 2026 React rules remain Team input until confirmed.",
+        "General review questions are not rewritten as hard rules.",
+        "Tooling contradictions are visible."
+      ],
+      "sourceIds": [
+        "conventions-research",
+        "product-frontend"
+      ],
+      "openQuestions": [
+        "Who owns the React-team rules and which source is authoritative?"
+      ]
+    },
+    {
+      "id": "collect-angular-conventions",
+      "title": "Collect approved Angular target conventions",
+      "type": "research",
+      "status": "blocked",
+      "phase": "P1",
+      "description": "Use the planned introductions to representative Lely Angular teams to obtain approved documentation, architecture guidance, starter templates, tooling, and examples without extrapolating from React.",
+      "dependencies": [
+        "build-lab-foundation"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "Every target rule has a status, source, owner, scope, and validation method.",
+        "Team-local choices are distinguished from organization-wide standards.",
+        "Missing conventions remain Open question."
+      ],
+      "sourceIds": [
+        "conventions-research"
+      ],
+      "openQuestions": [
+        "Which Angular-team contacts will Bernhard introduce on 3 September 2026?",
+        "Which conventions documents, architecture guidelines, starter templates, shared configurations, and representative examples can those contacts provide?",
+        "Which findings are Lely-wide standards and which are team-local choices?"
+      ]
+    },
+    {
+      "id": "author-migration-analyze-v0",
+      "title": "Author migration-analyze v0",
+      "type": "skill",
+      "status": "done",
+      "phase": "P1",
+      "description": "Create only the small Copilot-native read-only analysis skill and its targeted references after the contract is approved.",
+      "dependencies": [
+        "approve-analyze-contract",
+        "curate-react-review-criteria"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "SKILL.md is concise and versioned.",
+        "The product repository is read-only by contract.",
+        "Post-run improvements are proposals and never self-applied."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "github-agent-skills",
+        "airmile-claude-config"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "review-install-personal-snapshot",
+      "title": "Review and install personal-skill snapshot",
+      "type": "governance",
+      "status": "blocked",
+      "phase": "P1",
+      "description": "Review the source skill and then copy an explicitly versioned snapshot to the personal Copilot skills directory.",
+      "dependencies": [
+        "author-migration-analyze-v0"
+      ],
+      "evidenceValue": "medium",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Source and installed snapshot versions match.",
+        "No symlink or public runtime dependency is introduced.",
+        "The installed skill has no pre-approved risky tool access."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "github-agent-skills"
+      ],
+      "openQuestions": [
+        "Is a reviewed additional skill location preferable and approved in the Lely VS Code environment?"
+      ]
+    },
+    {
+      "id": "select-simple-benchmark",
+      "title": "Select simple benchmark feature",
+      "type": "benchmark",
+      "status": "done",
+      "phase": "P1",
+      "description": "Use the approved badge-status-indicator boundary as the small stateless feature with existing tests and a human reference analysis.",
+      "dependencies": [
+        "approve-analyze-contract"
+      ],
+      "evidenceValue": "high",
+      "risk": "low",
+      "acceptanceCriteria": [
+        "The user explicitly approves the feature boundary.",
+        "A human reference analysis can be produced.",
+        "The case can reveal over-analysis and citation gaps."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "run-simple-benchmark",
+      "title": "Run simple analysis benchmark",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P1",
+      "description": "Run migration-analyze on the approved simple feature and compare it with an independent human reference.",
+      "dependencies": [
+        "confirm-run-report-storage",
+        "review-install-personal-snapshot",
+        "select-simple-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "low",
+      "acceptanceCriteria": [
+        "The case scores at least 10 out of 12 with no zero dimension.",
+        "All Confirmed claims have verified citations.",
+        "The product worktree is unchanged."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "select-stateful-benchmark",
+      "title": "Select stateful benchmark feature",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Choose a feature with shared or persistent state, events, recovery behavior, or lifecycle cleanup.",
+      "dependencies": [
+        "run-simple-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The boundary crosses at least one meaningful state or event edge.",
+        "Expected mutations and cleanup can be reviewed independently.",
+        "The user approves the case."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": [
+        "Which stateful feature is representative without being high-risk?"
+      ]
+    },
+    {
+      "id": "run-stateful-benchmark",
+      "title": "Run stateful analysis benchmark",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Run migration-analyze on the approved stateful case and review mutations, lifecycle, cleanup, recovery, and test gaps.",
+      "dependencies": [
+        "select-stateful-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The case scores at least 10 out of 12 with no zero dimension.",
+        "Hidden state mutations and lifecycle edges are represented.",
+        "The earlier simple case still passes after approved skill changes."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "select-high-risk-benchmark",
+      "title": "Select high-risk benchmark feature",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Choose a bounded feature involving Maui, Auth0, SignalR, SVG or DOM ownership, an external store, or undo and redo.",
+      "dependencies": [
+        "run-stateful-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "The case exercises a real cross-boundary contract.",
+        "No destructive or production interaction is required.",
+        "A relevant owner can review the resulting unknowns."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": [
+        "Which integration is representative and safe to analyze first?"
+      ]
+    },
+    {
+      "id": "run-high-risk-benchmark",
+      "title": "Run high-risk analysis benchmark",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Run migration-analyze on the approved high-risk case and review cross-boundary contracts, parity blind spots, cleanup, and uncertainty.",
+      "dependencies": [
+        "select-high-risk-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "The case scores at least 10 out of 12 with no zero dimension.",
+        "Cross-boundary contracts and unknowns are explicit.",
+        "The simple and stateful cases still pass after approved changes."
+      ],
+      "sourceIds": [
+        "stage-approach",
+        "product-frontend"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "evaluate-analyze-v0-maturity",
+      "title": "Evaluate migration-analyze v0 maturity",
+      "type": "decision",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Compare all three benchmark reports, costs, retries, review corrections, and regressions before expanding the workflow.",
+      "dependencies": [
+        "run-simple-benchmark",
+        "run-stateful-benchmark",
+        "run-high-risk-benchmark"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "All three cases pass their hard gates and score threshold.",
+        "Recurring failures are recorded as proposals, not auto-applied.",
+        "A human decides whether the analysis contract is stable."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "design-migration-plan-skill",
+      "title": "Design migration-plan skill",
+      "type": "skill",
+      "status": "deferred",
+      "phase": "P3",
+      "description": "Design a read-only planning skill only after analysis quality and the required Angular target conventions are sufficient.",
+      "dependencies": [
+        "collect-angular-conventions",
+        "evaluate-analyze-v0-maturity"
+      ],
+      "evidenceValue": "medium",
+      "risk": "high",
+      "acceptanceCriteria": [
+        "The analyze report is a stable input contract.",
+        "Target conventions for the selected slice are approved or explicitly blocking.",
+        "No implementation or product write is included."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "conventions-research"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "decide-interactive-backlog-ui",
+      "title": "Decide whether an interactive backlog UI is justified",
+      "type": "decision",
+      "status": "deferred",
+      "phase": "P3",
+      "description": "Use evidence from real backlog maintenance to decide whether the standalone HTML snapshot is insufficient.",
+      "dependencies": [
+        "evaluate-analyze-v0-maturity"
+      ],
+      "evidenceValue": "low",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "A concrete usability problem is demonstrated.",
+        "Security, hosting, sync, ownership, and maintenance costs are assessed.",
+        "The canonical JSON contract remains independent of presentation."
+      ],
+      "sourceIds": [
+        "airmile-claude-config"
+      ],
+      "openQuestions": [
+        "Which real task cannot be completed efficiently with JSON plus standalone HTML?"
+      ]
+    },
+    {
+      "id": "build-skill-observation-loop",
+      "title": "Build migration skill observation loop",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Capture concrete execution evidence after every flow-skill result in a schema-valid sidecar without changing the primary artifact or skill source.",
+      "dependencies": [
+        "validate-three-skill-workflow-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "All three flow skills write a validated sidecar after their primary result.",
+        "Empty observations are valid and material observations are not capped.",
+        "Product defects, normal blockers, convention gaps and unproven causality are excluded."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "github-agent-skills",
+        "airmile-core-audit"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "author-migration-skill-audit-v0",
+      "title": "Author migration-skill-audit v0.1",
+      "type": "skill",
+      "status": "done",
+      "phase": "P2",
+      "description": "Create an explicit evidence-driven audit skill that analyzes one flow skill and applies only numbered changes selected by a human.",
+      "dependencies": [
+        "build-skill-observation-loop"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Trace, artifact and explicit static-only modes keep their evidence strength distinct.",
+        "All material findings remain in the report after deduplication and ranking.",
+        "No skill source changes before a human approves numbered changes."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "airmile-core-audit",
+        "github-agent-skills"
+      ],
+      "openQuestions": []
+    },
+    {
+      "id": "benchmark-improvement-loop-on-poc",
+      "title": "Benchmark improvement loop on first POC slice",
+      "type": "benchmark",
+      "status": "blocked",
+      "phase": "P2",
+      "description": "Use the first approved three-skill migration slice to assess whether inline capture finds useful evidence without disrupting the primary workflow.",
+      "dependencies": [
+        "author-migration-skill-audit-v0",
+        "run-line-drawer-poc-workflow"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Each run produces a valid observation artifact, including empty evidence where appropriate.",
+        "The audit separates real skill friction from product and convention findings.",
+        "The team reviews audit usefulness, execution cost and proposed changes."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "stage-approach",
+        "airmile-core-audit"
+      ],
+      "openQuestions": [
+        "Does inline capture add measurable context or execution cost during a long migration run?",
+        "Would a separately benchmarked observer agent improve filtering enough to justify its isolated context?"
+      ]
+    },
+    {
+      "id": "decide-frontend-copilot-instructions",
+      "title": "Decide frontend Copilot instruction integration",
+      "type": "decision",
+      "status": "deferred",
+      "phase": "P3",
+      "description": "After the POC branch and team review, decide whether the frontend repository needs a short instruction that activates the skill-owned observation protocol without duplicating it.",
+      "dependencies": [
+        "benchmark-improvement-loop-on-poc"
+      ],
+      "evidenceValue": "medium",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "The frontend team approves any repository-wide Copilot instruction.",
+        "The instruction activates rather than duplicates versioned skill behavior.",
+        "No instruction is added to the frontend repository during the lab-only implementation."
+      ],
+      "sourceIds": [
+        "github-agent-skills",
+        "skill-architecture"
+      ],
+      "openQuestions": [
+        "Does the POC runtime load project, personal or repository skill snapshots?",
+        "Who owns review of repository-wide Copilot instructions in the frontend project?"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+# Migration execution contract
+
+Read this reference for every `migrate-flow` run.
+
+## Preconditions
+
+The migration may start only when:
+
+- `flow-contract.json` validates and is human-approved;
+- all product paths to change are explicitly listed in
+  `scope.allowedWritePaths`;
+- the user explicitly authorizes product writes for this run;
+- available Angular convention evidence and POC design choices are cited;
+- unresolved conventions are recorded as limitations and are not presented as
+  approved Lely standards;
+- every required dependency, lockfile, TypeScript and Vite change is explicit
+  in the approved target architecture and `allowedWritePaths`;
+- validation commands and rollback instructions are concrete.
+- the baseline work-item handoff validates and its manual application outcome
+  is stated without assuming that copy-ready content was applied;
+- checkpoint mode, expected branch, external reference and push policy match
+  the approved Flow Contract.
+
+An analysis report or a previous successful run is not implementation
+approval. Stop with `BLOCKED` if any precondition is missing.
+
+## Required implementation order
+
+1. Keep the existing behavior executable as the comparison baseline.
+2. Add only the missing React characterizing tests that prove approved
+   scenarios.
+3. Run those tests before the Angular implementation.
+4. Implement the smallest bounded Angular slice.
+5. Add Angular tests for those same scenarios.
+6. Run targeted tests, typecheck and build.
+7. Run the checkpoint preflight for every coherent green milestone and, when
+   `auto-local` is approved, commit only the exact allowlisted scoped delta.
+8. Create a compact `migration-result.json` and Epic/Feature/Story/Task
+   progress handoff with a daily standup block, without source copies.
+
+## Result constraints
+
+The result must validate against
+`schemas/migration-result.schema.json`. `changedPaths` must be a subset of
+the approved write allowlist. A failed or blocked validation command must be
+reported with that status and diagnosis; it cannot be recorded as completed.
+
+## Checkpoint constraints
+
+Use `scripts/verify-checkpoint.mjs --prepare <manifest.json>` before staging.
+Freeze HEAD, branch and Git-visible status before product writes. Never use
+`git add -A`; stage only the returned paths and compare the staged path set
+with the manifest by running `verify-checkpoint.mjs --verify-staged` before
+committing. After commit, run `verify-checkpoint.mjs --verify-commit` with the
+same manifest and new SHA. Record its changed paths, subject and diff hash.
+
+The preflight blocks active Git operations, denylisted credential paths,
+outside-allowlist paths, failed required validation, unexpected concurrent
+changes and pre-existing dirty candidate files whose new delta is not proven.
+Do not bypass a block. Flow Contract approval for `auto-local` authorizes all
+listed green milestones without a per-commit prompt. Hook failure stops the
+checkpoint; never use `--no-verify` or amend.
+
+Detect the message convention from repository history and use the approved
+external reference. Record commit SHA, subject, paths and validation summary.
+Attach checkpoint milestones to the stakeholder-readable implementation Task;
+do not create one Task per commit or calculate progress from commit count. Do
+not create empty commits. `migrate-flow` never pushes.
+
+Failures returned by independent verification are not a new normal migration
+attempt. `verify-flow` writes a debug handoff and a fresh `debug-flow` agent
+owns bounded repair. A changed contract or expanded scope returns to
+`flow-baseline`.
+
+## Dependency and host boundaries
+
+Dependency, lockfile and build-configuration changes are permitted only when
+the bounded target architecture approves the exact change, path, validation
+and rollback. Put them in a separate coherent checkpoint. Missing approval is
+a blocker; it is not permission to expand the slice.
+
+Backend, Maui and Auth0 contract changes remain outside the Detail Drawer POC
+unless a renewed Flow Contract explicitly changes that boundary.

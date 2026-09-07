@@ -1,0 +1,22 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local run state and temporary output
+runs/
+tmp/
+*.log
+
+# Dependencies and generated caches
+node_modules/
+coverage/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.obsidian/
+.DS_Store
+Thumbs.db

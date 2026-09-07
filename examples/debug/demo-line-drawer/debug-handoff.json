@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "debug-handoff",
+  "skill": "verify-flow",
+  "skillVersion": "0.5.0",
+  "runId": "demo-line-drawer-debug-handoff-001",
+  "flowId": "demo-line-drawer",
+  "status": "repairable",
+  "flowContract": {
+    "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
+    "sha256": "ae2013c2a8b14e5cc8be30421c4d4a1d92ed071d2c7a21e55aafd3f02d52f7fb"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
+    "sha256": "c02cb4938db644164b2dd4383cc4effa79d0f9ea0b411d80bd5bcea6c834aa69"
+  },
+  "verificationResult": {
+    "path": "examples\\debug\\demo-line-drawer\\failed-verification-result.json",
+    "sha256": "1dc0b4fa547bcae7163adfea9169a9a10ed2d8ec1cde47830400ca119b5b8aad"
+  },
+  "failures": [
+    {
+      "id": "stale-length-after-submit",
+      "source": "scenario",
+      "scenarioId": "valid-edit",
+      "expected": "The drawer and visible line show the submitted length.",
+      "actual": "The drawer retained the old displayed length.",
+      "evidence": [
+        "Targeted test and browser reproduction fail at the same observable outcome."
+      ],
+      "reproduction": [
+        "Select one existing line.",
+        "Submit a different valid length.",
+        "Observe the length shown by the drawer."
+      ],
+      "suspectedBoundary": "The local drawer state refresh after an accepted line update.",
+      "candidatePaths": [
+        "src/features/demo-line-drawer/Drawer.ts"
+      ],
+      "recommendedStartTier": "immediate",
+      "recommendationReason": "The failure is deterministic, local and already has a targeted reproduction."
+    }
+  ],
+  "summary": "Start a fresh debug-flow agent for the local stale-length failure."
+}
