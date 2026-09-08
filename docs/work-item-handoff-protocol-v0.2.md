@@ -10,8 +10,8 @@ date: 2026-09-07
 ## Purpose
 
 Translate migration evidence into reviewable Epic, Feature, User Story, Task
-and daily standup content without granting the skills access to TopDesk. The
-versioned JSON snapshot is canonical. Generated Markdown is a copy/paste view
+and daily standup content without granting the skills access to Targetprocess.
+The versioned JSON snapshot is canonical. Generated Markdown is a copy/paste view
 for the human operator.
 
 ## Phase snapshots
@@ -81,7 +81,8 @@ Allowed states are:
 - `confirmed-applied`: a human confirmed the external result.
 
 Only `confirmed-applied` carries confirmer role and timestamp. A skill never
-opens TopDesk, calls an API or upgrades `copy-ready` based on an assumption.
+opens Targetprocess, calls an API or upgrades `copy-ready` based on an
+assumption.
 For an immutable chain, `previousApplication` in the next phase records the
 human-confirmed outcome and repeats the previous handoff hash.
 
@@ -112,7 +113,8 @@ Each phase snapshot contains a short update for the active User Story:
 - one short spoken summary.
 
 This block is copy/paste support for daily communication. It must use the same
-progress as the selected Story and must not claim that TopDesk was updated.
+progress as the selected Story and must not claim that Targetprocess was
+updated.
 
 ## Rendering
 
@@ -122,5 +124,5 @@ Run:
 node .\scripts\render-work-item-handoff.mjs <snapshot.json>
 ```
 
-The renderer validates the snapshot and emits fields in TopDesk template
+The renderer validates the snapshot and emits fields in Targetprocess template
 order. Use `--check` to detect generated Markdown drift.

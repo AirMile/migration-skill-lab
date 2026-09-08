@@ -219,7 +219,7 @@ ${value.previousApplication ?
     `**Previous handoff application:** ${value.previousApplication.status}` :
     ""}
 
-> This is a copy/paste proposal. It is not proof that TopDesk was updated.
+> This is a copy/paste proposal. It is not proof that Targetprocess was updated.
 
 ${renderEpic(value.epic)}
 
@@ -246,7 +246,7 @@ ${value.openQuestions.length > 0
 - Keep the Feature linked to the listed parent Epic.
 - Keep every User Story linked to the listed parent Feature.
 - Keep every Task linked to the listed parent User Story.
-- Do not mark a proposal as applied until TopDesk shows the change.
+- Do not mark a proposal as applied until Targetprocess shows the change.
 - Record the confirmation in the next immutable handoff snapshot.
 
 **Application summary:** ${value.manualApplication.summary}
@@ -281,7 +281,7 @@ const runSelfTest = async () => {
     "Proposed progress after applying this handoff",
     "### Acceptance criteria",
     "## Manual application checklist",
-    "not proof that TopDesk was updated",
+    "not proof that Targetprocess was updated",
   ];
   for (const text of requiredText) {
     if (!first.includes(text)) {

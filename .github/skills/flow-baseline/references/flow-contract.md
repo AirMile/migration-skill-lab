@@ -74,8 +74,8 @@ Tasks, and include a daily standup block using the same percentage. Render it
 to Markdown with
 `scripts/render-work-item-handoff.mjs`.
 
-TopDesk remains human-in-the-loop. `copy-ready` means the proposal is ready to
-paste, not that it was applied. Only a later snapshot may record
+Targetprocess remains human-in-the-loop. `copy-ready` means the proposal is
+ready to paste, not that it was applied. Only a later snapshot may record
 `confirmed-applied`, and only after the user explicitly confirms the real
 external state. Always render confirmed current state/progress separately from
 the proposed Task-derived values.

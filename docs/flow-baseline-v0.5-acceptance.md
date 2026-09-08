@@ -53,7 +53,8 @@ The source is acceptable when:
    unproven causality from skill observations;
 8. an observation-capture failure is visible but does not rewrite the Flow
    Contract status.
-9. it never updates TopDesk or presents `copy-ready` as externally applied;
+9. it never updates Targetprocess or presents `copy-ready` as externally
+   applied;
 10. it proposes a new story only after explicit request or evidence-backed
     scope splitting and never invents an external ID;
 11. it creates no product or empty checkpoint commit in the read-only phase.

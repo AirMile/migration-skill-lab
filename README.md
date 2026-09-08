@@ -139,11 +139,14 @@ Do not use a live symlink to a public or personal repository.
    capture ran without inventing feedback.
 
 Each phase also writes an immutable work-item snapshot and deterministic
-copy/paste Markdown for manual TopDesk updates. It covers Epic, Feature, User
-Story, stakeholder-readable Tasks and a daily standup update. Story progress
-is validated from weighted Task progress; checkpoint commits are evidence for
-the implementation Task, not separate Tasks. The skills never update TopDesk
-directly or claim that copy-ready content was applied.
+copy/paste content for manual Targetprocess updates. The work tracker is
+Targetprocess at `lely.tpondemand.com`; run artifacts created before
+2026-09-08 still name it "TopDesk" and are left unchanged as historical
+evidence. A snapshot covers Epic, Feature, User Story, stakeholder-readable
+Tasks and a daily standup update. Story progress is validated from weighted
+Task progress; checkpoint commits are evidence for the implementation Task,
+not separate Tasks. The skills never update Targetprocess directly or claim
+that copy-ready content was applied.
 
 See `docs\skill-handoff-protocol-v0.5.md`. Skills exchange artifacts through
 the ignored `runs\` directory; they must not rely on prior chat context.

@@ -281,7 +281,7 @@
       "evidenceValue": "high",
       "risk": "high",
       "acceptanceCriteria": [
-        "Every phase produces a validated immutable Epic/Feature/Story/Task and standup snapshot plus deterministic copy/paste Markdown without updating TopDesk.",
+        "Every phase produces a validated immutable Epic/Feature/Story/Task and standup snapshot plus deterministic copy/paste Markdown without updating Targetprocess.",
         "Story progress is calculated from stakeholder-readable weighted Tasks while checkpoint commits remain implementation evidence.",
         "Automatic local commits contain only green allowlisted product changes and preserve pre-existing work.",
         "Push requires overall PASS, passed host validation, matching checkpoints and explicit confirmation."

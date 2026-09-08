@@ -128,7 +128,7 @@ Never:
   personal data in reports or artifacts;
 - edit this skill, its references or any installed skill snapshot during a run;
 - present unapproved Angular conventions as target requirements.
-- update TopDesk through a browser, API or other external write;
+- update Targetprocess through a browser, API or other external write;
 - create an external work-item ID or mark a handoff `confirmed-applied`
   without the user's confirmation;
 - invent Task progress independently of the validated weighted calculation;

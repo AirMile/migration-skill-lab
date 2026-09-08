@@ -6,7 +6,7 @@
 **Manual application:** copy-ready
 **Previous handoff application:** confirmed-applied
 
-> This is a copy/paste proposal. It is not proof that TopDesk was updated.
+> This is a copy/paste proposal. It is not proof that Targetprocess was updated.
 
 ## Epic
 
@@ -271,7 +271,7 @@ Detail Drawer is at 100% and verified. Next is stakeholder review and selection 
 - Keep the Feature linked to the listed parent Epic.
 - Keep every User Story linked to the listed parent Feature.
 - Keep every Task linked to the listed parent User Story.
-- Do not mark a proposal as applied until TopDesk shows the change.
+- Do not mark a proposal as applied until Targetprocess shows the change.
 - Record the confirmation in the next immutable handoff snapshot.
 
-**Application summary:** Copy the verified Epic-to-Task final state and standup update into TopDesk and confirm what was applied.
+**Application summary:** Copy the verified Epic-to-Task final state and standup update into Targetprocess and confirm what was applied.

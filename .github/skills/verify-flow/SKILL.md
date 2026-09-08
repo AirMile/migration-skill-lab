@@ -88,7 +88,7 @@ outside the declared flow.
     result and migration handoff hashes. Propose User Story `Done` only for
     overall `PASS` with passed required host validation. Render the final
     copy/paste Markdown. Record the user's applied/not-applied confirmation for
-    the migration handoff in `previousApplication`; never update TopDesk
+    the migration handoff in `previousApplication`; never update Targetprocess
     directly or rewrite an earlier snapshot.
 14. Update the verification Task with criterion, browser, host and push
     evidence.
@@ -121,8 +121,8 @@ Never:
   confirmation;
 - force-push, push tags or push any branch other than the approved feature
   branch;
-- update TopDesk or mark a work-item proposal applied without explicit user
-  confirmation;
+- update Targetprocess or mark a work-item proposal applied without explicit
+  user confirmation;
 - mark a Story Done while any of its Tasks remains incomplete or derive
   progress from commit count;
 - edit product code, choose a debug tier or treat a repair candidate as PASS;

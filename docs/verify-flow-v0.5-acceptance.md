@@ -50,7 +50,7 @@ The source is acceptable when:
    matching checkpoint SHAs, the approved branch and explicit confirmation;
 9. it never force-pushes, pushes tags or pushes another branch;
 10. `Done` is not proposed for FAIL, BLOCKED or missing host evidence;
-11. it never updates TopDesk or treats copy-ready output as applied.
+11. it never updates Targetprocess or treats copy-ready output as applied.
 12. a Story cannot be Done while any child Task is incomplete;
 13. one completed Story does not imply its parent Feature or Epic is done.
 14. regular-browser automation and required Maui host validation are reported

@@ -13,10 +13,10 @@
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-migration.json",
-    "sha256": "d0ddb7a322259d2231a6a30a32a9b76520d77f65b83c4e45fa1f3567812ae438"
+    "sha256": "99adde736d068ac49c87c38fe6d60066d3f9d9989bc4a2ea13d9dd741cc9b70d"
   },
   "previousApplication": {
-    "handoffSha256": "d0ddb7a322259d2231a6a30a32a9b76520d77f65b83c4e45fa1f3567812ae438",
+    "handoffSha256": "99adde736d068ac49c87c38fe6d60066d3f9d9989bc4a2ea13d9dd741cc9b70d",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:30:00Z",
@@ -197,7 +197,7 @@
   },
   "manualApplication": {
     "status": "copy-ready",
-    "summary": "Copy the verified Epic-to-Task final state and standup update into TopDesk and confirm what was applied."
+    "summary": "Copy the verified Epic-to-Task final state and standup update into Targetprocess and confirm what was applied."
   },
   "evidence": [
     "Overall verification PASS.",

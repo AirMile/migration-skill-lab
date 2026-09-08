@@ -188,7 +188,7 @@
   },
   "manualApplication": {
     "status": "copy-ready",
-    "summary": "Copy the proposed Epic, Feature, User Story, Tasks and standup update into TopDesk and confirm what was applied."
+    "summary": "Copy the proposed Epic, Feature, User Story, Tasks and standup update into Targetprocess and confirm what was applied."
   },
   "evidence": [
     "Sanitized example Flow Contract scenarios.",

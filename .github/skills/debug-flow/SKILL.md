@@ -119,8 +119,8 @@ Never:
   history, push, merge, publish or create a pull request;
 - reset the tier ledger, retry the same tier indefinitely or hide a failed
   attempt behind a later summary;
-- declare `PASS`, skip the independent re-verification, update TopDesk or make
-  any other external write;
+- declare `PASS`, skip the independent re-verification, update Targetprocess
+  or make any other external write;
 - turn a product-behavior improvement into a repair; return any requested
   acceptance change to `flow-baseline` and renewed approval;
 - store source copies, credentials, tokens, private URLs or unnecessary

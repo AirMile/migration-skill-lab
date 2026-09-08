@@ -28,7 +28,7 @@ Confirm all inputs before any product write:
 - rollback instructions;
 - declared run-artifact directory.
 - path to the corresponding `work-item-baseline.json`;
-- the actual manual-application outcome of the previous TopDesk proposal;
+- the actual manual-application outcome of the previous Targetprocess proposal;
 - approved checkpoint policy, expected branch and external reference from the
   Flow Contract.
 
@@ -123,8 +123,8 @@ Never:
 - make an unapproved Angular convention a target rule;
 - edit this skill, its references or an installed snapshot during a run;
 - hide failed validation or return a success-shaped result after an error.
-- update TopDesk or claim a copy-ready proposal was applied without explicit
-  confirmation.
+- update Targetprocess or claim a copy-ready proposal was applied without
+  explicit confirmation.
 - create one Task per checkpoint commit or report progress that is not derived
   from the Task contribution model.
 - repair failures returned by `verify-flow`; those belong to `debug-flow`.

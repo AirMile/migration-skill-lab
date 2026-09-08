@@ -13,10 +13,10 @@
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-baseline.json",
-    "sha256": "c7c3165fed98294fd010a9a5263f1547c69b524710449fc38c5d055c429d2159"
+    "sha256": "6e384fdf4a3e845decd6e9bda05daec2035e3e5d86d0fb5988c2c853c0c48dcf"
   },
   "previousApplication": {
-    "handoffSha256": "c7c3165fed98294fd010a9a5263f1547c69b524710449fc38c5d055c429d2159",
+    "handoffSha256": "6e384fdf4a3e845decd6e9bda05daec2035e3e5d86d0fb5988c2c853c0c48dcf",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:00:00Z",
@@ -196,7 +196,7 @@
   },
   "manualApplication": {
     "status": "copy-ready",
-    "summary": "Copy the factual Epic-to-Task implementation progress and standup update into TopDesk and confirm what was applied."
+    "summary": "Copy the factual Epic-to-Task implementation progress and standup update into Targetprocess and confirm what was applied."
   },
   "evidence": [
     "Targeted drawer test passed.",

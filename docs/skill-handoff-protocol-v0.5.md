@@ -38,7 +38,7 @@ flow-baseline
 
 The work-item artifacts form a supporting immutable sidechain. They produce
 copy/paste Epic, Feature, Story, Task and standup updates but never prove that
-TopDesk was changed.
+Targetprocess was changed.
 
 ## Storage and confidentiality
 
@@ -145,9 +145,9 @@ when it preserves every `retain-react` item in the active parent form.
 
 `copy-ready` means the generated Markdown is ready for review and manual
 application. It is not an external-write result. A later snapshot may use
-`confirmed-applied` only after a human confirms what TopDesk actually shows.
-Create proposals never invent an external ID; the next snapshot records the
-ID only after the item exists.
+`confirmed-applied` only after a human confirms what Targetprocess actually
+shows. Create proposals never invent an external ID; the next snapshot records
+the ID only after the item exists.
 
 ## Improvement loop
 

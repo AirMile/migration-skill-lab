@@ -53,7 +53,7 @@ The source is acceptable when:
 10. it never uses `git add -A`, bypasses hooks, amends, pushes or includes an
     unproven pre-existing dirty delta;
 11. checkpoint SHA, subject, paths and validation evidence are recorded;
-12. it never updates TopDesk or treats copy-ready progress as applied.
+12. it never updates Targetprocess or treats copy-ready progress as applied.
 13. it never equates commit count with progress or creates one Task per commit.
 14. repair attempts from verification belong to `debug-flow`, not this skill.
 15. it leaves manual browser-flow and Maui-WebView scenario verification to a
