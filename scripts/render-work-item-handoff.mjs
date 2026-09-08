@@ -255,6 +255,248 @@ ${value.openQuestions.length > 0
 const defaultOutputPath = snapshotPath =>
   snapshotPath.replace(/\.json$/i, ".md");
 
+const epicFeatureFieldLabels = [
+  ["currentSituation", "Who is the user and what situation or problem are they experiencing?"],
+  ["desiredOutcome", "What outcome or experience should the user have when this is done?"],
+  ["whyMatters", "Why does this matter?"],
+  ["successCriteria", "How will we know it is successful?"],
+  ["richReleaseNotes", "Rich Release Notes"],
+];
+
+const storyFieldLabels = [
+  ["userValue", "User Value (As ... I want ... so that ...)"],
+  ["currentBehavior", "Current behavior or functionality (Initial State)"],
+  ["desiredBehavior", "Desired behavior or functionality (Target state)"],
+  ["acceptanceCriteria", "Acceptance criteria"],
+  ["attentionPoints", "Attention points for reproduction and testing"],
+  ["attachmentInformation", "Attachment information"],
+  ["richReleaseNotes", "Rich Release Notes"],
+];
+
+const taskFieldLabels = [
+  ["description", "Description"],
+  ["doneWhen", "Done when"],
+  ["checkpointMilestones", "Checkpoint milestones"],
+  ["evidence", "Evidence"],
+  ["blockers", "Blockers"],
+];
+
+const fieldValue = value =>
+  Array.isArray(value)
+    ? (value.length > 0 ? renderBullets(value) : "- None.")
+    : String(value);
+
+const itemFields = entry => {
+  const { item, kind } = entry;
+  if (kind === "Task") {
+    return taskFieldLabels.map(([key, label]) => [label, fieldValue(item[key])]);
+  }
+  const labels = kind === "User Story" ? storyFieldLabels : epicFeatureFieldLabels;
+  const fields = labels.map(([key, label]) => [label, fieldValue(item.fields[key])]);
+  if (kind === "Epic" && item.structureComment) {
+    fields.push(["Suggested structure comment", item.structureComment]);
+  }
+  return fields;
+};
+
+const itemLabel = entry => {
+  const { item, kind } = entry;
+  const identity = item.externalId ? `#${item.externalId}` : "(new)";
+  return `${kind} ${identity} — ${item.title}`;
+};
+
+const collectInlineItems = snapshot => {
+  const entries = [];
+  entries.push({ localId: snapshot.epic.localId, kind: "Epic", item: snapshot.epic });
+  entries.push({
+    localId: snapshot.feature.localId,
+    kind: "Feature",
+    item: snapshot.feature,
+    parent: snapshot.feature.parentEpicExternalId,
+  });
+  for (const story of snapshot.stories) {
+    entries.push({
+      localId: story.localId,
+      kind: "User Story",
+      item: story,
+      parent: story.parentFeatureExternalId,
+    });
+    for (const task of story.tasks) {
+      entries.push({
+        localId: task.localId,
+        kind: "Task",
+        item: task,
+        parent: task.parentStoryExternalId,
+      });
+    }
+  }
+  return entries;
+};
+
+const changedFields = (entry, previousEntry) => {
+  const previousFields = new Map(itemFields(previousEntry));
+  return itemFields(entry).filter(([label, value]) => previousFields.get(label) !== value);
+};
+
+const renderFieldBlocks = fields =>
+  fields
+    .map(([label, value]) => `\`\`\`text\n${label}\n\n${value}\n\`\`\``)
+    .join("\n\n");
+
+const renderInline = (snapshot, previousSnapshot) => {
+  const entries = collectInlineItems(snapshot);
+  const previousEntries = previousSnapshot
+    ? new Map(collectInlineItems(previousSnapshot).map(entry => [entry.localId, entry]))
+    : new Map();
+
+  const created = [];
+  const createdRepeat = [];
+  const changed = [];
+  const unchanged = [];
+
+  for (const entry of entries) {
+    const previousEntry = previousEntries.get(entry.localId);
+    if (entry.item.action === "create") {
+      const repeated = previousEntry &&
+        previousEntry.item.action === "create" &&
+        changedFields(entry, previousEntry).length === 0 &&
+        entry.item.proposedState === previousEntry.item.proposedState &&
+        entry.item.proposedProgress === previousEntry.item.proposedProgress;
+      (repeated ? createdRepeat : created).push(entry);
+      continue;
+    }
+    if (!previousEntry) {
+      changed.push({ entry, fields: itemFields(entry) });
+      continue;
+    }
+    const fields = changedFields(entry, previousEntry);
+    const stateMoved =
+      entry.item.proposedState !== previousEntry.item.proposedState ||
+      entry.item.proposedProgress !== previousEntry.item.proposedProgress;
+    if (fields.length === 0 && !stateMoved) {
+      unchanged.push(entry);
+      continue;
+    }
+    changed.push({ entry, fields, previousEntry, stateMoved });
+  }
+
+  const sections = [];
+
+  sections.push(`# Inline handoff — ${snapshot.flowId} / ${snapshot.handoffPhase}
+
+Producer: ${snapshot.skill} ${snapshot.skillVersion}
+Manual application: ${snapshot.manualApplication.status}${snapshot.previousApplication
+    ? `\nPrevious handoff application: ${snapshot.previousApplication.status}`
+    : ""}
+
+> Proposal only. Nothing here changed Targetprocess.`);
+
+  sections.push(`## Change in Targetprocess (${changed.length})
+
+${changed.length === 0
+    ? "Nothing to change in this phase."
+    : changed
+      .map(({ entry, fields, previousEntry, stateMoved }) => {
+        const lines = [`### ${itemLabel(entry)}`, ""];
+        const move = (label, previousValue, value, suffix = "") => {
+          if (!previousEntry) return `${label}: ${value}${suffix}`;
+          return previousValue === value
+            ? `${label}: ${value}${suffix} (unchanged)`
+            : `${label}: ${previousValue}${suffix} -> ${value}${suffix}`;
+        };
+        lines.push(
+          move(
+            "State",
+            previousEntry?.item.proposedState,
+            entry.item.proposedState,
+          ),
+          move(
+            "Progress",
+            previousEntry?.item.proposedProgress,
+            entry.item.proposedProgress,
+            "%",
+          ),
+        );
+        lines.push(`Confirmed on the board now: ${entry.item.currentState} / ${entry.item.currentProgress}%`);
+        if (fields.length > 0) {
+          lines.push("", renderFieldBlocks(fields));
+        } else {
+          lines.push("", "No field text changed; only state and progress.");
+        }
+        return lines.join("\n");
+      })
+      .join("\n\n")}`);
+
+  sections.push(`## Create (${created.length})
+
+${created.length === 0
+    ? "Nothing to create in this phase."
+    : created
+      .map(entry => [
+        `### ${entry.kind} — ${entry.item.title}`,
+        "",
+        `Parent: ${entry.parent ? `#${entry.parent}` : "use the new parent above"}`,
+        `State: ${entry.item.proposedState}`,
+        `Progress: ${entry.item.proposedProgress}%`,
+        "",
+        renderFieldBlocks(itemFields(entry)),
+      ].join("\n"))
+      .join("\n\n")}`);
+
+  if (createdRepeat.length > 0) {
+    sections.push(`## Still to create — unchanged since the previous handoff (${createdRepeat.length})
+
+These were already proposed and are repeated here only because they have not
+been created yet. Their fields are identical to the previous handoff, so use
+that one rather than re-reading them:
+
+${renderBullets(createdRepeat.map(entry =>
+      `${entry.kind} — ${entry.item.title} (parent ${entry.parent ? `#${entry.parent}` : "above"})`))}`);
+  }
+
+  sections.push(`## Unchanged — do not touch (${unchanged.length})
+
+${unchanged.length === 0
+    ? "- None."
+    : renderBullets(unchanged.map(itemLabel))}`);
+
+  if (created.length + createdRepeat.length > 0) {
+    sections.push(`## Report back
+
+After creating the items above, report the IDs Targetprocess assigned so the
+next snapshot records them instead of proposing the same items again:
+
+\`\`\`json
+"createdExternalIds": [
+${[...created, ...createdRepeat]
+      .map(entry => `  { "localId": "${entry.localId}", "externalId": "<id>" }`)
+      .join(",\n")}
+]
+\`\`\``);
+  }
+
+  const standup = snapshot.standup;
+  sections.push(`## Standup
+
+\`\`\`text
+${standup.date} — User Story #${standup.storyExternalId}
+Board now: ${standup.currentBoardProgress}% · proposed after this handoff: ${standup.proposedBoardProgress}%
+
+Completed since previous update
+${renderBullets(standup.completedSincePreviousUpdate)}
+
+Next
+${renderBullets(standup.next)}
+
+Blockers
+${standup.blockers.length > 0 ? renderBullets(standup.blockers) : "- None."}
+
+${standup.summary}
+\`\`\``);
+
+  return `${sections.join("\n\n")}\n`;
+};
+
 const runSelfTest = async () => {
   const examplePath = path.join(
     rootDirectory,
@@ -289,6 +531,56 @@ const runSelfTest = async () => {
     }
   }
 
+  const handoffDirectory = path.dirname(examplePath);
+  const { value: migrationSnapshot } = await readSnapshot(
+    path.join(handoffDirectory, "work-item-migration.json"),
+  );
+  const { value: verificationSnapshot } = await readSnapshot(
+    path.join(handoffDirectory, "work-item-verification.json"),
+  );
+
+  const inline = renderInline(verificationSnapshot, migrationSnapshot);
+  if (inline !== renderInline(verificationSnapshot, migrationSnapshot)) {
+    throw new Error("Inline renderer self-test produced non-deterministic output.");
+  }
+
+  for (const text of [
+    "# Inline handoff",
+    "## Change in Targetprocess (4)",
+    "## Unchanged — do not touch (2)",
+    "Task #700001",
+    "## Standup",
+    "Nothing here changed Targetprocess",
+  ]) {
+    if (!inline.includes(text)) {
+      throw new Error(`Inline renderer self-test is missing ${JSON.stringify(text)}.`);
+    }
+  }
+
+  if (inline.includes("Acceptance criteria")) {
+    throw new Error(
+      "Inline renderer self-test emitted an unchanged field as a change.",
+    );
+  }
+  if (inline.length >= renderSnapshot(verificationSnapshot).length) {
+    throw new Error(
+      "Inline renderer self-test produced no reduction over the full render.",
+    );
+  }
+
+  const baselineInline = renderInline(value, undefined);
+  for (const text of [
+    "## Create (3)",
+    "## Report back",
+    "\"localId\": \"detail-drawer-baseline\"",
+  ]) {
+    if (!baselineInline.includes(text)) {
+      throw new Error(
+        `Inline renderer self-test is missing ${JSON.stringify(text)} for a first-phase snapshot.`,
+      );
+    }
+  }
+
   console.log("Work-item renderer self-test passed.");
 };
 
@@ -311,6 +603,29 @@ const argumentsList = process.argv.slice(2);
 
 if (argumentsList.length === 1 && argumentsList[0] === "--self-test") {
   await runSelfTest();
+} else if (argumentsList[0] === "--inline") {
+  const snapshotPath = argumentsList[1];
+  if (!snapshotPath) {
+    throw new Error(
+      "Usage: node .\\scripts\\render-work-item-handoff.mjs --inline <snapshot.json> [--since <previous-snapshot.json>]",
+    );
+  }
+
+  let previousSnapshot;
+  if (argumentsList[2]) {
+    if (argumentsList[2] !== "--since" || !argumentsList[3]) {
+      throw new Error(
+        "Usage: node .\\scripts\\render-work-item-handoff.mjs --inline <snapshot.json> [--since <previous-snapshot.json>]",
+      );
+    }
+    previousSnapshot = (await readSnapshot(argumentsList[3])).value;
+  }
+
+  const { value } = await readSnapshot(snapshotPath);
+  if (previousSnapshot && previousSnapshot.flowId !== value.flowId) {
+    throw new Error("The --since snapshot belongs to a different flow.");
+  }
+  process.stdout.write(renderInline(value, previousSnapshot));
 } else if (argumentsList[0] === "--check") {
   const snapshotPaths = argumentsList.slice(1);
   if (snapshotPaths.length === 0) {
