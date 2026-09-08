@@ -9,14 +9,14 @@
   "primaryArtifact": {
     "artifactType": "verification-result",
     "path": "examples\\handoff\\demo-line-drawer\\verification-result.json",
-    "sha256": "562b9bb25273ab7a5a370cbe5f4682626bc3f313706057679d5c266ec76a5325"
+    "sha256": "be73c1a433a36f69262e0e8b8c75d86ee615d7737ef5a89ce94dabad30191af1"
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-migration.json",
-    "sha256": "99adde736d068ac49c87c38fe6d60066d3f9d9989bc4a2ea13d9dd741cc9b70d"
+    "sha256": "33b7b3d1555696b7c213e36518b95ecab75a8c5a47c06fa29751bd07281d5618"
   },
   "previousApplication": {
-    "handoffSha256": "99adde736d068ac49c87c38fe6d60066d3f9d9989bc4a2ea13d9dd741cc9b70d",
+    "handoffSha256": "33b7b3d1555696b7c213e36518b95ecab75a8c5a47c06fa29751bd07281d5618",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:30:00Z",
@@ -98,7 +98,7 @@
           "localId": "detail-drawer-baseline",
           "kind": "baseline",
           "externalId": "700001",
-          "action": "update",
+          "action": "no-change",
           "parentStoryLocalId": "migrate-detail-drawer",
           "parentStoryExternalId": "522512",
           "title": "Establish Detail Drawer behavior baseline",
@@ -123,7 +123,7 @@
           "localId": "detail-drawer-implementation",
           "kind": "implementation",
           "externalId": "700002",
-          "action": "update",
+          "action": "no-change",
           "parentStoryLocalId": "migrate-detail-drawer",
           "parentStoryExternalId": "522512",
           "title": "Implement the bounded Angular Detail Drawer",

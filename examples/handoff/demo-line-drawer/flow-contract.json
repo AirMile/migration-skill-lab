@@ -25,7 +25,15 @@
     ],
     "allowedWritePaths": [
       "src/features/demo-line-drawer"
-    ]
+    ],
+    "partialMount": {
+      "nested": true,
+      "retainedParent": "LineForm",
+      "siblingSections": [
+        "Detectable",
+        "Coordinates"
+      ]
+    }
   },
   "scenarios": [
     {

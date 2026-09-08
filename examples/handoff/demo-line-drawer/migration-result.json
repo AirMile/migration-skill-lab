@@ -8,7 +8,7 @@
   "status": "completed",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "05e06ba09920d59e01a4120b8c7d9b40b5b29c24a101fe0a44d8355a6ad62c34"
+    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
   },
   "repository": {
     "root": "C:\\Example\\frontend",
@@ -44,6 +44,17 @@
     "instructions": "Revert only the declared changed path."
   },
   "limitations": [],
+  "renderedSurfaceComparison": {
+    "evidenceSource": "real-parent-tree",
+    "comparedAgainst": [
+      "Detectable",
+      "Coordinates"
+    ],
+    "observations": [
+      "Length and angle fields keep the retained field width and label placement.",
+      "Drawer padding matches the retained sibling sections."
+    ]
+  },
   "checkpoints": [
     {
       "milestone": "angular-drawer",

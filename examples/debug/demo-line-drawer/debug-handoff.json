@@ -8,15 +8,15 @@
   "status": "repairable",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "05e06ba09920d59e01a4120b8c7d9b40b5b29c24a101fe0a44d8355a6ad62c34"
+    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
   },
   "migrationResult": {
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "034608f1abb5e61ededdfd60758683af48b89630150d6fb726d2bfb5cdf66144"
+    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
   },
   "verificationResult": {
     "path": "examples\\debug\\demo-line-drawer\\failed-verification-result.json",
-    "sha256": "66ca942ae2cf4b8ce3770e56f6c8c998e978bac0082e4aaa9612befd18711bd3"
+    "sha256": "c9e0ca61648d502b6a6716e0cf7621730c1597f00939de3b315d1b4f418710df"
   },
   "failures": [
     {

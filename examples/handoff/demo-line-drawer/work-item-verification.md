@@ -131,7 +131,7 @@ Detail Drawer POC passed automated and host verification and was pushed after co
 
 ### Task 1: Establish Detail Drawer behavior baseline
 
-**Action:** update
+**Action:** no-change
 **External ID:** 700001
 **Parent User Story ID:** 522512
 **Task type:** baseline
@@ -163,7 +163,7 @@ Document current behavior, acceptance scenarios, evidence gaps, scope and approv
 
 ### Task 2: Implement the bounded Angular Detail Drawer
 
-**Action:** update
+**Action:** no-change
 **External ID:** 700002
 **Parent User Story ID:** 522512
 **Task type:** implementation

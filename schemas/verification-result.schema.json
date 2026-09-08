@@ -151,13 +151,17 @@
     "browserValidation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "summary"],
+      "required": ["status", "summary", "evidenceSource"],
       "properties": {
         "status": {
           "type": "string",
           "enum": ["passed", "failed", "blocked", "not-run"]
         },
-        "summary": { "type": "string", "minLength": 1 }
+        "summary": { "type": "string", "minLength": 1 },
+        "evidenceSource": {
+          "type": "string",
+          "enum": ["real-host-layout", "isolated-fixture", "not-run"]
+        }
       }
     },
     "diagnosis": {

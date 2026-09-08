@@ -214,6 +214,22 @@ const validateArtifactRules = (value, errors) => {
         );
       }
     }
+
+    const partialMount = value.scope.partialMount;
+    if (partialMount?.nested === true &&
+      (!partialMount.retainedParent ||
+        !partialMount.siblingSections?.length)) {
+      errors.push(
+        "$.scope.partialMount requires retainedParent and siblingSections when nested.",
+      );
+    }
+    if (partialMount && partialMount.nested === false &&
+      (Object.hasOwn(partialMount, "retainedParent") ||
+        Object.hasOwn(partialMount, "siblingSections"))) {
+      errors.push(
+        "$.scope.partialMount may not carry retainedParent or siblingSections when it is not nested.",
+      );
+    }
     return;
   }
 
@@ -696,6 +712,24 @@ const loadArtifact = async filePath => {
   };
 };
 
+const collectWorkItemsByLocalId = snapshot => {
+  const items = new Map();
+  const add = (item, kind) => items.set(item.localId, { item, kind });
+  add(snapshot.epic, "Epic");
+  add(snapshot.feature, "Feature");
+  for (const story of snapshot.stories) {
+    add(story, "User Story");
+    for (const task of story.tasks) add(task, "Task");
+  }
+  return items;
+};
+
+const workItemContentEquals = (current, previous) =>
+  current.proposedState === previous.proposedState &&
+  current.proposedProgress === previous.proposedProgress &&
+  JSON.stringify(current.fields ?? null) ===
+    JSON.stringify(previous.fields ?? null);
+
 const validateArtifactLinks = artifacts => {
   const byType = new Map();
 
@@ -833,6 +867,21 @@ const validateArtifactLinks = artifacts => {
         "A completed migration-result requires every validation command to pass.",
       );
     }
+
+    if (migration.value.status === "completed" &&
+      contract.value.scope.partialMount?.nested === true) {
+      const comparison = migration.value.renderedSurfaceComparison;
+      if (!comparison) {
+        throw new Error(
+          "A completed migration-result for a nested partial mount requires renderedSurfaceComparison.",
+        );
+      }
+      if (comparison.evidenceSource !== "real-parent-tree") {
+        throw new Error(
+          "renderedSurfaceComparison for a nested partial mount requires real-parent-tree evidence.",
+        );
+      }
+    }
   }
 
   if (verification && contract && migration) {
@@ -911,6 +960,14 @@ const validateArtifactLinks = artifacts => {
       verification.value.manualValidation.status !== "passed") {
       throw new Error(
         "A PASS verification-result requires passed manual validation.",
+      );
+    }
+    if (verification.value.status === "PASS" &&
+      contract.value.scope.partialMount?.nested === true &&
+      verification.value.browserValidation.evidenceSource !==
+        "real-host-layout") {
+      throw new Error(
+        "A PASS verification-result for a nested partial mount requires real-host-layout browser evidence.",
       );
     }
 
@@ -1111,6 +1168,61 @@ const validateArtifactLinks = artifacts => {
         throw new Error(
           `${phaseOrder[index]} work-item previous handoff hash does not match.`,
         );
+      }
+
+      const phase = phaseOrder[index];
+      const currentItems = collectWorkItemsByLocalId(current.value);
+      const previousItems = collectWorkItemsByLocalId(previous.value);
+      const application = current.value.previousApplication;
+      const createdExternalIds = application.createdExternalIds ?? [];
+
+      if (createdExternalIds.length > 0 &&
+        application.status !== "confirmed-applied") {
+        throw new Error(
+          `${phase} work-item createdExternalIds requires a confirmed-applied previous application.`,
+        );
+      }
+
+      for (const created of createdExternalIds) {
+        const previousEntry = previousItems.get(created.localId);
+        if (!previousEntry) {
+          throw new Error(
+            `${phase} work-item createdExternalIds names unknown local ID ${created.localId}.`,
+          );
+        }
+        if (previousEntry.item.action !== "create") {
+          throw new Error(
+            `${phase} work-item createdExternalIds names ${created.localId}, which the previous snapshot did not propose to create.`,
+          );
+        }
+        const currentEntry = currentItems.get(created.localId);
+        if (!currentEntry) {
+          throw new Error(
+            `${phase} work-item snapshot no longer contains created item ${created.localId}.`,
+          );
+        }
+        if (currentEntry.item.action === "create") {
+          throw new Error(
+            `${phase} work-item ${created.localId} already exists externally and must not be proposed as create again.`,
+          );
+        }
+        if (currentEntry.item.externalId !== created.externalId) {
+          throw new Error(
+            `${phase} work-item ${created.localId} does not carry the confirmed external ID ${created.externalId}.`,
+          );
+        }
+      }
+
+      for (const [localId, entry] of currentItems) {
+        if (entry.item.action !== "update") continue;
+        const previousEntry = previousItems.get(localId);
+        if (!previousEntry) continue;
+        if (previousEntry.item.action === "create") continue;
+        if (workItemContentEquals(entry.item, previousEntry.item)) {
+          throw new Error(
+            `${phase} work-item ${entry.kind} ${localId} is unchanged and must use action no-change.`,
+          );
+        }
       }
     }
 
@@ -1593,6 +1705,102 @@ const runSelfTest = async () => {
     error.includes("artifactPath and $.primaryOutcome.sha256"))) {
     throw new Error(
       "Handoff validator self-test did not reject an incomplete artifact pointer.",
+    );
+  }
+
+  const expectLinkRejection = (mutate, expected, description) => {
+    const mutated = structuredClone(artifacts);
+    mutate({
+      contract: mutated.find(
+        artifact => artifact.value.artifactType === "flow-contract",
+      ).value,
+      migration: mutated.find(
+        artifact => artifact.value.artifactType === "migration-result",
+      ).value,
+      verification: mutated.find(
+        artifact => artifact.value.artifactType === "verification-result",
+      ).value,
+      handoffs: Object.fromEntries(
+        mutated
+          .filter(artifact => artifact.value.artifactType === "work-item-handoff")
+          .map(artifact => [artifact.value.handoffPhase, artifact.value]),
+      ),
+    });
+
+    let rejected = false;
+    try {
+      validateArtifactLinks(mutated);
+    } catch (error) {
+      rejected = error.message.includes(expected);
+    }
+    if (!rejected) {
+      throw new Error(`Handoff validator self-test did not reject ${description}.`);
+    }
+  };
+
+  expectLinkRejection(
+    ({ migration }) => {
+      migration.renderedSurfaceComparison.evidenceSource = "isolated-fixture";
+    },
+    "requires real-parent-tree evidence",
+    "an isolated-fixture rendered-surface comparison for a nested partial mount",
+  );
+
+  expectLinkRejection(
+    ({ migration }) => {
+      delete migration.renderedSurfaceComparison;
+    },
+    "requires renderedSurfaceComparison",
+    "a completed nested partial mount without a rendered-surface comparison",
+  );
+
+  expectLinkRejection(
+    ({ verification }) => {
+      verification.browserValidation.evidenceSource = "isolated-fixture";
+    },
+    "requires real-host-layout browser evidence",
+    "a PASS on isolated-fixture browser evidence for a nested partial mount",
+  );
+
+  expectLinkRejection(
+    ({ handoffs }) => {
+      const task = handoffs.verification.stories[0].tasks.find(
+        candidate => candidate.localId === "detail-drawer-baseline",
+      );
+      task.action = "update";
+    },
+    "must use action no-change",
+    "an unchanged work item still proposed as an update",
+  );
+
+  expectLinkRejection(
+    ({ handoffs }) => {
+      handoffs.migration.previousApplication.status = "not-applied";
+    },
+    "requires a confirmed-applied previous application",
+    "created external IDs without a confirmed application",
+  );
+
+  expectLinkRejection(
+    ({ handoffs }) => {
+      handoffs.migration.previousApplication.createdExternalIds[0].externalId =
+        "999999";
+    },
+    "does not carry the confirmed external ID",
+    "a created external ID the snapshot does not carry",
+  );
+
+  const nestedContract = structuredClone(
+    artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
+      .value,
+  );
+  delete nestedContract.scope.partialMount.siblingSections;
+  const nestedErrors = [];
+  validateArtifactRules(nestedContract, nestedErrors);
+  if (!nestedErrors.some(error =>
+    error.includes("requires retainedParent and siblingSections"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject an incomplete nested partial mount.",
     );
   }
 

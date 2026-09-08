@@ -9,18 +9,32 @@
   "primaryArtifact": {
     "artifactType": "migration-result",
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "034608f1abb5e61ededdfd60758683af48b89630150d6fb726d2bfb5cdf66144"
+    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-baseline.json",
-    "sha256": "6e384fdf4a3e845decd6e9bda05daec2035e3e5d86d0fb5988c2c853c0c48dcf"
+    "sha256": "b9d915c4fdea391c27e1340600d178b0e50e84265c5cfb6203377baf21fe3ed1"
   },
   "previousApplication": {
-    "handoffSha256": "6e384fdf4a3e845decd6e9bda05daec2035e3e5d86d0fb5988c2c853c0c48dcf",
+    "handoffSha256": "b9d915c4fdea391c27e1340600d178b0e50e84265c5cfb6203377baf21fe3ed1",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:00:00Z",
-    "summary": "The baseline Feature and User Story content was applied manually."
+    "summary": "The baseline Feature, User Story and Tasks were applied manually; Targetprocess assigned the Task IDs.",
+    "createdExternalIds": [
+      {
+        "localId": "detail-drawer-baseline",
+        "externalId": "700001"
+      },
+      {
+        "localId": "detail-drawer-implementation",
+        "externalId": "700002"
+      },
+      {
+        "localId": "detail-drawer-verification",
+        "externalId": "700003"
+      }
+    ]
   },
   "epic": {
     "localId": "react-angular-migration",
