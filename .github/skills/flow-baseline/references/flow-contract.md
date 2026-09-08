@@ -88,6 +88,21 @@ as observable behavior. A framework boundary does not inherit React wrapper
 styles; require browser verification that the replacement stays within the
 drawer and preserves the approved padding or margin.
 
+Appearance is a declared acceptance criterion, not a review instruction. From
+schemaVersion 4 the contract carries `visualParity`: one entry per migrated
+surface with its `id`, the retained `counterpart` it must look like, the
+`appearance` requirements (border, radius, icon and label placement, trailing
+unit, design tokens instead of literal values) and the `layout` requirements
+(width, alignment and spacing against the retained sibling sections). Cite the
+counterpart with file and line in `reference` when one exists.
+
+The validator enforces this list downstream: `migrate-flow` must return a
+verdict per surface and `verify-flow` must status each one on its own. A
+surface that is not declared here can therefore never fail later, so an
+appearance difference the user would notice belongs in `visualParity` rather
+than in report prose. `scope.partialMount` is required too; `nested: false` is
+a deliberate statement about the mount shape, not an omission.
+
 When the slice mounts inside a retained React parent, declare it in the
 contract as `scope.partialMount` with `nested: true`, the `retainedParent` and
 the `siblingSections` a migrated field must match. `migrate-flow` and

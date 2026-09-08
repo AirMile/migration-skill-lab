@@ -5,7 +5,7 @@ description: Migrate one explicitly approved React-to-Angular flow within a decl
 
 # Migrate Flow
 
-Skill version: `0.7.0`.
+Skill version: `0.8.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -55,7 +55,10 @@ provisional convention as an approved Lely standard.
    placement, border, radius, color tokens) and layout fit (padding, margin
    and width parity with retained sibling sections) for any migrated field
    with a directly comparable retained React counterpart, not only whether a
-   control or branch is present.
+   control or branch is present. Walk the contract's `visualParity` list and
+   produce one verdict per declared surface; `deviates` and `not-checked` are
+   honest outcomes that block a `completed` result, so resolve them rather
+   than restate them.
 5. Add or update only the React characterizing tests required by the approved
    scenarios. Run them against the existing React implementation before
    changing the selected behavior.
@@ -74,29 +77,38 @@ provisional convention as an approved Lely standard.
    custom-element fixture may remain as an additional unit-level test but
    must not be the sole basis for a claim about drawer padding, spacing or
    input containment.
-8. After each coherent product milestone whose relevant checks pass, create a
+8. Treat visual parity as its own coherent milestone once the functional
+   slice is green: bring every declared surface onto its `appearance` and
+   `layout` requirements, rerun the declared checks, and checkpoint that as a
+   separate scoped delta. Behavior and appearance then carry separate evidence
+   and separate commits inside one flow, instead of appearance riding along
+   unrecorded.
+9. After each coherent product milestone whose relevant checks pass, create a
    checkpoint manifest and run `verify-checkpoint.mjs --prepare`. Continue
    only when it confirms the branch, HEAD, operation state, path denylist,
    `allowedWritePaths`, clean baseline ownership and validations.
-9. When checkpoint mode is `auto-local`, stage only the verifier's explicit
+10. When checkpoint mode is `auto-local`, stage only the verifier's explicit
    paths, then run `verify-checkpoint.mjs --verify-staged` to prove the staged
    path set and diff match the expected scoped delta. Create the local commit
    with its deterministic repository-style subject and run
    `verify-checkpoint.mjs --verify-commit` against the new SHA. Do not ask
    again: Flow Contract approval is the batch authorization. Do not bypass
    hooks, amend or create an empty commit.
-10. Record coverage only through a command and output location explicitly
+11. Record coverage only through a command and output location explicitly
    approved for this run. Remove only generated artifacts that the approval
    identifies.
-11. Write `migration-result.json` in the declared run directory, including
+12. Write `migration-result.json` in the declared run directory, including
     every committed, skipped or blocked checkpoint. When the contract sets
    `scope.partialMount.nested`, record the step 4 comparison in
    `renderedSurfaceComparison`: the `evidenceSource` you actually used, the
    retained sibling sections you compared against, and the concrete style and
    layout observations. Only `real-parent-tree` is accepted for a completed
-   nested migration; an isolated fixture is not sufficient. It must
+   nested migration; an isolated fixture is not sufficient. Record one
+   `surfaces` entry per declared `visualParity` id with its verdict and
+   observations; the validator refuses a `completed` result that skips a
+   declared surface or leaves one on `deviates` or `not-checked`. It must
    validate with the handoff validator together with the Flow Contract.
-12. Write and validate `work-item-migration.json`, pointing to the exact
+13. Write and validate `work-item-migration.json`, pointing to the exact
     migration result and previous work-item handoff hashes. Render the
     copy/paste Markdown with factual progress and no unverified completion,
     then run `render-work-item-handoff.mjs --inline <snapshot> --since
@@ -106,14 +118,14 @@ provisional convention as an approved Lely standard.
     `previousApplication`, including the external IDs Targetprocess assigned to
     any created item in `createdExternalIds`; never modify the baseline
     snapshot.
-13. Update the implementation Task with the validated checkpoint milestones
+14. Update the implementation Task with the validated checkpoint milestones
    and actual completed work. Recalculate User Story progress from all Task
    contributions; never equate commit count with progress.
-14. Add a concise daily standup block with completed work, next verification
+15. Add a concise daily standup block with completed work, next verification
    step, blockers and the same calculated User Story progress.
-15. Record the final worktree status. Do not merge, push, publish or update the
+16. Record the final worktree status. Do not merge, push, publish or update the
    skill.
-16. End with one focused user question offering a fresh `/verify-flow` chat
+17. End with one focused user question offering a fresh `/verify-flow` chat
    with only the declared artifact paths and product root. Do not spawn a
    verifier subagent or perform verification in this chat.
 

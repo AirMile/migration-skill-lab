@@ -1,19 +1,19 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "artifactType": "verification-result",
   "skill": "verify-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-verification-001",
   "flowId": "demo-line-drawer",
   "verificationAttempt": 1,
   "status": "PASS",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "migrationResult": {
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
+    "sha256": "4a78844a866ff8e3d194b9c168a95bda993c3d2b53543acf170a6f42d682bb70"
   },
   "criteria": [
     {
@@ -23,6 +23,26 @@
         "Targeted test passed."
       ],
       "diagnosis": "No regression detected."
+    }
+  ],
+  "visualCriteria": [
+    {
+      "visualParityId": "length-field",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "A real selected line reached through the product navigation flow was measured in the actual drawer."
+      ],
+      "diagnosis": "Appearance and width match the retained sibling sections."
+    },
+    {
+      "visualParityId": "angle-field",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "The same real selected-line drawer was measured for the angle field."
+      ],
+      "diagnosis": "Appearance and width match the retained sibling sections."
     }
   ],
   "validation": [

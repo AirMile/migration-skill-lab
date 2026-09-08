@@ -3,13 +3,13 @@
   "artifactType": "work-item-handoff",
   "handoffPhase": "baseline",
   "skill": "flow-baseline",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.7.0",
   "runId": "demo-line-drawer-baseline-001",
   "flowId": "demo-line-drawer",
   "primaryArtifact": {
     "artifactType": "flow-contract",
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "epic": {
     "localId": "react-angular-migration",

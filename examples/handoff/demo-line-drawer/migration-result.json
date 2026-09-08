@@ -1,14 +1,14 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "artifactType": "migration-result",
   "skill": "migrate-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-migration-001",
   "flowId": "demo-line-drawer",
   "status": "completed",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "repository": {
     "root": "C:\\Example\\frontend",
@@ -53,6 +53,24 @@
     "observations": [
       "Length and angle fields keep the retained field width and label placement.",
       "Drawer padding matches the retained sibling sections."
+    ],
+    "surfaces": [
+      {
+        "visualParityId": "length-field",
+        "verdict": "matches",
+        "observations": [
+          "The bordered box, icon, label placement and trailing unit match the retained input.",
+          "Rendered through the real LineForm tree, the field width equals the Detectable and Coordinates sections."
+        ]
+      },
+      {
+        "visualParityId": "angle-field",
+        "verdict": "matches",
+        "observations": [
+          "The bordered box, icon and label placement match the retained input.",
+          "The degree unit is vertically centered with the value in the real parent tree."
+        ]
+      }
     ]
   },
   "checkpoints": [

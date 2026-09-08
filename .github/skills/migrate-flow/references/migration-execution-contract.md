@@ -36,10 +36,15 @@ approval. Stop with `BLOCKED` if any precondition is missing.
    border, radius, color tokens) and layout fit (padding, margin and width
    parity with retained sibling sections) for any migrated field or slice
    with a directly comparable retained React counterpart, not only whether a
-   control or branch is present.
+   control or branch is present. Compare against the contract's declared
+   `visualParity` requirements and return one verdict per surface.
 5. Implement the smallest bounded Angular slice.
 6. Add Angular tests for those same scenarios.
-7. Run targeted tests, typecheck and build.
+7. Bring every declared visual parity surface onto its `appearance` and
+   `layout` requirements as a separate coherent milestone, once the functional
+   slice is green. Behavior and appearance then carry separate evidence and
+   separate checkpoints inside one flow.
+8. Run targeted tests, typecheck and build.
    Leave manual browser-flow and Maui-WebView verification to `verify-flow`.
    When the migrated slice is a partial Angular mount nested inside a
    retained React parent, at least one authored or updated automated UI test
@@ -48,9 +53,9 @@ approval. Stop with `BLOCKED` if any precondition is missing.
    custom-element fixture may remain as an additional unit-level test but
    must not be the sole basis for a claim about drawer padding, spacing or
    input containment.
-8. Run the checkpoint preflight for every coherent green milestone and, when
+9. Run the checkpoint preflight for every coherent green milestone and, when
    `auto-local` is approved, commit only the exact allowlisted scoped delta.
-9. Create a compact `migration-result.json` and Epic/Feature/Story/Task
+10. Create a compact `migration-result.json` and Epic/Feature/Story/Task
    progress handoff with a daily standup block, without source copies.
 
 ## Result constraints
@@ -63,6 +68,13 @@ the approved write allowlist. When the contract sets
 retained sibling sections compared against, and the concrete style and layout
 observations from step 4. The validator rejects a completed nested migration
 without it, so the step-4 comparison can no longer be silently skipped.
+
+Whenever the contract declares `visualParity`, `renderedSurfaceComparison`
+must also carry one `surfaces` entry per declared id, each with its verdict
+and observations. A `completed` result cannot skip a declared surface or leave
+one on `deviates` or `not-checked`; those verdicts are honest outcomes that
+belong in a `blocked` result or in a further milestone, not in a completed
+one.
 
 A failed or blocked validation command must be
 reported with that status and diagnosis; it cannot be recorded as completed.

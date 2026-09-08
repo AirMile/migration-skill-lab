@@ -2,7 +2,7 @@
 
 **Flow:** demo-line-drawer
 **Phase:** migration
-**Producer:** migrate-flow 0.5.0
+**Producer:** migrate-flow 0.8.0
 **Manual application:** copy-ready
 **Previous handoff application:** confirmed-applied
 

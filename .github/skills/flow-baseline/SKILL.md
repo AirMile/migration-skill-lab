@@ -5,7 +5,7 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 # Flow Baseline
 
-Skill version: `0.6.0`.
+Skill version: `0.7.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -75,6 +75,16 @@ ambiguous. Never choose the flow automatically.
    `siblingSections` a migrated field must visually match. This field is what
    later makes real-host evidence mandatory for `migrate-flow` and
    `verify-flow`, so an omitted or wrongly `false` value silently weakens both.
+   From schemaVersion 4 `scope.partialMount` is required: declaring
+   `nested: false` is a deliberate statement, not something to leave out.
+   Record every migrated surface in `visualParity` with its `id`, the retained
+   `counterpart` it must look like, the concrete `appearance` requirements
+   (border, radius, icon and label placement, trailing unit, design tokens
+   rather than literal values) and the `layout` requirements (width, alignment
+   and spacing against the retained sibling sections). Cite the counterpart
+   with file and line in `reference` when one exists. Appearance that is not
+   declared here cannot be verified later, so anything a user would notice
+   belongs in this list rather than in report prose.
 7. When current behavior differs from a plausible improvement, do not choose
    silently. Ask one focused product question with these routes:
    - preserve current behavior for migration;

@@ -3,20 +3,20 @@
   "artifactType": "work-item-handoff",
   "handoffPhase": "verification",
   "skill": "verify-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-verification-001",
   "flowId": "demo-line-drawer",
   "primaryArtifact": {
     "artifactType": "verification-result",
     "path": "examples\\handoff\\demo-line-drawer\\verification-result.json",
-    "sha256": "be73c1a433a36f69262e0e8b8c75d86ee615d7737ef5a89ce94dabad30191af1"
+    "sha256": "7aeaf5b413aca5ddce5c83bf311d6481dfc17b79ff4877741b4f57e2b57e532c"
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-migration.json",
-    "sha256": "33b7b3d1555696b7c213e36518b95ecab75a8c5a47c06fa29751bd07281d5618"
+    "sha256": "611b8e8bd15dff1c26710d8ef95379b1e57e6af72c1083fb249a398c94cf15b9"
   },
   "previousApplication": {
-    "handoffSha256": "33b7b3d1555696b7c213e36518b95ecab75a8c5a47c06fa29751bd07281d5618",
+    "handoffSha256": "611b8e8bd15dff1c26710d8ef95379b1e57e6af72c1083fb249a398c94cf15b9",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:30:00Z",

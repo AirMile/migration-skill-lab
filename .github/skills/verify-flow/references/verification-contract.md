@@ -65,6 +65,19 @@ anything but `real-host-layout`. Record what was actually done; a shortcut
 recorded honestly produces a blocked result, while a shortcut recorded as
 real-host evidence is a false verification.
 
+Visual parity is statused per surface. For every `visualParity` entry the
+contract declares, record one `visualCriteria` entry with its own status,
+evidence source, evidence and diagnosis, measured against that surface's
+declared `appearance` and `layout` requirements rather than against a fresh
+reading of the React source. Overall `PASS` requires every visual criterion to
+pass, and under `scope.partialMount.nested` a visual `PASS` requires
+`real-host-layout` evidence.
+
+Appearance therefore has its own column that must be green. A difference the
+user would see is a `FAIL` on its own criterion; calling it a styling
+limitation rather than a functional regression describes the deviation, it
+does not excuse it.
+
 Compare the actual drawer against the baseline rendered-surface inventory.
 Any missing retained control, action or conditional capability branch is a
 scenario failure, not a styling limitation. The comparison also includes

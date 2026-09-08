@@ -1,11 +1,11 @@
 ---
 document: skill-handoff-protocol
-version: 0.5.3
+version: 0.6.0
 status: experimental
 date: 2026-09-08
 ---
 
-# Migration handoff protocol v0.5.3
+# Migration handoff protocol v0.6.0
 
 ## Purpose
 
@@ -85,6 +85,15 @@ Every artifact has `schemaVersion`, `skillVersion`, `runId`, `flowId` and
 revision or content-hash pointers. A consumer rejects an incompatible version,
 a mismatched flow, missing artifact or unknown status.
 
+A schema accepts more than one `schemaVersion` at a time: `flow-contract` and
+`verification-result` accept 3 and 4, `migration-result` accepts 2 and 3, and
+`debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
+optional and the validator's rule layer makes it mandatory for the newer
+version. Completed runs stay valid at the version they were written under,
+which matters because a draft baseline and its artifacts are immutable
+historical evidence. Skills always write the newest version, so a new run
+cannot opt out of the newer rules by staying behind.
+
 Each work-item handoff points to its phase's primary artifact. Migration and
 verification handoffs also point to the exact previous work-item snapshot.
 They record the human-confirmed applied/not-applied outcome of that previous
@@ -141,13 +150,30 @@ The baseline also inventories every rendered control and conditional branch as
 `migrate`, `retain-react` or `excluded`. A partial Angular mount is valid only
 when it preserves every `retain-react` item in the active parent form.
 
-The baseline declares that shape as `scope.partialMount`. When it is nested,
-the validator requires `migrate-flow` to record
+The baseline declares that shape as `scope.partialMount`, which is required
+from schemaVersion 4 so that a `nested: false` is a statement rather than an
+omission. When it is nested, the validator requires `migrate-flow` to record
 `renderedSurfaceComparison.evidenceSource: "real-parent-tree"` and refuses an
 overall `PASS` unless `verify-flow` recorded
 `browserValidation.evidenceSource: "real-host-layout"`. These replace prose
 requirements that an earlier run satisfied on paper while using an isolated
 fixture in practice.
+
+Appearance itself is a declared criterion, carried end to end as its own track
+rather than as a remark on a functional scenario:
+
+| Phase | Field | Rule |
+|---|---|---|
+| `flow-baseline` | `visualParity[]` | One entry per migrated surface: retained counterpart, appearance requirements, layout requirements against the sibling sections. |
+| `migrate-flow` | `renderedSurfaceComparison.surfaces[]` | One verdict per declared surface. A `completed` result cannot skip one or leave it on `deviates` or `not-checked`. |
+| `verify-flow` | `visualCriteria[]` | One status per declared surface. Overall `PASS` needs every one green, on `real-host-layout` evidence under a nested mount. |
+| `verify-flow` | `debug-handoff` `source: visual-parity` | An appearance defect routes through the normal repair loop instead of being handled beside the artifact chain. |
+
+The consequence is that a surface nobody declared can never fail later, and a
+declared surface cannot pass unnoticed. It closes the case where a verifier
+recorded a visible deviation as a styling limitation rather than a failure,
+and the case where the appearance defect had no field to live in and was
+repaired outside the consumed handoff.
 
 ## Work-item application loop
 

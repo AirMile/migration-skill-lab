@@ -2,40 +2,41 @@
   "schemaVersion": 1,
   "artifactType": "debug-result",
   "skill": "debug-flow",
-  "skillVersion": "0.1.0",
+  "skillVersion": "0.2.0",
   "runId": "demo-line-drawer-debug-001",
   "flowId": "demo-line-drawer",
   "status": "repaired",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "migrationResult": {
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
+    "sha256": "4a78844a866ff8e3d194b9c168a95bda993c3d2b53543acf170a6f42d682bb70"
   },
   "verificationResult": {
     "path": "examples\\debug\\demo-line-drawer\\failed-verification-result.json",
-    "sha256": "c9e0ca61648d502b6a6716e0cf7621730c1597f00939de3b315d1b4f418710df"
+    "sha256": "e5e76024176e11e681d4f3540e992e0b6347cedc960ee816b9681fe9f92f70dc"
   },
   "debugHandoff": {
     "path": "examples\\debug\\demo-line-drawer\\debug-handoff.json",
-    "sha256": "3543fd53bca674fd5b22ba8069d7235f1e19047fe4d4985bd7eee3a7302ce9d5"
+    "sha256": "2a58d33d844e10b705752cef9d2d8fc53c0acfa6653b3a41cd431e644f59e131"
   },
   "repository": {
     "root": "C:\\Example\\frontend",
     "revisionBefore": "0123456789abcdef0123456789abcdef01234567",
     "revisionAfter": "fedcba9876543210fedcba9876543210fedcba98"
   },
-  "selectedStartTier": "immediate",
-  "selectionReason": "The root cause was local, confirmed and covered by a targeted reproduction.",
+  "selectedStartTier": "light",
+  "selectionReason": "The behavioral root cause was local and reproducible, and the visual deviation needed a bounded style change measured in the real host layout.",
   "attempts": [
     {
-      "tier": "immediate",
+      "tier": "light",
       "status": "repaired",
-      "hypothesis": "The drawer omitted its local display refresh after the accepted update.",
+      "hypothesis": "The drawer omitted its local display refresh after the accepted update, and the migrated section duplicated the parent wrapper padding while overriding the parent flex alignment.",
       "reproductionEvidence": [
-        "The targeted stale-length assertion failed before the fix and passed after it."
+        "The targeted stale-length assertion failed before the fix and passed after it.",
+        "The real drawer showed the narrower box and top-aligned unit before the fix and sections of equal width after it."
       ],
       "changedPaths": [
         "src/features/demo-line-drawer/Drawer.ts"
@@ -59,13 +60,13 @@
       ],
       "checkpoint": {
         "commitSha": "1234567890abcdef1234567890abcdef12345678",
-        "subject": "TP522512: refresh detail drawer after line update",
+        "subject": "TP522512: refresh detail drawer and match retained field layout",
         "paths": [
           "src/features/demo-line-drawer/Drawer.ts"
         ],
         "stagedDiffSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       },
-      "summary": "The local stale display was repaired in one immediate attempt."
+      "summary": "The stale display and the length-field visual deviation were repaired together and re-measured in the real drawer, not in an isolated fixture."
     }
   ],
   "nextAction": "reverify",

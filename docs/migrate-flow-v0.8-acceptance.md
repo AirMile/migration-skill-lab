@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: migrate-flow
-targetVersion: 0.7.0
+targetVersion: 0.8.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `migrate-flow` v0.7.0 acceptance criteria
+# `migrate-flow` v0.8.0 acceptance criteria
 
 ## Hard gates
 
@@ -70,4 +70,11 @@ The source is acceptable when:
     a completed result without it is rejected.
 20. it shows the generated `--inline` handoff verbatim in the chat and records
     `createdExternalIds` for every item the user confirmed creating, so the
-    same Tasks are not re-proposed as `create` in a later phase.
+    same Tasks are not re-proposed as `create` in a later phase;
+21. it records one `renderedSurfaceComparison.surfaces` verdict per surface the
+    contract declares in `visualParity`, with concrete observations;
+22. a `completed` result never skips a declared surface and never leaves one on
+    `deviates` or `not-checked`;
+23. it treats visual parity as its own coherent milestone and checkpoint after
+    the functional slice is green, so behavior and appearance carry separate
+    evidence.

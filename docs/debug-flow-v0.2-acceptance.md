@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: debug-flow
-targetVersion: 0.1.2
+targetVersion: 0.2.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `debug-flow` v0.1.2 acceptance criteria
+# `debug-flow` v0.2.0 acceptance criteria
 
 ## Hard gates
 
@@ -69,4 +69,10 @@ The source is acceptable when:
 14. observation capture excludes product defects, expected blockers, external
     issues, missing Angular conventions and unproven causality;
 15. observation capture failure is visible but cannot rewrite the primary debug
-    status.
+    status;
+16. a `visual-parity` failure is repaired against the contract's declared
+    `appearance` and `layout` for the named surface, not against a fresh
+    reading of the React source;
+17. a visual repair confirmed only in an isolated or injected fixture is not
+    recorded as `repaired`, because a fixture cannot show width, alignment or
+    spacing against the retained sibling sections.

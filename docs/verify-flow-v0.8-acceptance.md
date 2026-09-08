@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: verify-flow
-targetVersion: 0.7.0
+targetVersion: 0.8.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `verify-flow` v0.7.0 acceptance criteria
+# `verify-flow` v0.8.0 acceptance criteria
 
 ## Hard gates
 
@@ -67,4 +67,11 @@ The source is acceptable when:
     overall `PASS` on `isolated-fixture` evidence when the contract declares
     a nested partial mount.
 20. it shows the generated `--inline` handoff verbatim in the chat and marks
-    an item that did not move as `no-change` rather than a no-op `update`.
+    an item that did not move as `no-change` rather than a no-op `update`;
+21. it records one `visualCriteria` entry per surface the contract declares in
+    `visualParity`, with its own status, evidence source, evidence and
+    diagnosis;
+22. overall `PASS` requires every visual parity criterion to pass, and a visual
+    `PASS` under a nested partial mount requires `real-host-layout` evidence;
+23. a visible appearance deviation is recorded as a `FAIL` on its own
+    criterion rather than dismissed as a styling limitation.

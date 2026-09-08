@@ -5,7 +5,7 @@ description: Independently verify one approved React-to-Angular migration flow a
 
 # Verify Flow
 
-Skill version: `0.7.0`.
+Skill version: `0.8.0`.
 
 Recommended model: a different model family than `migrate-flow` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -48,7 +48,9 @@ outside the declared flow.
    migrated fields themselves pass. Also compare a migrated field's width,
    alignment and spacing against its retained sibling sections in the same
    drawer whenever the flow contract's scope implies a shared drawer layout;
-   a field-presence check alone is not sufficient for `PASS`.
+   a field-presence check alone is not sufficient for `PASS`. Status every
+   surface the contract declares in `visualParity` on its own; appearance is a
+   criterion here, never a footnote to a functional scenario.
 4. Run the declared targeted test, typecheck and build commands. Do not expand
    to unrelated validation without a reason recorded in the result.
 5. Check that changed paths stay within the approved allowlist and that the
@@ -72,8 +74,15 @@ outside the declared flow.
    contract sets `scope.partialMount.nested`, the validator refuses an overall
    `PASS` on anything but `real-host-layout`, so record what you actually did
    rather than what the contract asks for.
-8. Record `PASS`, `FAIL` or `BLOCKED` for every scenario and the overall
-   result. A passing overall result requires every scenario to pass.
+   Record one `visualCriteria` entry per declared `visualParity` id with its
+   own status, evidence source, evidence and diagnosis. Compare the observed
+   appearance and layout against that surface's declared requirements, not
+   against your own reading of the React source.
+8. Record `PASS`, `FAIL` or `BLOCKED` for every scenario and every visual
+   parity surface, then the overall result. A passing overall result requires
+   every scenario and every visual parity criterion to pass. A deviation the
+   user would see is a `FAIL` on its own criterion; "a styling limitation, not
+   a functional regression" is a description, not a reason to pass.
 9. For non-PASS results, write `debug-handoff.json` after
    `verification-result.json`. Mark it `repairable` only for a local,
    reproducible failure with allowlisted candidate paths; otherwise mark it

@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "artifactType": "flow-contract",
   "skill": "flow-baseline",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.7.0",
   "runId": "demo-line-drawer-baseline-001",
   "flowId": "demo-line-drawer",
   "status": "approved",
@@ -12,7 +12,7 @@
   },
   "baselineReport": {
     "path": "baseline-report.md",
-    "sha256": "3dbb2e2f25fb0516d7cb0cdbd78a1997035a5d7c4ae7ba362b3b02cbfd81580a"
+    "sha256": "b7ba0fbc861b6f9ef38a97a60bea34724ea765be12c1fe1c1b7d3c19f8087bec"
   },
   "scope": {
     "startState": "A line is selected.",
@@ -46,6 +46,42 @@
       "evidence": [
         "C:\\Example\\frontend\\src\\features\\demo-line-drawer\\Drawer.test.ts:20"
       ]
+    }
+  ],
+  "visualParity": [
+    {
+      "id": "length-field",
+      "surface": "Length field in the selected-line drawer",
+      "counterpart": "FocusNumberInput as rendered by the retained React sibling sections",
+      "appearance": [
+        "Bordered field box with the same corner radius as the retained input.",
+        "Straight-line icon left of the label.",
+        "Label above the value, not beside it.",
+        "Trailing unit inside the same field box.",
+        "Border, value and label colors come from the design tokens, not literals."
+      ],
+      "layout": [
+        "Field width matches the Detectable and Coordinates sections.",
+        "The trailing unit is vertically centered with the value.",
+        "The migrated section adds no padding on top of the parent form wrapper."
+      ],
+      "reference": "C:\\Example\\frontend\\src\\features\\demo-line-drawer\\FocusNumberInput.tsx:1"
+    },
+    {
+      "id": "angle-field",
+      "surface": "Angle field in the selected-line drawer",
+      "counterpart": "FocusNumberInput as rendered by the retained React sibling sections",
+      "appearance": [
+        "Bordered field box with the same corner radius as the retained input.",
+        "Angle icon left of the label.",
+        "Label above the value, not beside it.",
+        "Trailing degree unit inside the same field box."
+      ],
+      "layout": [
+        "Field width matches the Detectable and Coordinates sections.",
+        "The trailing unit is vertically centered with the value."
+      ],
+      "reference": "C:\\Example\\frontend\\src\\features\\demo-line-drawer\\FocusNumberInput.tsx:1"
     }
   ],
   "testGaps": [

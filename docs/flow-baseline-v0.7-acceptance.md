@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.6.0
+targetVersion: 0.7.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.6.0 acceptance criteria
+# `flow-baseline` v0.7.0 acceptance criteria
 
 ## Hard gates
 
@@ -78,4 +78,12 @@ The source is acceptable when:
     React parent, because both downstream skills read that flag to decide
     whether real-host evidence is mandatory.
 22. it shows the generated `--inline` handoff verbatim in the chat rather than
-    a paraphrase, so the copy/paste content comes from the validated snapshot.
+    a paraphrase, so the copy/paste content comes from the validated snapshot;
+23. it declares `scope.partialMount` explicitly from schemaVersion 4, including
+    a deliberate `nested: false`, rather than omitting the field;
+24. it declares one `visualParity` entry per migrated surface with the retained
+    counterpart, the concrete appearance requirements and the layout
+    requirements against the retained sibling sections;
+25. an appearance difference a user would notice is declared as a contract
+    requirement rather than left to report prose, because an undeclared
+    surface can never fail downstream.

@@ -25,7 +25,7 @@
     "rollback"
   ],
   "properties": {
-    "schemaVersion": { "const": 3 },
+    "schemaVersion": { "enum": [3, 4] },
     "artifactType": { "const": "flow-contract" },
     "skill": { "const": "flow-baseline" },
     "skillVersion": {
@@ -139,6 +139,35 @@
             "minItems": 1,
             "items": { "type": "string", "minLength": 1 }
           }
+        }
+      }
+    },
+    "visualParity": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "surface", "counterpart", "appearance", "layout"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "surface": { "type": "string", "minLength": 1 },
+          "counterpart": { "type": "string", "minLength": 1 },
+          "appearance": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "layout": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "reference": { "type": "string", "minLength": 1 }
         }
       }
     },

@@ -2,7 +2,7 @@
 
 **Flow:** demo-line-drawer
 **Phase:** verification
-**Producer:** verify-flow 0.5.0
+**Producer:** verify-flow 0.8.0
 **Manual application:** copy-ready
 **Previous handoff application:** confirmed-applied
 

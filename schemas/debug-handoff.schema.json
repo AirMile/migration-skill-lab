@@ -19,7 +19,7 @@
     "summary"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "enum": [1, 2] },
     "artifactType": { "const": "debug-handoff" },
     "skill": { "const": "verify-flow" },
     "skillVersion": {
@@ -99,9 +99,18 @@
           },
           "source": {
             "type": "string",
-            "enum": ["scenario", "validation", "manual-validation"]
+            "enum": [
+              "scenario",
+              "validation",
+              "manual-validation",
+              "visual-parity"
+            ]
           },
           "scenarioId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "visualParityId": {
             "type": "string",
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },

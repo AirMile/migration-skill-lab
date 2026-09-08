@@ -67,6 +67,21 @@ Every attempt must preserve a complete record of:
 A no-change attempt is still an attempt and must remain visible in the result.
 A failed attempt is evidence, not something to overwrite.
 
+## Visual parity failures
+
+A `visual-parity` failure in the handoff names a surface the Flow Contract
+declares in `visualParity`. Its expected outcome is that surface's declared
+`appearance` and `layout`, not a fresh judgement about how the React source
+looks. Reproduce and confirm it in the real host layout: a visual repair
+observed only in an isolated or injected fixture is unproven, because a
+fixture cannot show width, alignment or spacing against the retained sibling
+sections.
+
+Record the deviation you actually measured and the value after the repair in
+the attempt evidence, the same way a behavioral reproduction is recorded. A
+visual repair is still only a candidate; independent re-verification decides
+whether the surface passes.
+
 ## Scope boundary
 
 All product edits must stay within `scope.allowedWritePaths`. `debug-flow`

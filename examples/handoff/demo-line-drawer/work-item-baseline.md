@@ -2,7 +2,7 @@
 
 **Flow:** demo-line-drawer
 **Phase:** baseline
-**Producer:** flow-baseline 0.5.0
+**Producer:** flow-baseline 0.7.0
 **Manual application:** copy-ready
 
 

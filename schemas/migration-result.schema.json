@@ -22,7 +22,7 @@
     "checkpoints"
   ],
   "properties": {
-    "schemaVersion": { "const": 2 },
+    "schemaVersion": { "enum": [2, 3] },
     "artifactType": { "const": "migration-result" },
     "skill": { "const": "migrate-flow" },
     "skillVersion": {
@@ -138,6 +138,32 @@
           "minItems": 1,
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 }
+        },
+        "surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["visualParityId", "verdict", "observations"],
+            "properties": {
+              "visualParityId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "verdict": {
+                "type": "string",
+                "enum": ["matches", "deviates", "not-checked"]
+              },
+              "observations": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
         }
       }
     },

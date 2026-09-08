@@ -1,19 +1,19 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "artifactType": "verification-result",
   "skill": "verify-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-verification-failed-001",
   "flowId": "demo-line-drawer",
   "verificationAttempt": 1,
   "status": "FAIL",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "migrationResult": {
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
+    "sha256": "4a78844a866ff8e3d194b9c168a95bda993c3d2b53543acf170a6f42d682bb70"
   },
   "criteria": [
     {
@@ -23,6 +23,27 @@
         "The targeted browser reproduction showed the old length after submit."
       ],
       "diagnosis": "The local drawer update did not refresh its displayed value."
+    }
+  ],
+  "visualCriteria": [
+    {
+      "visualParityId": "length-field",
+      "status": "FAIL",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "In the actual drawer the length box is narrower than the Detectable and Coordinates sections.",
+        "The trailing unit renders top-aligned instead of centered with the value."
+      ],
+      "diagnosis": "The migrated section duplicates the parent wrapper padding and overrides the parent flex alignment."
+    },
+    {
+      "visualParityId": "angle-field",
+      "status": "FAIL",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "The angle box shows the same narrower width in the actual drawer."
+      ],
+      "diagnosis": "Same duplicated section padding as the length field."
     }
   ],
   "validation": [

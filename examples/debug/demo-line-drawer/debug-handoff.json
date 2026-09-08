@@ -1,22 +1,22 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "artifactType": "debug-handoff",
   "skill": "verify-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-debug-handoff-001",
   "flowId": "demo-line-drawer",
   "status": "repairable",
   "flowContract": {
     "path": "examples\\handoff\\demo-line-drawer\\flow-contract.json",
-    "sha256": "f3e564f84c4667b750d05137a210ac522f8c18871237788b9061cbe5a1fe3d8b"
+    "sha256": "e8e1827ad9b46dca3c1f0229394d487802adbfbe8486f95eaadefad9315b05f9"
   },
   "migrationResult": {
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
+    "sha256": "4a78844a866ff8e3d194b9c168a95bda993c3d2b53543acf170a6f42d682bb70"
   },
   "verificationResult": {
     "path": "examples\\debug\\demo-line-drawer\\failed-verification-result.json",
-    "sha256": "c9e0ca61648d502b6a6716e0cf7621730c1597f00939de3b315d1b4f418710df"
+    "sha256": "e5e76024176e11e681d4f3540e992e0b6347cedc960ee816b9681fe9f92f70dc"
   },
   "failures": [
     {
@@ -39,7 +39,28 @@
       ],
       "recommendedStartTier": "immediate",
       "recommendationReason": "The failure is deterministic, local and already has a targeted reproduction."
+    },
+    {
+      "id": "length-field-width-and-unit-alignment",
+      "source": "visual-parity",
+      "visualParityId": "length-field",
+      "expected": "The length box matches the Detectable and Coordinates width with a vertically centered unit.",
+      "actual": "The length box is narrower than its sibling sections and the unit is top-aligned.",
+      "evidence": [
+        "The actual drawer was measured through the real navigation flow with a real selected line."
+      ],
+      "reproduction": [
+        "Select one existing line in the real drawer.",
+        "Compare the length box width with the Detectable and Coordinates sections.",
+        "Observe the vertical position of the trailing unit."
+      ],
+      "suspectedBoundary": "The migrated section's own padding and the unit's alignment override.",
+      "candidatePaths": [
+        "src/features/demo-line-drawer/Drawer.ts"
+      ],
+      "recommendedStartTier": "light",
+      "recommendationReason": "The deviation is visible in the real host layout and bounded to the migrated section styles."
     }
   ],
-  "summary": "Start a fresh debug-flow agent for the local stale-length failure."
+  "summary": "Start a fresh debug-flow agent for the local stale-length failure and the length-field visual parity deviation."
 }

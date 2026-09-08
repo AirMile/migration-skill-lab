@@ -24,7 +24,7 @@
     "verificationAttempt"
   ],
   "properties": {
-    "schemaVersion": { "const": 3 },
+    "schemaVersion": { "enum": [3, 4] },
     "artifactType": { "const": "verification-result" },
     "skill": { "const": "verify-flow" },
     "skillVersion": {
@@ -98,6 +98,40 @@
           "status": {
             "type": "string",
             "enum": ["PASS", "FAIL", "BLOCKED"]
+          },
+          "evidence": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "diagnosis": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "visualCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "visualParityId",
+          "status",
+          "evidenceSource",
+          "evidence",
+          "diagnosis"
+        ],
+        "properties": {
+          "visualParityId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PASS", "FAIL", "BLOCKED"]
+          },
+          "evidenceSource": {
+            "type": "string",
+            "enum": ["real-host-layout", "isolated-fixture", "not-run"]
           },
           "evidence": {
             "type": "array",

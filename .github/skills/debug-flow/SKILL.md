@@ -5,7 +5,7 @@ description: Diagnose and repair one failed or repairable BLOCKED React-to-Angul
 
 # Debug Flow
 
-Skill version: `0.1.2`.
+Skill version: `0.2.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -53,28 +53,32 @@ blocked by an external system.
 5. Refuse external or approval blockers. Do not debug service outages, missing
    access, dependency approvals, host-contract changes or other issues that are
    outside the approved local product slice.
-6. Select the cheapest starting tier without asking:
+6. Treat a `visual-parity` failure as a first-class repair target: its
+   expected outcome is the contract's declared `appearance` and `layout` for
+   that surface, and its evidence must come from the real host layout. A
+   visual repair confirmed only in an isolated fixture is not repaired.
+7. Select the cheapest starting tier without asking:
    - `immediate` when the root cause is confirmed, local and already has a
      targeted reproduction;
    - `light` when exactly one strong local hypothesis explains the failure but
      is not yet proven;
    - `heavy` when the cause is unclear, crosses approved boundaries or the same
      failure already survived a lower-tier attempt.
-7. Attempt exactly once per tier and escalate automatically in order
+8. Attempt exactly once per tier and escalate automatically in order
    `immediate -> light -> heavy`. Never reset attempts, repeat a tier or loop
    after `heavy`.
-8. For each attempt, preserve and record all five evidence blocks even when no
+9. For each attempt, preserve and record all five evidence blocks even when no
    product file changes occur:
    - reproduction evidence;
    - current hypothesis;
    - actual file changes or `none`;
    - validation outcomes;
    - checkpoint outcome.
-9. In each attempt, rerun or restate the smallest targeted reproduction from
+10. In each attempt, rerun or restate the smallest targeted reproduction from
    `verify-flow`, make only the minimum approved product edits inside
    `allowedWritePaths`, then rerun the targeted reproduction and declared
    validations.
-10. When a repaired candidate has the required green evidence and checkpoint
+11. When a repaired candidate has the required green evidence and checkpoint
     mode is `auto-local`, create a checkpoint manifest and run:
 
     ```powershell
@@ -86,7 +90,7 @@ blocked by an external system.
 
     Stage only the verifier's explicit paths. Do not use `git add -A`, bypass
     hooks, amend or create an empty commit.
-11. Write a concise human-readable debug summary and `debug-result.json` in the
+12. Write a concise human-readable debug summary and `debug-result.json` in the
     declared run directory. Use statuses honestly:
     - `repaired` when the targeted reproduction and declared validations now
       pass and the attempt record is complete;
@@ -95,12 +99,12 @@ blocked by an external system.
       were not already approved;
     - `parked` when the `heavy` tier still cannot produce a safe, local repair
       and a human decision is required.
-12. Every `repaired` result must end with a mandatory handoff to a fresh,
+13. Every `repaired` result must end with a mandatory handoff to a fresh,
     independent `verify-flow` run. `debug-flow` never declares `PASS`, never
     treats a repair as verified and never closes the verification loop itself.
-13. Record the final Git-visible worktree status and report any delta against
+14. Record the final Git-visible worktree status and report any delta against
     the frozen baseline without reverting unrelated changes.
-14. For a `repaired` result, end with one focused user question offering a
+15. For a `repaired` result, end with one focused user question offering a
     fresh `/verify-flow` chat with only the declared artifacts and product root.
     Never spawn a verifier subagent or reuse this debug chat as verification.
 

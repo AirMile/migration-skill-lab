@@ -230,6 +230,36 @@ const validateArtifactRules = (value, errors) => {
         "$.scope.partialMount may not carry retainedParent or siblingSections when it is not nested.",
       );
     }
+
+    if (value.schemaVersion >= 4) {
+      if (!partialMount) {
+        errors.push(
+          "$.scope.partialMount is required from schemaVersion 4; declare nested false explicitly rather than omitting it.",
+        );
+      }
+      if (!value.visualParity?.length) {
+        errors.push(
+          "$.visualParity is required from schemaVersion 4; every migrated surface needs a declared appearance baseline.",
+        );
+      }
+    }
+
+    if (value.visualParity) {
+      const visualIds = value.visualParity.map(entry => entry.id);
+      if (new Set(visualIds).size !== visualIds.length) {
+        errors.push("$.visualParity must use unique ids.");
+      }
+
+      if (partialMount?.nested === true) {
+        for (const entry of value.visualParity) {
+          if (entry.layout.length === 0) {
+            errors.push(
+              `$.visualParity ${entry.id} requires layout parity against the retained sibling sections when the mount is nested.`,
+            );
+          }
+        }
+      }
+    }
     return;
   }
 
@@ -263,6 +293,16 @@ const validateArtifactRules = (value, errors) => {
     if (new Set(committedShas).size !== committedShas.length) {
       errors.push("$.checkpoints must use unique commitSha values.");
     }
+
+    const surfaces = value.renderedSurfaceComparison?.surfaces;
+    if (surfaces) {
+      const surfaceIds = surfaces.map(surface => surface.visualParityId);
+      if (new Set(surfaceIds).size !== surfaceIds.length) {
+        errors.push(
+          "$.renderedSurfaceComparison.surfaces must use unique visualParityId values.",
+        );
+      }
+    }
     return;
   }
 
@@ -291,6 +331,24 @@ const validateArtifactRules = (value, errors) => {
     if (value.verificationAttempt > 1 && !hasDebugResult) {
       errors.push("$.debugResult is required after verification attempt 1.");
     }
+
+    if (value.visualCriteria) {
+      const visualIds = value.visualCriteria.map(
+        criterion => criterion.visualParityId,
+      );
+      if (new Set(visualIds).size !== visualIds.length) {
+        errors.push("$.visualCriteria must use unique visualParityId values.");
+      }
+
+      for (const criterion of value.visualCriteria) {
+        if (criterion.status === "PASS" &&
+          criterion.evidenceSource === "not-run") {
+          errors.push(
+            `$.visualCriteria ${criterion.visualParityId} cannot pass without rendered evidence.`,
+          );
+        }
+      }
+    }
     return;
   }
 
@@ -304,6 +362,11 @@ const validateArtifactRules = (value, errors) => {
       if (failure.source === "scenario" && !failure.scenarioId) {
         errors.push(
           `$.failures[${index}].scenarioId is required for a scenario failure.`,
+        );
+      }
+      if (failure.source === "visual-parity" && !failure.visualParityId) {
+        errors.push(
+          `$.failures[${index}].visualParityId is required for a visual-parity failure.`,
         );
       }
     }
@@ -882,6 +945,39 @@ const validateArtifactLinks = artifacts => {
         );
       }
     }
+
+    const contractVisualIds = (contract.value.visualParity ?? []).map(
+      entry => entry.id,
+    );
+    if (migration.value.status === "completed" && contractVisualIds.length > 0) {
+      const surfaces = migration.value.renderedSurfaceComparison?.surfaces;
+      if (!surfaces) {
+        throw new Error(
+          "A completed migration-result requires renderedSurfaceComparison.surfaces for every declared visual parity surface.",
+        );
+      }
+
+      const coveredIds = new Set(surfaces.map(surface => surface.visualParityId));
+      for (const visualId of contractVisualIds) {
+        if (!coveredIds.has(visualId)) {
+          throw new Error(
+            `renderedSurfaceComparison does not cover the declared visual parity surface ${visualId}.`,
+          );
+        }
+      }
+      for (const surface of surfaces) {
+        if (!contractVisualIds.includes(surface.visualParityId)) {
+          throw new Error(
+            `renderedSurfaceComparison names visual parity surface ${surface.visualParityId}, which the flow-contract does not declare.`,
+          );
+        }
+        if (surface.verdict !== "matches") {
+          throw new Error(
+            `A completed migration-result cannot leave visual parity surface ${surface.visualParityId} on verdict ${surface.verdict}.`,
+          );
+        }
+      }
+    }
   }
 
   if (verification && contract && migration) {
@@ -971,6 +1067,51 @@ const validateArtifactLinks = artifacts => {
       );
     }
 
+    const contractVisualParity = contract.value.visualParity ?? [];
+    if (contractVisualParity.length > 0) {
+      const visualCriteria = verification.value.visualCriteria;
+      if (!visualCriteria) {
+        throw new Error(
+          "A verification-result requires visualCriteria for every declared visual parity surface.",
+        );
+      }
+
+      const criterionById = new Map(
+        visualCriteria.map(criterion => [criterion.visualParityId, criterion]),
+      );
+      for (const entry of contractVisualParity) {
+        if (!criterionById.has(entry.id)) {
+          throw new Error(
+            `visualCriteria does not cover the declared visual parity surface ${entry.id}.`,
+          );
+        }
+      }
+      for (const criterion of visualCriteria) {
+        if (!contractVisualParity.some(
+          entry => entry.id === criterion.visualParityId)) {
+          throw new Error(
+            `visualCriteria names visual parity surface ${criterion.visualParityId}, which the flow-contract does not declare.`,
+          );
+        }
+      }
+
+      if (verification.value.status === "PASS") {
+        for (const criterion of visualCriteria) {
+          if (criterion.status !== "PASS") {
+            throw new Error(
+              `A PASS verification-result cannot contain a ${criterion.status} visual parity criterion (${criterion.visualParityId}).`,
+            );
+          }
+          if (contract.value.scope.partialMount?.nested === true &&
+            criterion.evidenceSource !== "real-host-layout") {
+            throw new Error(
+              `A PASS visual parity criterion for a nested partial mount requires real-host-layout evidence (${criterion.visualParityId}).`,
+            );
+          }
+        }
+      }
+    }
+
     if (verification.value.push.policy !==
       contract.value.checkpointPolicy.pushPolicy) {
       throw new Error("verification push policy does not match flow-contract.");
@@ -1038,6 +1179,18 @@ const validateArtifactLinks = artifacts => {
       throw new Error(
         "A repairable debug-handoff requires allowlisted candidate paths.",
       );
+    }
+
+    const declaredVisualIds = new Set(
+      (contract.value.visualParity ?? []).map(entry => entry.id),
+    );
+    for (const failure of debugHandoff.value.failures) {
+      if (failure.source !== "visual-parity") continue;
+      if (!declaredVisualIds.has(failure.visualParityId)) {
+        throw new Error(
+          `debug-handoff visual-parity failure names ${failure.visualParityId}, which the flow-contract does not declare.`,
+        );
+      }
     }
   }
 
@@ -1789,6 +1942,109 @@ const runSelfTest = async () => {
     "does not carry the confirmed external ID",
     "a created external ID the snapshot does not carry",
   );
+
+  expectLinkRejection(
+    ({ migration }) => {
+      migration.renderedSurfaceComparison.surfaces =
+        migration.renderedSurfaceComparison.surfaces.filter(
+          surface => surface.visualParityId !== "angle-field",
+        );
+    },
+    "does not cover the declared visual parity surface angle-field",
+    "a completed migration that skipped a declared visual parity surface",
+  );
+
+  expectLinkRejection(
+    ({ migration }) => {
+      migration.renderedSurfaceComparison.surfaces[0].verdict = "deviates";
+    },
+    "cannot leave visual parity surface length-field on verdict deviates",
+    "a completed migration with an unresolved visual parity deviation",
+  );
+
+  expectLinkRejection(
+    ({ migration }) => {
+      delete migration.renderedSurfaceComparison.surfaces;
+    },
+    "requires renderedSurfaceComparison.surfaces",
+    "a completed migration without any per-surface visual parity verdict",
+  );
+
+  expectLinkRejection(
+    ({ verification }) => {
+      verification.visualCriteria[0].status = "FAIL";
+    },
+    "cannot contain a FAIL visual parity criterion",
+    "an overall PASS that hides a failed visual parity criterion",
+  );
+
+  expectLinkRejection(
+    ({ verification }) => {
+      verification.visualCriteria[0].evidenceSource = "isolated-fixture";
+    },
+    "requires real-host-layout evidence",
+    "a visual parity PASS on isolated-fixture evidence for a nested partial mount",
+  );
+
+  expectLinkRejection(
+    ({ verification }) => {
+      delete verification.visualCriteria;
+    },
+    "requires visualCriteria",
+    "a verification that never statused the declared visual parity surfaces",
+  );
+
+  const visualDebug = structuredClone(debugArtifacts);
+  visualDebug
+    .find(artifact => artifact.value.artifactType === "debug-handoff")
+    .value.failures.find(failure => failure.source === "visual-parity")
+    .visualParityId = "undeclared-field";
+  let visualDebugRejected = false;
+  try {
+    validateArtifactLinks(visualDebug);
+  } catch (error) {
+    visualDebugRejected = error.message.includes(
+      "which the flow-contract does not declare",
+    );
+  }
+  if (!visualDebugRejected) {
+    throw new Error(
+      "Handoff validator self-test did not reject a visual-parity failure for an undeclared surface.",
+    );
+  }
+
+  const versionedContract = structuredClone(
+    artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
+      .value,
+  );
+  delete versionedContract.scope.partialMount;
+  delete versionedContract.visualParity;
+  const versionedErrors = [];
+  validateArtifactRules(versionedContract, versionedErrors);
+  for (const expected of [
+    "$.scope.partialMount is required from schemaVersion 4",
+    "$.visualParity is required from schemaVersion 4",
+  ]) {
+    if (!versionedErrors.some(error => error.includes(expected))) {
+      throw new Error(
+        `Handoff validator self-test did not reject a schemaVersion 4 contract missing ${expected}.`,
+      );
+    }
+  }
+
+  const flatVisualContract = structuredClone(
+    artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
+      .value,
+  );
+  flatVisualContract.visualParity[0].layout = [];
+  const flatVisualErrors = [];
+  validateArtifactRules(flatVisualContract, flatVisualErrors);
+  if (!flatVisualErrors.some(error =>
+    error.includes("requires layout parity against the retained sibling sections"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a nested visual parity surface without layout requirements.",
+    );
+  }
 
   const nestedContract = structuredClone(
     artifacts.find(artifact => artifact.value.artifactType === "flow-contract")

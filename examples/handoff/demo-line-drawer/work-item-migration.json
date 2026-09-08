@@ -3,20 +3,20 @@
   "artifactType": "work-item-handoff",
   "handoffPhase": "migration",
   "skill": "migrate-flow",
-  "skillVersion": "0.5.0",
+  "skillVersion": "0.8.0",
   "runId": "demo-line-drawer-migration-001",
   "flowId": "demo-line-drawer",
   "primaryArtifact": {
     "artifactType": "migration-result",
     "path": "examples\\handoff\\demo-line-drawer\\migration-result.json",
-    "sha256": "e699642e952dc1319c114d443ea2ed8d7460f7a8571c2938e64ffb6f73e67d39"
+    "sha256": "4a78844a866ff8e3d194b9c168a95bda993c3d2b53543acf170a6f42d682bb70"
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-baseline.json",
-    "sha256": "b9d915c4fdea391c27e1340600d178b0e50e84265c5cfb6203377baf21fe3ed1"
+    "sha256": "7f8911aea6f3b4d249b0c0849dff78a7ea505c402a39d80191f3aba9b4253d19"
   },
   "previousApplication": {
-    "handoffSha256": "b9d915c4fdea391c27e1340600d178b0e50e84265c5cfb6203377baf21fe3ed1",
+    "handoffSha256": "7f8911aea6f3b4d249b0c0849dff78a7ea505c402a39d80191f3aba9b4253d19",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:00:00Z",
