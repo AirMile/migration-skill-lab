@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: migrate-flow
-targetVersion: 0.5.0
+targetVersion: 0.5.2
 status: experimental
 date: 2026-09-04
 ---
 
-# `migrate-flow` v0.5 acceptance criteria
+# `migrate-flow` v0.5.2 acceptance criteria
 
 ## Hard gates
 
@@ -56,3 +56,11 @@ The source is acceptable when:
 12. it never updates TopDesk or treats copy-ready progress as applied.
 13. it never equates commit count with progress or creates one Task per commit.
 14. repair attempts from verification belong to `debug-flow`, not this skill.
+15. it leaves manual browser-flow and Maui-WebView scenario verification to a
+    fresh independent `verify-flow` chat.
+16. it ends by offering that fresh chat through one focused user question and
+    never starts a verifier subagent.
+17. it does not replace, hide or early-return from a parent React form while
+    that form contains inventory items marked `retain-react`.
+18. it characterizes retained controls and conditional branches before mounting
+    the partial Angular slice.

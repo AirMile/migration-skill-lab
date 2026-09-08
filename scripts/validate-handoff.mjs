@@ -146,12 +146,14 @@ const validateArtifactRules = (value, errors) => {
     const approval = value.approval;
     const hasApprovalEvidence =
       Object.hasOwn(approval, "approvedByRole") ||
-      Object.hasOwn(approval, "approvedAt");
+      Object.hasOwn(approval, "approvedAt") ||
+      Object.hasOwn(approval, "approvedDecisions");
 
     if (approval.status === "approved") {
-      if (!approval.approvedByRole || !approval.approvedAt) {
+      if (!approval.approvedByRole || !approval.approvedAt ||
+        !approval.approvedDecisions?.length) {
         errors.push(
-          "$.approval approval evidence is required when status is approved.",
+          "$.approval approver, date and approved decisions are required when status is approved.",
         );
       }
     } else if (hasApprovalEvidence) {
@@ -197,9 +199,10 @@ const validateArtifactRules = (value, errors) => {
       const browserValidation = value.validationPlan.browserValidation;
       if (browserValidation.required &&
         (!browserValidation.owner ||
+          !browserValidation.command ||
           browserValidation.scenarios.length === 0)) {
         errors.push(
-          "$.validationPlan.browserValidation requires owner and scenarios before approval.",
+          "$.validationPlan.browserValidation requires command, owner and scenarios before approval.",
         );
       }
       if (manualValidation.required &&

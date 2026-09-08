@@ -5,7 +5,7 @@ description: Migrate one explicitly approved React-to-Angular flow within a decl
 
 # Migrate Flow
 
-Skill version: `0.5.0`.
+Skill version: `0.6.0`.
 
 Implement one bounded Angular migration only after a human has approved the
 Flow Contract, available convention evidence, allowed paths, validation
@@ -45,41 +45,64 @@ provisional convention as an approved Lely standard.
 2. Record the product revision and Git-visible worktree status. Preserve all
    pre-existing changes.
 3. Confirm each requested file change is inside `allowedWritePaths`.
-4. Add or update only the React characterizing tests required by the approved
+4. Compare the approved rendered-surface inventory with the current React
+   render tree before replacing anything. A partial Angular mount must not
+   return early from, replace or hide a parent form that still owns
+   `retain-react` controls. The comparison covers visual style (icon, label
+   placement, border, radius, color tokens) and layout fit (padding, margin
+   and width parity with retained sibling sections) for any migrated field
+   with a directly comparable retained React counterpart, not only whether a
+   control or branch is present.
+5. Add or update only the React characterizing tests required by the approved
    scenarios. Run them against the existing React implementation before
    changing the selected behavior.
-5. Implement the smallest Angular change that meets the same scenarios.
-6. Add Angular tests for the same behavior and run the declared targeted test,
+   Include one rendered test that proves every retained control remains visible
+   across the relevant conditional capability branches.
+6. Implement the smallest Angular change that meets the same scenarios.
+7. Add Angular tests for the same behavior and run the declared targeted test,
    typecheck and build commands.
-7. After each coherent product milestone whose relevant checks pass, create a
+   Do not execute, solicit or record the contract's manual browser flow or
+   Maui-WebView smoke as migration verification; `verify-flow` owns that
+   independent evidence.
+   When the migrated slice is a partial Angular mount nested inside a
+   retained React parent, at least one authored or updated automated UI test
+   must render it through that real parent component tree, not only as a
+   standalone element attached directly to the document; an isolated
+   custom-element fixture may remain as an additional unit-level test but
+   must not be the sole basis for a claim about drawer padding, spacing or
+   input containment.
+8. After each coherent product milestone whose relevant checks pass, create a
    checkpoint manifest and run `verify-checkpoint.mjs --prepare`. Continue
    only when it confirms the branch, HEAD, operation state, path denylist,
    `allowedWritePaths`, clean baseline ownership and validations.
-8. When checkpoint mode is `auto-local`, stage only the verifier's explicit
+9. When checkpoint mode is `auto-local`, stage only the verifier's explicit
    paths, then run `verify-checkpoint.mjs --verify-staged` to prove the staged
    path set and diff match the expected scoped delta. Create the local commit
    with its deterministic repository-style subject and run
    `verify-checkpoint.mjs --verify-commit` against the new SHA. Do not ask
    again: Flow Contract approval is the batch authorization. Do not bypass
    hooks, amend or create an empty commit.
-9. Record coverage only through a command and output location explicitly
+10. Record coverage only through a command and output location explicitly
    approved for this run. Remove only generated artifacts that the approval
    identifies.
-10. Write `migration-result.json` in the declared run directory, including
+11. Write `migration-result.json` in the declared run directory, including
     every committed, skipped or blocked checkpoint. It must
    validate with the handoff validator together with the Flow Contract.
-11. Write and validate `work-item-migration.json`, pointing to the exact
+12. Write and validate `work-item-migration.json`, pointing to the exact
     migration result and previous work-item handoff hashes. Render the
     copy/paste Markdown with factual progress and no unverified completion.
     Record the user's applied/not-applied confirmation for the baseline in
     `previousApplication`; never modify the baseline snapshot.
-12. Update the implementation Task with the validated checkpoint milestones
+13. Update the implementation Task with the validated checkpoint milestones
    and actual completed work. Recalculate User Story progress from all Task
    contributions; never equate commit count with progress.
-13. Add a concise daily standup block with completed work, next verification
+14. Add a concise daily standup block with completed work, next verification
    step, blockers and the same calculated User Story progress.
-14. Record the final worktree status. Do not merge, push, publish or update the
-   skill. Hand both results to `verify-flow`.
+15. Record the final worktree status. Do not merge, push, publish or update the
+   skill.
+16. End with one focused user question offering a fresh `/verify-flow` chat
+   with only the declared artifact paths and product root. Do not spawn a
+   verifier subagent or perform verification in this chat.
 
 ## Safety boundary
 
@@ -105,6 +128,10 @@ Never:
 - create one Task per checkpoint commit or report progress that is not derived
   from the Task contribution model.
 - repair failures returned by `verify-flow`; those belong to `debug-flow`.
+- treat browser-flow or Maui-WebView confirmation as independent verification;
+  preserve those scenarios for the fresh `verify-flow` chat.
+- replace a parent React form unless every one of its rendered children is
+  explicitly marked `migrate` in the approved rendered-surface inventory.
 
 ## Handoff
 
@@ -114,6 +141,10 @@ instructions and limitations. `work-item-migration.json` contains the
 copy/paste Epic/Feature/Story/Task and standup progress update. Use
 `completed`, `failed` or `blocked` honestly. `verify-flow` consumes both
 artifacts and must not rely on earlier chat context.
+
+After writing the handoff, ask the user whether to open the fresh
+`/verify-flow` chat. A declined handoff is recorded as pending verification,
+not as a verified migration.
 
 ## Post-run observation capture
 

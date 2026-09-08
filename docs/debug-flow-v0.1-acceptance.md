@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: debug-flow
-targetVersion: 0.1.0
+targetVersion: 0.1.1
 status: experimental
 date: 2026-09-07
 ---
 
-# `debug-flow` v0.1 acceptance criteria
+# `debug-flow` v0.1.1 acceptance criteria
 
 ## Hard gates
 
@@ -60,8 +60,8 @@ The source is acceptable when:
    `--no-verify`, amend, push or other history-rewriting shortcuts;
 10. `repaired` requires a passing targeted reproduction, honest validation
     evidence and recorded checkpoint outcome;
-11. it ends every `repaired` run with a fresh independent `verify-flow`
-    handoff and never self-certifies the migration as `PASS`;
+11. it ends every `repaired` run by offering a user-confirmed fresh independent
+    `/verify-flow` chat and never self-certifies the migration as `PASS`;
 12. external systems, missing approvals, and dependency, configuration or host
     changes that are not already approved become `blocked`, not debugged;
 13. a non-repair at `heavy` becomes `parked` for human decision rather than a

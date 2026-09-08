@@ -8,9 +8,9 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline`, `migrate-flow` and `verify-flow` v0.5.0
+- experimental `flow-baseline`, `migrate-flow` and `verify-flow` v0.5.2
   source skills;
-- experimental `debug-flow` v0.1.0 source skill;
+- experimental `debug-flow` v0.1.1 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
   dependency-free validator;
@@ -130,10 +130,10 @@ Do not use a live symlink to a public or personal repository.
    same contract and writes `verification-result.json` with `PASS`, `FAIL` or
    `BLOCKED`. After full PASS it may offer one confirmed featurebranch push.
 5. On local repairable FAIL/BLOCKED, `verify-flow` writes a debug handoff and
-   the orchestrator starts a fresh `debug-flow` agent. It selects one
+   asks the user before opening a fresh `debug-flow` chat. It selects one
    `immediate`, `light` or `heavy` attempt at a time, parks after a failed
-   heavy attempt, and hands repaired candidates to a fresh independent
-   `verify-flow`.
+   heavy attempt, and hands repaired candidates to a user-confirmed fresh
+   independent `verify-flow` chat.
 6. After its primary output, each skill writes a
    `skill-run-observations.json` sidecar. An empty observation list proves that
    capture ran without inventing feedback.

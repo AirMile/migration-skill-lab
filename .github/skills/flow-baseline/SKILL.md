@@ -5,7 +5,7 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 # Flow Baseline
 
-Skill version: `0.5.0`.
+Skill version: `0.5.2`.
 
 Analyze one explicitly selected flow or component boundary. Produce a
 human-readable behavior baseline, a bounded target-architecture proposal and
@@ -48,6 +48,9 @@ ambiguous. Never choose the flow automatically.
 3. Read only relevant configuration, entry points, direct consumers, tests,
    stories and documentation. Follow dependencies only when they determine the
    selected flow's behavior or risk.
+   Create a rendered-surface inventory for the selected route: every visible
+   control, conditional capability branch, child component and action must be
+   marked as `migrate`, `retain-react` or `excluded`.
 4. Label material conclusions `Confirmed`, `Inference` or `Open question`.
    Cite every confirmed repository claim with file and line.
 5. Inventory existing relevant tests and map them to behavior. Use existing
@@ -59,7 +62,12 @@ ambiguous. Never choose the flow automatically.
    mount/unmount lifecycle, styling, browser tests, Maui smoke validation and
    any required dependency/build paths. Preserve current boundaries where they
    are sound; do not mirror React mechanically or redesign the whole app.
-   Mark every unapproved choice as proposed or open.
+   Capture observable visual parity (including layout insets, spacing, input
+   containment and a reference screenshot when available). Mark every
+   unapproved choice as proposed or open.
+   A partial Angular mount may replace only inventory items marked `migrate`;
+   it must remain inside the existing parent form when siblings are marked
+   `retain-react`.
 7. When current behavior differs from a plausible improvement, do not choose
    silently. Ask one focused product question with these routes:
    - preserve current behavior for migration;
@@ -76,6 +84,11 @@ ambiguous. Never choose the flow automatically.
    `auto-local`, its expected branch, external reference and push policy.
    An approved contract requires concrete test, typecheck, build, manual-host
    and rollback values; a draft records missing values as open questions.
+   The draft report, contract and work-item baseline are immutable historical
+   evidence: never remove their pending or open wording after approval.
+   A later approved contract and matching baseline handoff must be separate
+   artifacts, include the human's `approvedDecisions`, and replace resolved
+   pending items only in that successor artifact.
 10. Write `work-item-baseline.json` after the Flow Contract. Populate the
    Epic, Feature and User Story templates from cited baseline evidence, use
    `create`, `update` or `no-change` honestly, and keep
@@ -98,6 +111,9 @@ ambiguous. Never choose the flow automatically.
    copy into the sprint backlog; never claim that it was applied.
 15. Capture the product Git-visible worktree status again. If it changed, stop,
    report the delta and do not revert or attribute it without evidence.
+16. End with one focused user question offering a fresh `/migrate-flow` chat
+   when an approved successor contract is available. Do not start a subagent
+   or reuse this chat as the implementation run.
 
 ## Safety boundary
 
@@ -129,6 +145,13 @@ context, checkpoint policy and a human approval record.
 `work-item-baseline.json` contains the copy/paste hierarchy, Tasks and daily
 standup proposal. Both are machine-readable inputs to `migrate-flow`; do not
 rely on prior chat context.
+
+The terminal handoff opens a fresh chat only after the user confirms it. A
+draft baseline instead directs the user to approve or reject the contract first.
+
+The report must carry the rendered-surface inventory into the migration
+handoff. A scenario list alone is not permission to replace a parent component
+that renders retained controls.
 
 ## Post-run observation capture
 

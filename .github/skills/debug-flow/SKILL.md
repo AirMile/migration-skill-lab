@@ -5,7 +5,7 @@ description: Diagnose and repair one failed or repairable BLOCKED React-to-Angul
 
 # Debug Flow
 
-Skill version: `0.1.0`.
+Skill version: `0.1.1`.
 
 Repair one failed or repairable blocked migration only within the already
 approved contract and artifact chain. Prefer a fresh isolated agent context.
@@ -38,9 +38,9 @@ blocked by an external system.
 ## Workflow
 
 1. Read `references/debug-contract.md`.
-2. Prefer a fresh isolated agent or session. When isolation is unavailable,
-   emulate it by reloading every required artifact from disk and ignoring prior
-   chat assumptions.
+2. Run only in a fresh isolated chat opened from `verify-flow`. When isolation
+   is unavailable, stop `BLOCKED` rather than reusing verification context.
+   Reload every required artifact from disk and ignore prior chat assumptions.
 3. Validate the approved Flow Contract, migration result and verification
    result with the handoff validator. Reject a `debug-handoff.json` whose
    `flowId`, artifact hashes, failure target or approved write scope does not
@@ -98,6 +98,9 @@ blocked by an external system.
     treats a repair as verified and never closes the verification loop itself.
 13. Record the final Git-visible worktree status and report any delta against
     the frozen baseline without reverting unrelated changes.
+14. For a `repaired` result, end with one focused user question offering a
+    fresh `/verify-flow` chat with only the declared artifacts and product root.
+    Never spawn a verifier subagent or reuse this debug chat as verification.
 
 ## Safety boundary
 
@@ -135,6 +138,9 @@ A `repaired` result is incomplete without a fresh independent `verify-flow`
 handoff that reuses the approved contract and current product state from disk.
 A contract change, broadened scope or new approval requirement returns to
 `flow-baseline` or a human decision instead of continuing in `debug-flow`.
+
+A repaired candidate is handed to a fresh verifier only after the user confirms
+the new-chat transition.
 
 ## Post-run observation capture
 

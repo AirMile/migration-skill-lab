@@ -9,14 +9,14 @@
   "primaryArtifact": {
     "artifactType": "verification-result",
     "path": "examples\\handoff\\demo-line-drawer\\verification-result.json",
-    "sha256": "8e706a3752a9b8ce3e9dadc37decb7d16d86a3e14a01ad68b7a463e9eb9f567b"
+    "sha256": "562b9bb25273ab7a5a370cbe5f4682626bc3f313706057679d5c266ec76a5325"
   },
   "previousHandoff": {
     "path": "examples\\handoff\\demo-line-drawer\\work-item-migration.json",
-    "sha256": "68eb183168338ba8758ef8a6bdf0c5e2ff5c2ca22e3a1bfdaf41bb34d010a3e0"
+    "sha256": "d0ddb7a322259d2231a6a30a32a9b76520d77f65b83c4e45fa1f3567812ae438"
   },
   "previousApplication": {
-    "handoffSha256": "68eb183168338ba8758ef8a6bdf0c5e2ff5c2ca22e3a1bfdaf41bb34d010a3e0",
+    "handoffSha256": "d0ddb7a322259d2231a6a30a32a9b76520d77f65b83c4e45fa1f3567812ae438",
     "status": "confirmed-applied",
     "recordedByRole": "implementer",
     "recordedAt": "2026-09-07T08:30:00Z",

@@ -29,6 +29,8 @@ Use this order:
 7. Target architecture: a bounded proposal for component ownership, typed
    adapter, state, mount/unmount, styling, browser automation, Maui smoke
    validation and exact dependency/build paths. Do not redesign the full app.
+   Include a rendered-surface inventory that marks every child control and
+   conditional branch as `migrate`, `retain-react` or `excluded`.
 
 ## `flow-contract.json`
 
@@ -45,14 +47,21 @@ Populate:
 - `testGaps` only for behavior without adequate evidence;
 - `openQuestions` for unknowns that cannot be inferred safely;
 - `approval` as `pending` until a human has explicitly approved the scope.
+  The approved successor artifact records the approver role, date and concise
+  `approvedDecisions`; it does not rewrite the draft baseline.
 - `workItemContext` with the existing Epic, Feature and selected User Story
   IDs;
 - `checkpointPolicy` with `disabled` until a human approves `auto-local`, the
-  exact branch, external reference, milestone IDs and post-PASS push policy;
-- `validationPlan` with targeted tests, typecheck, build and required manual
-  browser and host validation. Drafts may leave owner/command fields absent,
+  exact branch, external reference, milestone IDs and post-PASS push policy.
+  `authorizedByRole` and `authorizedAt` are present only for `auto-local`;
+- `validationPlan` with targeted tests, typecheck, build, an exact browser
+  command and required manual host validation. Drafts may leave owner/command fields absent,
   but approval may not;
 - `rollback` with concrete scope-preserving instructions.
+
+The baseline report's rendered-surface inventory is binding during partial
+migration. A component may not replace a parent React form when that would hide
+an item marked `retain-react`.
 
 ## Work-item handoff
 
@@ -70,6 +79,13 @@ paste, not that it was applied. Only a later snapshot may record
 `confirmed-applied`, and only after the user explicitly confirms the real
 external state. Always render confirmed current state/progress separately from
 the proposed Task-derived values.
+
+## Visual parity
+
+Record the source layout insets, spacing, input bounds and visual test evidence
+as observable behavior. A framework boundary does not inherit React wrapper
+styles; require browser verification that the replacement stays within the
+drawer and preserves the approved padding or margin.
 
 ## Coverage discipline
 

@@ -109,3 +109,9 @@ push from `debug-flow`.
 `debug-flow` never declares `PASS`. A `repaired` result is only a candidate
 repair and must hand off immediately to a fresh independent `verify-flow` run.
 The verifying agent must not inherit the mutable debug context as proof.
+
+## Chat transition
+
+After a repaired result, ask the user before opening a fresh `/verify-flow`
+chat. Never start a nested agent or perform the independent verification in the
+debug chat.

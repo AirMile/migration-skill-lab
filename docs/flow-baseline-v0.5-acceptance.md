@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.5.0
+targetVersion: 0.5.2
 status: experimental
 date: 2026-09-04
 ---
 
-# `flow-baseline` v0.5 acceptance criteria
+# `flow-baseline` v0.5.2 acceptance criteria
 
 ## Hard gates
 
@@ -64,3 +64,11 @@ The source is acceptable when:
 15. browser automation and Maui host smoke validation stay separate.
 16. a possible behavior improvement triggers one explicit preserve/include/
     follow-up choice and remains open until answered.
+17. it preserves draft pending/open wording as immutable history and requires a
+    separate approved successor artifact with resolved decisions.
+18. it records visual parity requirements, including drawer insets and input
+    containment, for independent browser verification.
+19. it ends by offering a user-confirmed fresh `/migrate-flow` chat rather than
+    starting an implementation subagent.
+20. it inventories every rendered child control and conditional branch as
+    `migrate`, `retain-react` or `excluded` before proposing a partial mount.

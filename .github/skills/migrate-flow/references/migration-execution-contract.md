@@ -30,9 +30,24 @@ approval. Stop with `BLOCKED` if any precondition is missing.
 2. Add only the missing React characterizing tests that prove approved
    scenarios.
 3. Run those tests before the Angular implementation.
-4. Implement the smallest bounded Angular slice.
-5. Add Angular tests for those same scenarios.
-6. Run targeted tests, typecheck and build.
+4. Compare the rendered-surface inventory with the React tree; preserve every
+   retained child and conditional branch when mounting a partial Angular slice.
+   The inventory comparison covers visual style (icon, label placement,
+   border, radius, color tokens) and layout fit (padding, margin and width
+   parity with retained sibling sections) for any migrated field or slice
+   with a directly comparable retained React counterpart, not only whether a
+   control or branch is present.
+5. Implement the smallest bounded Angular slice.
+6. Add Angular tests for those same scenarios.
+7. Run targeted tests, typecheck and build.
+   Leave manual browser-flow and Maui-WebView verification to `verify-flow`.
+   When the migrated slice is a partial Angular mount nested inside a
+   retained React parent, at least one authored or updated automated UI test
+   must render it through that real parent component tree, not only as a
+   standalone element attached directly to the document; an isolated
+   custom-element fixture may remain as an additional unit-level test but
+   must not be the sole basis for a claim about drawer padding, spacing or
+   input containment.
 7. Run the checkpoint preflight for every coherent green milestone and, when
    `auto-local` is approved, commit only the exact allowlisted scoped delta.
 8. Create a compact `migration-result.json` and Epic/Feature/Story/Task
@@ -44,6 +59,8 @@ The result must validate against
 `schemas/migration-result.schema.json`. `changedPaths` must be a subset of
 the approved write allowlist. A failed or blocked validation command must be
 reported with that status and diagnosis; it cannot be recorded as completed.
+Manual browser and host outcomes are verification evidence and must not appear
+as migration-pass evidence.
 
 ## Checkpoint constraints
 

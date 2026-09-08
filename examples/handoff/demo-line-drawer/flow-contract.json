@@ -47,7 +47,11 @@
   "approval": {
     "status": "approved",
     "approvedByRole": "feature-owner",
-    "approvedAt": "2026-09-04"
+    "approvedAt": "2026-09-04",
+    "approvedDecisions": [
+      "Use the approved selected-line drawer scope.",
+      "Run the declared browser and host validation."
+    ]
   },
   "workItemContext": {
     "epicExternalId": "522482",
@@ -76,6 +80,7 @@
     "browserValidation": {
       "required": true,
       "owner": "browser-tester",
+      "command": "npm run test:browser",
       "scenarios": [
         "Edit a selected line in the regular browser and verify the visible map update."
       ]

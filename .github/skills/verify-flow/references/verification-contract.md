@@ -48,6 +48,25 @@ declared Maui-WebView smoke scenario for native `local.maui` navigation,
 backend-to-WebView events and host lifecycle. Browser success is supporting
 evidence, not a substitute for required host evidence.
 
+Visual parity is a browser criterion: verify approved padding or margins,
+spacing and input containment in the actual drawer as well as functional
+edits. For any scenario whose rendered evidence has a directly comparable
+retained React counterpart, record explicitly whether that evidence came
+from the real host layout (the actual drawer reached through the product's
+real navigation flow, with a realistic selected element) or from an
+isolated/injected fixture. An isolated fixture is supporting evidence only;
+the real host layout is required as primary evidence whenever the flow
+contract's scope includes a partial Angular mount nested inside a retained
+React parent.
+
+Compare the actual drawer against the baseline rendered-surface inventory.
+Any missing retained control, action or conditional capability branch is a
+scenario failure, not a styling limitation. The comparison also includes
+checking that a migrated field's width, alignment and spacing match its
+retained sibling sections in the same drawer; a scenario is not `PASS` on a
+field-presence check alone when the flow contract's scope implies a shared
+drawer layout.
+
 ## Result constraints
 
 `verification-result.json` must validate against

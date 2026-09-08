@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: verify-flow
-targetVersion: 0.5.0
+targetVersion: 0.5.2
 status: experimental
 date: 2026-09-04
 ---
 
-# `verify-flow` v0.5 acceptance criteria
+# `verify-flow` v0.5.2 acceptance criteria
 
 ## Hard gates
 
@@ -55,7 +55,11 @@ The source is acceptable when:
 13. one completed Story does not imply its parent Feature or Epic is done.
 14. regular-browser automation and required Maui host validation are reported
     separately and both pass before overall PASS when required;
-15. repairable failures route to a fresh `debug-flow` agent and external
+15. repairable failures offer a user-confirmed fresh `/debug-flow` chat and external
     blockers do not;
 16. a repaired result is always followed by a new independent verification
     attempt.
+17. visual drawer parity is evaluated as a browser criterion, including approved
+    insets, spacing and input containment.
+18. the actual drawer is compared with the rendered-surface inventory, and any
+    missing retained control or conditional branch produces `FAIL`.

@@ -1,11 +1,11 @@
 ---
 document: skill-handoff-protocol
-version: 0.5.0
+version: 0.5.2
 status: experimental
 date: 2026-09-07
 ---
 
-# Migration handoff protocol v0.5
+# Migration handoff protocol v0.5.2
 
 ## Purpose
 
@@ -31,9 +31,9 @@ flow-baseline
 
   -> verification-result.json (FAIL / repairable BLOCKED)
   -> debug-handoff.json
-  -> fresh debug-flow agent
+  -> user-confirmed fresh debug-flow chat
   -> debug-result.json
-  -> fresh independent verify-flow
+  -> user-confirmed fresh independent verify-flow chat
 ```
 
 The work-item artifacts form a supporting immutable sidechain. They produce
@@ -61,6 +61,12 @@ The same approval may authorize `auto-local` checkpoint commits for the exact
 branch, external reference and write allowlist. It does not authorize push.
 `verify-flow` may offer one push only after overall `PASS`, passed required
 host validation and a visible remote/branch/commit summary.
+
+Draft baseline artifacts are immutable historical evidence. Human approval
+creates a separate approved contract and matching baseline handoff; it does not
+erase historical pending/open wording. The approved contract records the
+approver, approval date and concise resolved decisions. Checkpoint authorization
+fields exist only when its mode is `auto-local`.
 
 ## Artifact requirements
 
@@ -111,18 +117,29 @@ primary result.
 
 `verify-flow` reports `PASS`, `FAIL` or `BLOCKED` per contract scenario. It
 does not repair product code. For a local repairable result it writes a
-`debug-handoff.json`; the orchestrator starts a fresh `debug-flow` agent.
+`debug-handoff.json` and asks the user before opening a fresh `/debug-flow`
+chat.
 `debug-flow` chooses `immediate`, `light` or `heavy`, uses at most one attempt
 per tier and writes `debug-result.json`. A repaired result must be checked by a
 fresh independent `verify-flow`. External blockers do not start debug. A
 contract change requires a new baseline and renewed human approval.
 
-The orchestrator is the caller that owns the complete workflow, not
-`verify-flow` itself. It passes only the declared artifact paths and repository
-root into the fresh debug agent. After a repaired result it starts another
+The caller owns the complete workflow, not `verify-flow` itself. It passes only
+the declared artifact paths and repository root into the user-confirmed fresh
+debug chat. After a repaired result it asks the user before opening another
 fresh verifier with the approved contract, migration result and debug result.
 The artifact chain remains the fallback when isolated subagents are
 unavailable; no skill relies on nested skill invocation or prior chat memory.
+
+## Visual parity
+
+The baseline records observable drawer insets, spacing and input containment.
+`verify-flow` evaluates those browser-visible properties in the actual drawer;
+the implementation skill does not self-certify them.
+
+The baseline also inventories every rendered control and conditional branch as
+`migrate`, `retain-react` or `excluded`. A partial Angular mount is valid only
+when it preserves every `retain-react` item in the active parent form.
 
 ## Work-item application loop
 
