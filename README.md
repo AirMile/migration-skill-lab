@@ -8,7 +8,7 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.7.0, `migrate-flow` v0.8.0 and
+- experimental `flow-baseline` v0.7.0, `migrate-flow` v0.9.0 and
   `verify-flow` v0.8.0 source skills;
 - experimental `debug-flow` v0.2.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;

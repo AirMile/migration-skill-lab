@@ -5,7 +5,7 @@ description: Migrate one explicitly approved React-to-Angular flow within a decl
 
 # Migrate Flow
 
-Skill version: `0.8.0`.
+Skill version: `0.9.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -69,7 +69,16 @@ provisional convention as an approved Lely standard.
    typecheck and build commands.
    Do not execute, solicit or record the contract's manual browser flow or
    Maui-WebView smoke as migration verification; `verify-flow` owns that
-   independent evidence.
+   independent evidence. The validator enforces this: `migration-result`
+   `validation` may contain only the contract's declared test, typecheck and
+   build commands plus `verify-checkpoint.mjs` invocations. A free-text entry
+   such as `Manual browser flow` is rejected, so do not ask the user to
+   confirm host behavior in order to record it here.
+   These checks are a gate on your own work, not evidence of correctness.
+   Record what ran and whether it passed; do not describe what a green
+   command proves about a contract scenario. An automated test that mounts an
+   isolated fixture is not evidence about drawer padding, spacing or input
+   containment, and a summary must not imply otherwise.
    When the migrated slice is a partial Angular mount nested inside a
    retained React parent, at least one authored or updated automated UI test
    must render it through that real parent component tree, not only as a

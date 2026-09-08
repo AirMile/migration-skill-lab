@@ -81,6 +81,16 @@ reported with that status and diagnosis; it cannot be recorded as completed.
 Manual browser and host outcomes are verification evidence and must not appear
 as migration-pass evidence.
 
+`validation` is therefore a closed list: the contract's declared test,
+typecheck and build commands plus `verify-checkpoint.mjs` invocations, and
+nothing else. The validator rejects any other entry, including free-text ones
+like `Manual browser flow` or `Manual Maui-WebView smoke`. The boundary is
+that `migrate-flow` runs checks as a gate on its own work — may I checkpoint,
+may I call this `completed` — while `verify-flow` owns evidence and the
+verdict. Keep each `summary` to what ran and whether it passed; a summary that
+says what a green command proves about a contract scenario is a verification
+claim made in the wrong artifact.
+
 ## Checkpoint constraints
 
 Use `scripts/verify-checkpoint.mjs --prepare <manifest.json>` before staging.

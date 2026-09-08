@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: migrate-flow
-targetVersion: 0.8.0
+targetVersion: 0.9.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `migrate-flow` v0.8.0 acceptance criteria
+# `migrate-flow` v0.9.0 acceptance criteria
 
 ## Hard gates
 
@@ -78,3 +78,8 @@ The source is acceptable when:
 23. it treats visual parity as its own coherent milestone and checkpoint after
     the functional slice is green, so behavior and appearance carry separate
     evidence.
+24. its `validation` list contains only the contract's declared test, typecheck
+    and build commands plus `verify-checkpoint.mjs` invocations; a manual
+    browser-flow or host entry recorded there is rejected.
+25. each validation `summary` states what ran and whether it passed, and never
+    claims what a green command proves about a contract scenario.

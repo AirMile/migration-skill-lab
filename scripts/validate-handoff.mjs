@@ -880,6 +880,20 @@ const validateArtifactLinks = artifacts => {
       );
     }
 
+    const automatedCommands = new Set(expectedValidationCommands);
+    const unownedMigrationCommands = [...migrationCommands].filter(
+      command =>
+        !automatedCommands.has(command) &&
+        !command.includes("verify-checkpoint"),
+    );
+    if (unownedMigrationCommands.length > 0) {
+      throw new Error(
+        "migration-result may only record the contract's automated test, typecheck, " +
+          "build and checkpoint commands; browser-flow and host evidence belongs to " +
+          `verify-flow. Unowned: ${unownedMigrationCommands.join(", ")}.`,
+      );
+    }
+
     const allowedWritePaths = contract.value.scope.allowedWritePaths;
     const changedPaths = new Set(migration.value.changedPaths);
     for (const changedPath of changedPaths) {
@@ -1905,6 +1919,18 @@ const runSelfTest = async () => {
     },
     "requires renderedSurfaceComparison",
     "a completed nested partial mount without a rendered-surface comparison",
+  );
+
+  expectLinkRejection(
+    ({ migration }) => {
+      migration.validation.push({
+        command: "Manual Maui-WebView smoke",
+        status: "passed",
+        summary: "The host smoke was confirmed during the migration run.",
+      });
+    },
+    "browser-flow and host evidence belongs to verify-flow",
+    "a migration-result recording host evidence as its own validation",
   );
 
   expectLinkRejection(
