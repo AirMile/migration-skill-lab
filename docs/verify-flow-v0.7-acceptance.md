@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: verify-flow
-targetVersion: 0.5.2
+targetVersion: 0.7.0
 status: experimental
-date: 2026-09-04
+date: 2026-09-08
 ---
 
-# `verify-flow` v0.5.2 acceptance criteria
+# `verify-flow` v0.7.0 acceptance criteria
 
 ## Hard gates
 
@@ -63,3 +63,8 @@ The source is acceptable when:
     insets, spacing and input containment.
 18. the actual drawer is compared with the rendered-surface inventory, and any
     missing retained control or conditional branch produces `FAIL`.
+19. it records `browserValidation.evidenceSource` honestly, and never reaches
+    overall `PASS` on `isolated-fixture` evidence when the contract declares
+    a nested partial mount.
+20. it shows the generated `--inline` handoff verbatim in the chat and marks
+    an item that did not move as `no-change` rather than a no-op `update`.

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: debug-flow
-targetVersion: 0.1.1
+targetVersion: 0.1.2
 status: experimental
-date: 2026-09-07
+date: 2026-09-08
 ---
 
-# `debug-flow` v0.1.1 acceptance criteria
+# `debug-flow` v0.1.2 acceptance criteria
 
 ## Hard gates
 

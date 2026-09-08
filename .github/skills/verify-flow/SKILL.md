@@ -7,6 +7,10 @@ description: Independently verify one approved React-to-Angular migration flow a
 
 Skill version: `0.7.0`.
 
+Recommended model: a different model family than `migrate-flow` used for this
+flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
+migrator's blind spot.
+
 Independently verify one bounded migration. Do not repair product code, alter
 skill source or decide that a failed criterion is acceptable.
 

@@ -7,6 +7,9 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 Skill version: `0.6.0`.
 
+Recommended model: Claude Opus 5. This phase writes the contract that every
+later phase depends on.
+
 Analyze one explicitly selected flow or component boundary. Produce a
 human-readable behavior baseline, a bounded target-architecture proposal and
 a draft `flow-contract.json` for a later approved migration. Do not implement

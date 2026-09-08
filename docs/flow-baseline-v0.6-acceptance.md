@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.5.2
+targetVersion: 0.6.0
 status: experimental
-date: 2026-09-04
+date: 2026-09-08
 ---
 
-# `flow-baseline` v0.5.2 acceptance criteria
+# `flow-baseline` v0.6.0 acceptance criteria
 
 ## Hard gates
 
@@ -73,3 +73,9 @@ The source is acceptable when:
     starting an implementation subagent.
 20. it inventories every rendered child control and conditional branch as
     `migrate`, `retain-react` or `excluded` before proposing a partial mount.
+21. it declares `scope.partialMount` with `retainedParent` and
+    `siblingSections` whenever the proposed slice mounts inside a retained
+    React parent, because both downstream skills read that flag to decide
+    whether real-host evidence is mandatory.
+22. it shows the generated `--inline` handoff verbatim in the chat rather than
+    a paraphrase, so the copy/paste content comes from the validated snapshot.

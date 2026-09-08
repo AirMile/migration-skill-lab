@@ -7,6 +7,9 @@ description: Migrate one explicitly approved React-to-Angular flow within a decl
 
 Skill version: `0.7.0`.
 
+Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
+drawlib, history or the host boundary.
+
 Implement one bounded Angular migration only after a human has approved the
 Flow Contract, available convention evidence, allowed paths, validation
 commands and rollback. Write no code outside that agreement.

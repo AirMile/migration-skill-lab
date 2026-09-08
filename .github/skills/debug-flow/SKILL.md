@@ -7,6 +7,8 @@ description: Diagnose and repair one failed or repairable BLOCKED React-to-Angul
 
 Skill version: `0.1.2`.
 
+Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
+
 Repair one failed or repairable blocked migration only within the already
 approved contract and artifact chain. Prefer a fresh isolated agent context.
 Reload required state from versioned artifacts, not earlier chat memory.

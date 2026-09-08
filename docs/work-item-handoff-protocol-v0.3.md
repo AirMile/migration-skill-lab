@@ -1,11 +1,11 @@
 ---
 document: work-item-handoff-protocol
-version: 0.2.0
+version: 0.3.0
 status: experimental
-date: 2026-09-07
+date: 2026-09-08
 ---
 
-# Work-item handoff protocol v0.2
+# Work-item handoff protocol v0.3
 
 ## Purpose
 
@@ -34,6 +34,11 @@ Every Epic, Feature, User Story and Task uses `create`, `update` or
 
 - `create` has a stable local ID but no external ID.
 - `update` and `no-change` require the existing external ID.
+- `update` is only for an item that actually moved. When every field, the
+  proposed state and the proposed progress equal the previous snapshot, the
+  action must be `no-change`; the validator rejects a no-op `update`. This is
+  what keeps a later handoff short instead of re-emitting content the reader
+  has already applied.
 - every Feature points to the parent Epic local ID;
 - every User Story points to the parent Feature local ID;
 - every Task points to the parent User Story local ID;
@@ -86,6 +91,15 @@ assumption.
 For an immutable chain, `previousApplication` in the next phase records the
 human-confirmed outcome and repeats the previous handoff hash.
 
+When the previous proposal was actually applied, `previousApplication`
+also carries `createdExternalIds`: the ID Targetprocess assigned to each item
+the previous snapshot proposed to `create`. Without it the same Tasks are
+re-proposed as `create` in every later phase and the chain never converges.
+The validator requires a `confirmed-applied` status for the field, requires
+each named local ID to have been a `create` in the previous snapshot, and
+requires the current snapshot to carry that exact external ID under `update`
+or `no-change`.
+
 ## State and progress rules
 
 Every work item records confirmed `currentState`/`currentProgress` separately
@@ -126,3 +140,22 @@ node .\scripts\render-work-item-handoff.mjs <snapshot.json>
 
 The renderer validates the snapshot and emits fields in Targetprocess template
 order. Use `--check` to detect generated Markdown drift.
+
+That full render is the archived artifact, not the working surface. For the
+handoff a human actually reads, run:
+
+```powershell
+node .\scripts\render-work-item-handoff.mjs --inline <snapshot.json> --since <previous-snapshot.json>
+```
+
+It writes to stdout so a skill can show it inline in the chat at the step that
+produced it. It reports only what changed since `--since`, puts each field in
+its own fenced block labelled with its Targetprocess field name, and separates
+four groups: change, create, still-to-create (unchanged re-proposals) and
+explicitly unchanged. Items already created get a `createdExternalIds`
+fragment to report back. Without `--since` it falls back to the complete set,
+which is correct for a first-phase snapshot.
+
+Show that output verbatim. Its value is that it is generated from the
+validated snapshot; a paraphrase reintroduces exactly the drift the canonical
+JSON exists to prevent.

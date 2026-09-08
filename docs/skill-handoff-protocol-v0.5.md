@@ -1,11 +1,11 @@
 ---
 document: skill-handoff-protocol
-version: 0.5.2
+version: 0.5.3
 status: experimental
-date: 2026-09-07
+date: 2026-09-08
 ---
 
-# Migration handoff protocol v0.5.2
+# Migration handoff protocol v0.5.3
 
 ## Purpose
 
@@ -141,13 +141,27 @@ The baseline also inventories every rendered control and conditional branch as
 `migrate`, `retain-react` or `excluded`. A partial Angular mount is valid only
 when it preserves every `retain-react` item in the active parent form.
 
+The baseline declares that shape as `scope.partialMount`. When it is nested,
+the validator requires `migrate-flow` to record
+`renderedSurfaceComparison.evidenceSource: "real-parent-tree"` and refuses an
+overall `PASS` unless `verify-flow` recorded
+`browserValidation.evidenceSource: "real-host-layout"`. These replace prose
+requirements that an earlier run satisfied on paper while using an isolated
+fixture in practice.
+
 ## Work-item application loop
 
-`copy-ready` means the generated Markdown is ready for review and manual
+`copy-ready` means the generated content is ready for review and manual
 application. It is not an external-write result. A later snapshot may use
 `confirmed-applied` only after a human confirms what Targetprocess actually
 shows. Create proposals never invent an external ID; the next snapshot records
-the ID only after the item exists.
+the ID only after the item exists, through
+`previousApplication.createdExternalIds`.
+
+Each phase shows its handoff inline in the chat through
+`render-work-item-handoff.mjs --inline ... --since <previous snapshot>`, which
+reports only what moved. The full Markdown render remains the archived
+artifact. See `docs\work-item-handoff-protocol-v0.3.md`.
 
 ## Improvement loop
 

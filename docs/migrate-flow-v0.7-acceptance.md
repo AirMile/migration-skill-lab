@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: migrate-flow
-targetVersion: 0.5.2
+targetVersion: 0.7.0
 status: experimental
-date: 2026-09-04
+date: 2026-09-08
 ---
 
-# `migrate-flow` v0.5.2 acceptance criteria
+# `migrate-flow` v0.7.0 acceptance criteria
 
 ## Hard gates
 
@@ -64,3 +64,10 @@ The source is acceptable when:
     that form contains inventory items marked `retain-react`.
 18. it characterizes retained controls and conditional branches before mounting
     the partial Angular slice.
+19. it records `renderedSurfaceComparison` with `real-parent-tree` evidence,
+    the retained sibling sections compared against and concrete style and
+    layout observations whenever the contract declares a nested partial mount;
+    a completed result without it is rejected.
+20. it shows the generated `--inline` handoff verbatim in the chat and records
+    `createdExternalIds` for every item the user confirmed creating, so the
+    same Tasks are not re-proposed as `create` in a later phase.

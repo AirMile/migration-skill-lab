@@ -8,9 +8,9 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline`, `migrate-flow` and `verify-flow` v0.5.2
-  source skills;
-- experimental `debug-flow` v0.1.1 source skill;
+- experimental `flow-baseline` v0.6.0, `migrate-flow` v0.7.0 and
+  `verify-flow` v0.7.0 source skills;
+- experimental `debug-flow` v0.1.2 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
   dependency-free validator;
@@ -115,6 +115,24 @@ Lely-specific information.
 4. Keep source and runtime snapshot versions explicit.
 
 Do not use a live symlink to a public or personal repository.
+
+## Model per skill
+
+Copilot has no `model:` frontmatter; the model is chosen per chat. Because
+every phase already runs in a fresh chat, set it deliberately when opening
+that chat.
+
+| Skill | Model | Why |
+|---|---|---|
+| `flow-baseline` | Claude Opus 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
+| `migrate-flow` | Claude Sonnet 5; Opus 5 for a risky slice | Code generation inside a tight allowlist plus test authoring. Use Opus 5 when the slice touches drawlib, history or the host boundary. |
+| `verify-flow` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `migrate-flow` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
+| `debug-flow` | Claude Sonnet 5 or GPT-5.3-Codex | A bounded tier machine: reproduce, hypothesize, smallest patch. |
+| `migration-skill-audit` | Claude Opus 5 | Meta-reasoning over instruction text and spotting structural gaps, which is what produced M1 and V1. |
+
+Do not use Haiku 4.5, Gemini Flash, GPT-5 mini, GPT-5.4 mini or
+MAI-Code-1.1-Flash for any flow skill. They are too light for contract-grade
+reasoning, and the mechanical steps are already scripts.
 
 ## Migration workflow
 
