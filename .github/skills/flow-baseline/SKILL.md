@@ -5,7 +5,7 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 # Flow Baseline
 
-Skill version: `0.5.2`.
+Skill version: `0.6.0`.
 
 Analyze one explicitly selected flow or component boundary. Produce a
 human-readable behavior baseline, a bounded target-architecture proposal and
@@ -67,7 +67,11 @@ ambiguous. Never choose the flow automatically.
    unapproved choice as proposed or open.
    A partial Angular mount may replace only inventory items marked `migrate`;
    it must remain inside the existing parent form when siblings are marked
-   `retain-react`.
+   `retain-react`. Record that shape in the contract as
+   `scope.partialMount`: set `nested: true` with the `retainedParent` and the
+   `siblingSections` a migrated field must visually match. This field is what
+   later makes real-host evidence mandatory for `migrate-flow` and
+   `verify-flow`, so an omitted or wrongly `false` value silently weakens both.
 7. When current behavior differs from a plausible improvement, do not choose
    silently. Ask one focused product question with these routes:
    - preserve current behavior for migration;
@@ -107,8 +111,11 @@ ambiguous. Never choose the flow automatically.
     both current and proposed User Story progress. Keep it short enough to say
     aloud.
 14. Validate the Flow Contract and work-item snapshot together. Render the
-   snapshot with `render-work-item-handoff.mjs`. Tell the user exactly what to
-   copy into the sprint backlog; never claim that it was applied.
+   snapshot with `render-work-item-handoff.mjs`, then run the same script with
+   `--inline` and show its output verbatim in this chat as the handoff for this
+   step. Do not paraphrase, summarize or reformat it; its value is that it is
+   generated from the validated snapshot rather than from prose. Never claim
+   that anything was applied.
 15. Capture the product Git-visible worktree status again. If it changed, stop,
    report the delta and do not revert or attribute it without evidence.
 16. End with one focused user question offering a fresh `/migrate-flow` chat

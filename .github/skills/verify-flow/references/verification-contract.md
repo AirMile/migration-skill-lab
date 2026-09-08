@@ -59,6 +59,12 @@ the real host layout is required as primary evidence whenever the flow
 contract's scope includes a partial Angular mount nested inside a retained
 React parent.
 
+That choice belongs in `browserValidation.evidenceSource`. When the contract
+sets `scope.partialMount.nested`, the validator refuses an overall `PASS` on
+anything but `real-host-layout`. Record what was actually done; a shortcut
+recorded honestly produces a blocked result, while a shortcut recorded as
+real-host evidence is a false verification.
+
 Compare the actual drawer against the baseline rendered-surface inventory.
 Any missing retained control, action or conditional capability branch is a
 scenario failure, not a styling limitation. The comparison also includes

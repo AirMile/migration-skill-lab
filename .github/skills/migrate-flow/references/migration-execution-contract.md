@@ -48,16 +48,23 @@ approval. Stop with `BLOCKED` if any precondition is missing.
    custom-element fixture may remain as an additional unit-level test but
    must not be the sole basis for a claim about drawer padding, spacing or
    input containment.
-7. Run the checkpoint preflight for every coherent green milestone and, when
+8. Run the checkpoint preflight for every coherent green milestone and, when
    `auto-local` is approved, commit only the exact allowlisted scoped delta.
-8. Create a compact `migration-result.json` and Epic/Feature/Story/Task
+9. Create a compact `migration-result.json` and Epic/Feature/Story/Task
    progress handoff with a daily standup block, without source copies.
 
 ## Result constraints
 
 The result must validate against
 `schemas/migration-result.schema.json`. `changedPaths` must be a subset of
-the approved write allowlist. A failed or blocked validation command must be
+the approved write allowlist. When the contract sets
+`scope.partialMount.nested`, the result must carry
+`renderedSurfaceComparison` with `evidenceSource: "real-parent-tree"`, the
+retained sibling sections compared against, and the concrete style and layout
+observations from step 4. The validator rejects a completed nested migration
+without it, so the step-4 comparison can no longer be silently skipped.
+
+A failed or blocked validation command must be
 reported with that status and diagnosis; it cannot be recorded as completed.
 Manual browser and host outcomes are verification evidence and must not appear
 as migration-pass evidence.

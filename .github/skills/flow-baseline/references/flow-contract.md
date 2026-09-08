@@ -72,7 +72,8 @@ Feature and User Story template fields. Add stakeholder-readable child Tasks
 whose contribution weights total 100, calculate Story progress from those
 Tasks, and include a daily standup block using the same percentage. Render it
 to Markdown with
-`scripts/render-work-item-handoff.mjs`.
+`scripts/render-work-item-handoff.mjs`, then show the `--inline` output in the
+chat as the handoff for that step.
 
 Targetprocess remains human-in-the-loop. `copy-ready` means the proposal is
 ready to paste, not that it was applied. Only a later snapshot may record
@@ -86,6 +87,13 @@ Record the source layout insets, spacing, input bounds and visual test evidence
 as observable behavior. A framework boundary does not inherit React wrapper
 styles; require browser verification that the replacement stays within the
 drawer and preserves the approved padding or margin.
+
+When the slice mounts inside a retained React parent, declare it in the
+contract as `scope.partialMount` with `nested: true`, the `retainedParent` and
+the `siblingSections` a migrated field must match. `migrate-flow` and
+`verify-flow` both read that flag to decide whether real-host evidence is
+mandatory, so leaving it out weakens the two downstream checks without any
+visible error.
 
 ## Coverage discipline
 

@@ -5,7 +5,7 @@ description: Independently verify one approved React-to-Angular migration flow a
 
 # Verify Flow
 
-Skill version: `0.6.0`.
+Skill version: `0.7.0`.
 
 Independently verify one bounded migration. Do not repair product code, alter
 skill source or decide that a failed criterion is acceptable.
@@ -64,6 +64,10 @@ outside the declared flow.
    real navigation flow) or an isolated fixture, and require the former as
    primary evidence whenever the flow contract's scope includes a partial
    Angular mount nested inside a retained React parent.
+   Write that choice into `browserValidation.evidenceSource`. When the
+   contract sets `scope.partialMount.nested`, the validator refuses an overall
+   `PASS` on anything but `real-host-layout`, so record what you actually did
+   rather than what the contract asks for.
 8. Record `PASS`, `FAIL` or `BLOCKED` for every scenario and the overall
    result. A passing overall result requires every scenario to pass.
 9. For non-PASS results, write `debug-handoff.json` after
@@ -87,9 +91,14 @@ outside the declared flow.
 13. Write `work-item-verification.json`, pointing to the exact verification
     result and migration handoff hashes. Propose User Story `Done` only for
     overall `PASS` with passed required host validation. Render the final
-    copy/paste Markdown. Record the user's applied/not-applied confirmation for
-    the migration handoff in `previousApplication`; never update Targetprocess
-    directly or rewrite an earlier snapshot.
+    copy/paste Markdown, then run `render-work-item-handoff.mjs --inline
+    <snapshot> --since <work-item-migration.json>` and show its output verbatim
+    in this chat as the handoff for this step. Do not paraphrase or reformat
+    it.
+    Record the user's applied/not-applied confirmation for the migration
+    handoff in `previousApplication`, including the external IDs Targetprocess
+    assigned to any created item in `createdExternalIds`; never update
+    Targetprocess directly or rewrite an earlier snapshot.
 14. Update the verification Task with criterion, browser, host and push
     evidence.
     Recalculate User Story progress from all Task contributions. A Story may

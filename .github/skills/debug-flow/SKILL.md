@@ -5,7 +5,7 @@ description: Diagnose and repair one failed or repairable BLOCKED React-to-Angul
 
 # Debug Flow
 
-Skill version: `0.1.1`.
+Skill version: `0.1.2`.
 
 Repair one failed or repairable blocked migration only within the already
 approved contract and artifact chain. Prefer a fresh isolated agent context.

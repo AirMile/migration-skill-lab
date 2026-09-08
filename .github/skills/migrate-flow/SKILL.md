@@ -5,7 +5,7 @@ description: Migrate one explicitly approved React-to-Angular flow within a decl
 
 # Migrate Flow
 
-Skill version: `0.6.0`.
+Skill version: `0.7.0`.
 
 Implement one bounded Angular migration only after a human has approved the
 Flow Contract, available convention evidence, allowed paths, validation
@@ -86,13 +86,23 @@ provisional convention as an approved Lely standard.
    approved for this run. Remove only generated artifacts that the approval
    identifies.
 11. Write `migration-result.json` in the declared run directory, including
-    every committed, skipped or blocked checkpoint. It must
+    every committed, skipped or blocked checkpoint. When the contract sets
+   `scope.partialMount.nested`, record the step 4 comparison in
+   `renderedSurfaceComparison`: the `evidenceSource` you actually used, the
+   retained sibling sections you compared against, and the concrete style and
+   layout observations. Only `real-parent-tree` is accepted for a completed
+   nested migration; an isolated fixture is not sufficient. It must
    validate with the handoff validator together with the Flow Contract.
 12. Write and validate `work-item-migration.json`, pointing to the exact
     migration result and previous work-item handoff hashes. Render the
-    copy/paste Markdown with factual progress and no unverified completion.
+    copy/paste Markdown with factual progress and no unverified completion,
+    then run `render-work-item-handoff.mjs --inline <snapshot> --since
+    <work-item-baseline.json>` and show its output verbatim in this chat as the
+    handoff for this step. Do not paraphrase or reformat it.
     Record the user's applied/not-applied confirmation for the baseline in
-    `previousApplication`; never modify the baseline snapshot.
+    `previousApplication`, including the external IDs Targetprocess assigned to
+    any created item in `createdExternalIds`; never modify the baseline
+    snapshot.
 13. Update the implementation Task with the validated checkpoint milestones
    and actual completed work. Recalculate User Story progress from all Task
    contributions; never equate commit count with progress.
