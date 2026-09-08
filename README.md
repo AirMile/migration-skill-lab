@@ -8,9 +8,9 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.7.0, `migrate-flow` v0.9.0 and
-  `verify-flow` v0.8.0 source skills;
-- experimental `debug-flow` v0.2.0 source skill;
+- experimental `flow-baseline` v0.8.0, `flow-migrate` v0.9.0 and
+  `flow-verify` v0.8.0 source skills;
+- experimental `flow-debug` v0.2.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
   dependency-free validator;
@@ -125,9 +125,9 @@ that chat.
 | Skill | Model | Why |
 |---|---|---|
 | `flow-baseline` | Claude Opus 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
-| `migrate-flow` | Claude Sonnet 5; Opus 5 for a risky slice | Code generation inside a tight allowlist plus test authoring. Use Opus 5 when the slice touches drawlib, history or the host boundary. |
-| `verify-flow` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `migrate-flow` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
-| `debug-flow` | Claude Sonnet 5 or GPT-5.3-Codex | A bounded tier machine: reproduce, hypothesize, smallest patch. |
+| `flow-migrate` | Claude Sonnet 5; Opus 5 for a risky slice | Code generation inside a tight allowlist plus test authoring. Use Opus 5 when the slice touches drawlib, history or the host boundary. |
+| `flow-verify` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `flow-migrate` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
+| `flow-debug` | Claude Sonnet 5 or GPT-5.3-Codex | A bounded tier machine: reproduce, hypothesize, smallest patch. |
 | `migration-skill-audit` | Claude Opus 5 | Meta-reasoning over instruction text and spotting structural gaps, which is what produced M1 and V1. |
 
 Do not use Haiku 4.5, Gemini Flash, GPT-5 mini, GPT-5.4 mini or
@@ -139,19 +139,26 @@ reasoning, and the mechanical steps are already scripts.
 1. `flow-baseline` is read-only for the product repository. It creates a
    human-readable behavior baseline and a draft `flow-contract.json` for one
    human-selected flow.
-2. A human explicitly approves the contract, write allowlist, target
-   conventions, validation commands and rollback before any product write.
-3. `migrate-flow` writes only inside that approved scope. It proves missing
+2. `flow-baseline` ends at one approval checkpoint. It renders scope, write
+   allowlist, validation commands, rollback, checkpoint policy and open
+   questions from the validated contract; a human approves, rejects or asks a
+   question. Approval writes the approved successor pair, and the user then
+   picks one continuation: open a fresh `flow-migrate` chat now, paste the
+   invocation into a chat of their own, or save it beside the report for later.
+   Plan mode is the user's to enable; when a session already runs in it, the
+   checkpoint uses its plan-approval dialog and the artifacts are written after
+   approval.
+3. `flow-migrate` writes only inside that approved scope. It proves missing
    React behavior first, then implements the smallest Angular slice, creates
    approved scoped local checkpoints and writes `migration-result.json`.
-4. `verify-flow` is read-only for product code. It independently evaluates the
+4. `flow-verify` is read-only for product code. It independently evaluates the
    same contract and writes `verification-result.json` with `PASS`, `FAIL` or
    `BLOCKED`. After full PASS it may offer one confirmed featurebranch push.
-5. On local repairable FAIL/BLOCKED, `verify-flow` writes a debug handoff and
-   asks the user before opening a fresh `debug-flow` chat. It selects one
+5. On local repairable FAIL/BLOCKED, `flow-verify` writes a debug handoff and
+   asks the user before opening a fresh `flow-debug` chat. It selects one
    `immediate`, `light` or `heavy` attempt at a time, parks after a failed
    heavy attempt, and hands repaired candidates to a user-confirmed fresh
-   independent `verify-flow` chat.
+   independent `flow-verify` chat.
 6. After its primary output, each skill writes a
    `skill-run-observations.json` sidecar. An empty observation list proves that
    capture ran without inventing feedback.
@@ -166,7 +173,7 @@ Task progress; checkpoint commits are evidence for the implementation Task,
 not separate Tasks. The skills never update Targetprocess directly or claim
 that copy-ready content was applied.
 
-See `docs\skill-handoff-protocol-v0.6.md`. Skills exchange artifacts through
+See `docs\skill-handoff-protocol-v0.7.md`. Skills exchange artifacts through
 the ignored `runs\` directory; they must not rely on prior chat context.
 
 ## Improvement lifecycle

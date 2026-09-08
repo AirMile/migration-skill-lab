@@ -2,7 +2,7 @@
 
 > Status on 2026-09-04: historical handoff for the preserved
 > `migration-analyze` v0.1.0 benchmark reference. For new work, read
-> `README.md`, `docs\skill-handoff-protocol-v0.6.md` and the active flow
+> `README.md`, `docs\skill-handoff-protocol-v0.7.md` and the active flow
 > experimental skill acceptance documents first.
 
 Gebruik `/copilot-skill-authoring` en vervolg het

@@ -61,7 +61,7 @@
     },
     {
       "id": "airmile-dev-manual",
-      "label": "AirMile dev-manual debug-flow design reference",
+      "label": "AirMile dev-manual flow-debug design reference",
       "kind": "public-upstream",
       "location": "https://github.com/AirMile/claude-config/tree/1205499dfec8ae2498d68c1a65d9ae0d25c1b327/skills/dev-manual",
       "revision": "1205499dfec8ae2498d68c1a65d9ae0d25c1b327"
@@ -140,7 +140,7 @@
     },
     {
       "id": "author-migrate-flow-v0",
-      "title": "Author migrate-flow v0.1",
+      "title": "Author flow-migrate v0.1",
       "type": "skill",
       "status": "done",
       "phase": "P2",
@@ -166,7 +166,7 @@
     },
     {
       "id": "author-verify-flow-v0",
-      "title": "Author verify-flow v0.1",
+      "title": "Author flow-verify v0.1",
       "type": "skill",
       "status": "done",
       "phase": "P2",
@@ -249,7 +249,7 @@
       "type": "skill",
       "status": "done",
       "phase": "P2",
-      "description": "Add a verify-produced failure dossier and fresh debug-flow agent with finite immediate, light and heavy repair tiers followed by mandatory independent re-verification.",
+      "description": "Add a verify-produced failure dossier and fresh flow-debug agent with finite immediate, light and heavy repair tiers followed by mandatory independent re-verification.",
       "dependencies": [
         "build-work-item-checkpoint-flow"
       ],

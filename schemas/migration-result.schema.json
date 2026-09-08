@@ -24,7 +24,7 @@
   "properties": {
     "schemaVersion": { "enum": [2, 3] },
     "artifactType": { "const": "migration-result" },
-    "skill": { "const": "migrate-flow" },
+    "skill": { "enum": ["flow-migrate", "migrate-flow"] },
     "skillVersion": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"

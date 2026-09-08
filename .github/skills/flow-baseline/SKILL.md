@@ -5,7 +5,11 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 # Flow Baseline
 
-Skill version: `0.7.0`.
+Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
+`/flow-debug` as the repair loop back into a fresh `/flow-verify`.
+This skill is the first stage: it produces the contract every later stage reads.
+
+Skill version: `0.8.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -27,8 +31,10 @@ Confirm before deep analysis:
 - declared run-artifact directory;
 - whether existing coverage evidence is available or a measurement command is
   explicitly approved.
-- current Epic, Feature and User Story IDs, titles, parent relations, state,
-  progress and description content, including whether a new item is requested;
+- the most recent validated work-item handoff for this `flowId`, when one
+  exists; it supplies the Epic, Feature and User Story identity, parent
+  relations and field text, so ask for those only when no such snapshot exists;
+- whether a new Epic, Feature or User Story is requested;
 - current User Story Tasks, or approval to propose stakeholder-readable Tasks
   for baseline, implementation and independent verification;
 - declared work-item handoff JSON and rendered Markdown destinations;
@@ -73,8 +79,8 @@ ambiguous. Never choose the flow automatically.
    `retain-react`. Record that shape in the contract as
    `scope.partialMount`: set `nested: true` with the `retainedParent` and the
    `siblingSections` a migrated field must visually match. This field is what
-   later makes real-host evidence mandatory for `migrate-flow` and
-   `verify-flow`, so an omitted or wrongly `false` value silently weakens both.
+   later makes real-host evidence mandatory for `flow-migrate` and
+   `flow-verify`, so an omitted or wrongly `false` value silently weakens both.
    From schemaVersion 4 `scope.partialMount` is required: declaring
    `nested: false` is a deliberate statement, not something to leave out.
    Record every migrated surface in `visualParity` with its `id`, the retained
@@ -96,7 +102,7 @@ ambiguous. Never choose the flow automatically.
    with `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<flow-contract.json>"`.
 9. Set contract `status` and `approval.status` to `draft` and `pending`.
-   Only a human may approve the scope and write allowlist for `migrate-flow`.
+   Only a human may approve the scope and write allowlist for `flow-migrate`.
    Record checkpoint mode as `disabled` until the human explicitly approves
    `auto-local`, its expected branch, external reference and push policy.
    An approved contract requires concrete test, typecheck, build, manual-host
@@ -112,6 +118,25 @@ ambiguous. Never choose the flow automatically.
    `manualApplication.status` at `copy-ready` or `not-applied`. Propose a new
    story only when the user requests it or evidence shows the selected scope
    does not responsibly fit the existing story.
+   When a previous validated handoff exists for this `flowId`, copy each
+   unchanged `fields` value from it byte for byte and set that item's action to
+   `no-change`. Rewriting settled text produces a wording difference that is
+   indistinguishable from a real change, which forces `update`, re-emits the
+   whole item and asks a reader to re-review something that did not move. Use
+   `update` only for an item whose content, proposed state or proposed progress
+   actually moved, and say in `evidence` what moved it. Record the earlier
+   snapshot in `supersedes` with its path, sha256 and `runId`, and set
+   `schemaVersion` 4 when you do; the validator then rejects both a no-op
+   `update` and a `no-change` that hides a real change. A first baseline for a
+   flow has no predecessor and omits `supersedes`.
+   `currentState` and `currentProgress` are never carried forward. They are the
+   external board as the user confirmed it for this run.
+   Run narrative belongs to the item that actually moved. `richReleaseNotes`
+   describes what changed about that item, not what this run did in general, so
+   an Epic or Feature whose scope did not change keeps its previous notes and
+   stays `no-change`. Rewriting them anyway forces `update` and re-emits the
+   whole item, which is the same waste by another route. The Story, its Tasks
+   and the standup carry this run's news.
 11. Create or update stakeholder-readable User Story Tasks for target
    architecture/contract approval, bounded implementation and
    independent/browser/host verification. Assign
@@ -123,17 +148,53 @@ ambiguous. Never choose the flow automatically.
 13. Add a daily standup block with completed work, next steps, blockers and
     both current and proposed User Story progress. Keep it short enough to say
     aloud.
-14. Validate the Flow Contract and work-item snapshot together. Render the
-   snapshot with `render-work-item-handoff.mjs`, then run the same script with
-   `--inline` and show its output verbatim in this chat as the handoff for this
-   step. Do not paraphrase, summarize or reformat it; its value is that it is
-   generated from the validated snapshot rather than from prose. Never claim
-   that anything was applied.
+14. Validate the Flow Contract and work-item snapshot together, passing the
+   superseded baseline handoff as well when this run declares `supersedes`.
+   Render the snapshot with `render-work-item-handoff.mjs`, then run the same
+   script with `--inline`, adding `--since <previous-handoff.json>` when a
+   predecessor exists, and show its output verbatim in this chat as the handoff
+   for this step. Do not paraphrase, summarize or reformat it; its value is
+   that it is generated from the validated snapshot rather than from prose.
+   Items the snapshot marks `no-change` are listed by identity only; do not
+   restate their field text in chat to be helpful. Never claim that anything
+   was applied.
 15. Capture the product Git-visible worktree status again. If it changed, stop,
    report the delta and do not revert or attribute it without evidence.
-16. End with one focused user question offering a fresh `/migrate-flow` chat
-   when an approved successor contract is available. Do not start a subagent
-   or reuse this chat as the implementation run.
+16. Present one approval checkpoint. Render the decision block from the
+   validated contract rather than from report prose: `flowId` and boundary,
+   `scope.partialMount`, every `visualParity` id with the counterpart it must
+   match, `allowedWritePaths`, the test, typecheck and build commands, the
+   browser and manual host scenarios, rollback, checkpoint policy and every
+   open question. Say what approval authorizes and keep the block short enough
+   to read in one screen. Offer exactly three replies: approve the contract as
+   rendered, reject it, or ask a question first. Do not offer approval while an
+   open question that blocks writing is unresolved.
+   When the host already runs this session in plan mode, request the same
+   decision through its plan-approval mechanism and read approval, feedback and
+   exit-without-acting as those same three replies. That mode forbids
+   repository writes before approval, so run steps 8 to 14 after the approval
+   instead of before it; the artifacts themselves do not change. A skill cannot
+   set the session mode: never enter or leave plan mode on the user's behalf
+   and never describe a checkpoint answer as a plan-mode approval it was not.
+17. On approval, write the approved contract and its matching baseline
+   work-item handoff as new artifacts beside the draft, with `status` and
+   `approval.status` `approved`, the approver role, the approval date and the
+   decisions the user actually stated in `approvedDecisions`. Leave the draft
+   pair and its pending or open wording untouched. Validate the successor pair
+   with `validate-handoff.mjs` before offering any continuation. A rejection,
+   an unresolved blocking question or no answer ends the run with the draft as
+   the only contract.
+18. Ask which continuation the user wants and perform only the chosen one:
+   open a fresh interactive `/flow-migrate` chat now, show the invocation here
+   for the user to paste into a chat they open themselves, or save it beside
+   the baseline report for later. All three routes carry the same invocation,
+   built from the approved contract path, the approved work-item handoff path,
+   the migration-skill-lab root, the product root and the run directory; see
+   `references/flow-contract.md`. Launch a chat only on that explicit choice,
+   and report a refused or failed launch instead of describing the migration as
+   started. Never continue the migration in this chat and never delegate it to
+   a background agent, which cannot ask the user for the approvals
+   `flow-migrate` requires.
 
 ## Safety boundary
 
@@ -155,7 +216,17 @@ Never:
 - create one board Task per technical commit instead of grouping checkpoints
   under a stakeholder-readable delivery Task;
 - silently convert a possible UX improvement into accepted migration behavior;
-- create an empty or product checkpoint commit during this read-only phase.
+- create an empty or product checkpoint commit during this read-only phase;
+- enter, leave or simulate a host plan mode, or record a plan-mode approval
+  the user did not give;
+- write an approved contract from anything other than the user's explicit
+  answer at the checkpoint;
+- start the migration in this chat, in a background agent, or through any
+  route the user did not choose;
+- reword settled Epic, Feature, User Story or Task text that no evidence in
+  this run shows changed, or restate a `no-change` item's fields in chat;
+- carry a previous snapshot's `currentState` or `currentProgress` forward as
+  if it were a fresh read of the external board.
 
 ## Handoff
 
@@ -163,15 +234,37 @@ The contract must contain the scope, behavior scenarios, evidence pointers,
 test gaps, open questions, allowed product write paths, Epic/Feature/Story
 context, checkpoint policy and a human approval record.
 `work-item-baseline.json` contains the copy/paste hierarchy, Tasks and daily
-standup proposal. Both are machine-readable inputs to `migrate-flow`; do not
+standup proposal. Both are machine-readable inputs to `flow-migrate`; do not
 rely on prior chat context.
 
-The terminal handoff opens a fresh chat only after the user confirms it. A
-draft baseline instead directs the user to approve or reject the contract first.
+The run ends at one approval checkpoint rather than a summary. Rejection, a
+remaining blocking open question or no answer leaves the draft contract as the
+only artifact. Approval produces the approved successor pair and then exactly
+one continuation the user picks: a fresh `/flow-migrate` chat opened now, the
+invocation shown for pasting, or the invocation saved beside the baseline
+report for later.
 
 The report must carry the rendered-surface inventory into the migration
 handoff. A scenario list alone is not permission to replace a parent component
 that renders retained controls.
+
+## Reading discipline
+
+Context is a budget this run spends once, and every re-read of the same bytes
+is paid again for nothing.
+
+- Read a file once, at the range you need. Return to it only for a range you
+  have not read; never re-read it whole after reading part of it, and never
+  request a range overlapping one you already hold.
+- Widen or narrow a search rather than repeating it. Two patterns that differ
+  only in alternation, wording or case return mostly the same hits, so the
+  second one buys nothing.
+- Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
+  Copy the shape from `examples\handoff\`, write the artifact, run
+  `validate-handoff.mjs` and act on its errors; the validator names what is
+  missing far more cheaply than a schema read does.
+- Resolve a module path before reading it. A directory may be a barrel or a
+  single file, so check which exists instead of guessing and failing.
 
 ## Post-run observation capture
 
@@ -184,16 +277,37 @@ reprioritize the baseline workflow to analyze these signals.
 After the primary report and draft Flow Contract are complete, or after the
 final `BLOCKED` or failed response when those artifacts cannot be produced:
 
-1. Exclude product defects, expected precondition blockers, missing Angular
-   conventions themselves, executor noise, preferences and static speculation.
-2. Deduplicate semantically equivalent signals from this run and preserve their
+1. Evaluate this run's own tool history against these checks and record every
+   one that fired. They are countable, so answer them from the history rather
+   than from impression:
+   - the same file read more than twice, or re-read over a range already
+     held: `unnecessary-context-load`;
+   - two or more searches whose patterns differ only in alternation, wording
+     or case: `unnecessary-context-load`;
+   - a schema, validator or renderer source read instead of running the
+     command: `unnecessary-context-load`;
+   - a tool call that failed because this skill named a path, command or flag
+     that does not exist or does not behave as written:
+     `skill-caused-tool-failure`;
+   - a step performed by hand that a script in `scripts\` already performs:
+     `deterministic-step-candidate`;
+   - a user correction, a restated instruction, or the same question asked
+     twice: `user-correction` or `ambiguous-instruction`;
+   - an artifact that needed a repair pass before it validated:
+     `output-mismatch`.
+2. Exclude product defects, expected precondition blockers, missing Angular
+   conventions themselves, preferences and static speculation. Executor noise
+   means a host or transport failure unrelated to this skill; a tool call this
+   skill's own wording caused is never executor noise.
+3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-3. Write `<run-artifact-directory>\skill-run-observations.json`, including an
-   empty `observations` list when no signal qualifies.
-4. Validate it with
+4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
+   `observations` list is a claim that every check in step 1 was evaluated and
+   none fired; write it only when that is true.
+5. Validate it with
    `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<skill-run-observations.json>"`.
-5. Report a capture or validation failure separately without changing the
+6. Report a capture or validation failure separately without changing the
    primary Flow Contract status.
 
 The artifact is evidence for a later `migration-skill-audit`, not a change

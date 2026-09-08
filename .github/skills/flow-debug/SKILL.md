@@ -1,9 +1,13 @@
 ---
-name: debug-flow
-description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow within an already approved write scope, then hand off to a fresh independent re-verification. Use only with /debug-flow.
+name: flow-debug
+description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow within an already approved write scope, then hand off to a fresh independent re-verification. Use only with /flow-debug.
 ---
 
-# Debug Flow
+# Flow Debug
+
+Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
+`/flow-debug` as the repair loop back into a fresh `/flow-verify`.
+This skill is out of band: it repairs a failure and hands back to verification.
 
 Skill version: `0.2.0`.
 
@@ -12,7 +16,7 @@ Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 Repair one failed or repairable blocked migration only within the already
 approved contract and artifact chain. Prefer a fresh isolated agent context.
 Reload required state from versioned artifacts, not earlier chat memory.
-`debug-flow` may prepare a repair candidate, but it never declares `PASS`.
+`flow-debug` may prepare a repair candidate, but it never declares `PASS`.
 
 ## Required inputs
 
@@ -22,7 +26,7 @@ Confirm all inputs before any product write:
 - path to the corresponding `migration-result.json`;
 - path to a `verification-result.json` whose overall status is `FAIL` or a
   repairable `BLOCKED`;
-- path to the corresponding `debug-handoff.json` produced by `verify-flow`;
+- path to the corresponding `debug-handoff.json` produced by `flow-verify`;
 - migration-skill-lab root containing the validator, schemas and
   `scripts\verify-checkpoint.mjs`;
 - product root, expected branch and current Git-visible worktree status;
@@ -40,7 +44,7 @@ blocked by an external system.
 ## Workflow
 
 1. Read `references/debug-contract.md`.
-2. Run only in a fresh isolated chat opened from `verify-flow`. When isolation
+2. Run only in a fresh isolated chat opened from `flow-verify`. When isolation
    is unavailable, stop `BLOCKED` rather than reusing verification context.
    Reload every required artifact from disk and ignore prior chat assumptions.
 3. Validate the approved Flow Contract, migration result and verification
@@ -75,7 +79,7 @@ blocked by an external system.
    - validation outcomes;
    - checkpoint outcome.
 10. In each attempt, rerun or restate the smallest targeted reproduction from
-   `verify-flow`, make only the minimum approved product edits inside
+   `flow-verify`, make only the minimum approved product edits inside
    `allowedWritePaths`, then rerun the targeted reproduction and declared
    validations.
 11. When a repaired candidate has the required green evidence and checkpoint
@@ -100,12 +104,12 @@ blocked by an external system.
     - `parked` when the `heavy` tier still cannot produce a safe, local repair
       and a human decision is required.
 13. Every `repaired` result must end with a mandatory handoff to a fresh,
-    independent `verify-flow` run. `debug-flow` never declares `PASS`, never
+    independent `flow-verify` run. `flow-debug` never declares `PASS`, never
     treats a repair as verified and never closes the verification loop itself.
 14. Record the final Git-visible worktree status and report any delta against
     the frozen baseline without reverting unrelated changes.
 15. For a `repaired` result, end with one focused user question offering a
-    fresh `/verify-flow` chat with only the declared artifacts and product root.
+    fresh `/flow-verify` chat with only the declared artifacts and product root.
     Never spawn a verifier subagent or reuse this debug chat as verification.
 
 ## Safety boundary
@@ -140,13 +144,31 @@ attempt ledger, failed-scenario diagnosis, reproduction evidence, hypothesis
 updates, changed paths, validation outcomes, checkpoint evidence, remaining
 limitations and the final `repaired`, `blocked` or `parked` status.
 
-A `repaired` result is incomplete without a fresh independent `verify-flow`
+A `repaired` result is incomplete without a fresh independent `flow-verify`
 handoff that reuses the approved contract and current product state from disk.
 A contract change, broadened scope or new approval requirement returns to
-`flow-baseline` or a human decision instead of continuing in `debug-flow`.
+`flow-baseline` or a human decision instead of continuing in `flow-debug`.
 
 A repaired candidate is handed to a fresh verifier only after the user confirms
 the new-chat transition.
+
+## Reading discipline
+
+Context is a budget this run spends once, and every re-read of the same bytes
+is paid again for nothing.
+
+- Read a file once, at the range you need. Return to it only for a range you
+  have not read; never re-read it whole after reading part of it, and never
+  request a range overlapping one you already hold.
+- Widen or narrow a search rather than repeating it. Two patterns that differ
+  only in alternation, wording or case return mostly the same hits, so the
+  second one buys nothing.
+- Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
+  Copy the shape from `examples\handoff\`, write the artifact, run
+  `validate-handoff.mjs` and act on its errors; the validator names what is
+  missing far more cheaply than a schema read does.
+- Resolve a module path before reading it. A directory may be a barrel or a
+  single file, so check which exists instead of guessing and failing.
 
 ## Post-run observation capture
 
@@ -160,17 +182,37 @@ After `debug-result.json` and the re-verification handoff are complete, or
 after the final `blocked` or `parked` response when that artifact cannot be
 produced:
 
-1. Exclude product defects, external blockers, expected precondition blockers,
-   missing Angular conventions themselves, executor noise, preferences and
-   static speculation.
-2. Deduplicate semantically equivalent signals from this run and preserve their
+1. Evaluate this run's own tool history against these checks and record every
+   one that fired. They are countable, so answer them from the history rather
+   than from impression:
+   - the same file read more than twice, or re-read over a range already
+     held: `unnecessary-context-load`;
+   - two or more searches whose patterns differ only in alternation, wording
+     or case: `unnecessary-context-load`;
+   - a schema, validator or renderer source read instead of running the
+     command: `unnecessary-context-load`;
+   - a tool call that failed because this skill named a path, command or flag
+     that does not exist or does not behave as written:
+     `skill-caused-tool-failure`;
+   - a step performed by hand that a script in `scripts\` already performs:
+     `deterministic-step-candidate`;
+   - a user correction, a restated instruction, or the same question asked
+     twice: `user-correction` or `ambiguous-instruction`;
+   - an artifact that needed a repair pass before it validated:
+     `output-mismatch`.
+2. Exclude product defects, external blockers, expected precondition blockers,
+   missing Angular conventions themselves, preferences and static speculation.
+   Executor noise means a host or transport failure unrelated to this skill; a
+   tool call this skill's own wording caused is never executor noise.
+3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-3. Write `<run-artifact-directory>\skill-run-observations.json`, including an
-   empty `observations` list when no signal qualifies.
-4. Validate it with
-   `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"`
-   `"<skill-run-observations.json>"`.
-5. Report a capture or validation failure separately without changing the
+4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
+   `observations` list is a claim that every check in step 1 was evaluated and
+   none fired; write it only when that is true.
+5. Validate it with
+   `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
+   "<skill-run-observations.json>"`.
+6. Report a capture or validation failure separately without changing the
    primary debug status.
 
 The artifact is evidence for a later `migration-skill-audit`, not a change

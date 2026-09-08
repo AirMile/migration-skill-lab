@@ -1,13 +1,13 @@
 # Verification contract
 
-Read this reference for every `verify-flow` run.
+Read this reference for every `flow-verify` run.
 
 ## Independence
 
 The verifier is read-only for the product working tree and skill source. Its
 purpose is evidence and diagnosis, not implementation. Its only permitted Git
 write is the separately confirmed post-PASS featurebranch push. It must use
-the same approved Flow Contract that constrained `migrate-flow`.
+the same approved Flow Contract that constrained `flow-migrate`.
 
 ## Criterion status
 
@@ -116,8 +116,8 @@ the verification result. It points to the exact consumed artifacts and
 contains expected/actual behavior, reproduction, evidence, suspected boundary,
 allowlisted candidate paths and a tier recommendation.
 
-Use `repairable` only for a local product failure that a fresh `debug-flow`
+Use `repairable` only for a local product failure that a fresh `flow-debug`
 agent can reproduce and change within the approved scope. Missing access,
 environment, approval, dependency or host ownership is `external-blocked` and
-must not start debug. `verify-flow` never chooses the final tier or repairs
+must not start debug. `flow-verify` never chooses the final tier or repairs
 code. A repaired debug result always starts a new verification attempt.

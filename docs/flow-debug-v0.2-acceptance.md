@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
-skill: debug-flow
+skill: flow-debug
 targetVersion: 0.2.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `debug-flow` v0.2.0 acceptance criteria
+# `flow-debug` v0.2.0 acceptance criteria
 
 ## Hard gates
 
@@ -31,7 +31,7 @@ verification, declares `PASS`, or modifies skill source during its own run.
 - Changed paths that remain a subset of `allowedWritePaths`.
 - Local checkpoint evidence created through `verify-checkpoint.mjs` for every
   commit-eligible repaired milestone.
-- A mandatory handoff to a fresh independent `verify-flow` after any
+- A mandatory handoff to a fresh independent `flow-verify` after any
   `repaired` result.
 - A schema-valid observation artifact written after the primary debug result,
   including an empty observation list when no concrete skill signal occurred.
@@ -61,7 +61,7 @@ The source is acceptable when:
 10. `repaired` requires a passing targeted reproduction, honest validation
     evidence and recorded checkpoint outcome;
 11. it ends every `repaired` run by offering a user-confirmed fresh independent
-    `/verify-flow` chat and never self-certifies the migration as `PASS`;
+    `/flow-verify` chat and never self-certifies the migration as `PASS`;
 12. external systems, missing approvals, and dependency, configuration or host
     changes that are not already approved become `blocked`, not debugged;
 13. a non-repair at `heavy` becomes `parked` for human decision rather than a
@@ -76,3 +76,9 @@ The source is acceptable when:
 17. a visual repair confirmed only in an isolated or injected fixture is not
     recorded as `repaired`, because a fixture cannot show width, alignment or
     spacing against the retained sibling sections.
+18. it reads a file once at the range it needs, repeats no near-identical
+    search, and reads no schema or script source in place of running the
+    validator;
+19. observation capture evaluates the countable checks against this run's own
+    tool history, and an empty list means every check was evaluated and none
+    fired rather than that none was looked for.

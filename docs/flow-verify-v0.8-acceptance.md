@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
-skill: verify-flow
+skill: flow-verify
 targetVersion: 0.8.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `verify-flow` v0.8.0 acceptance criteria
+# `flow-verify` v0.8.0 acceptance criteria
 
 ## Hard gates
 
@@ -55,7 +55,7 @@ The source is acceptable when:
 13. one completed Story does not imply its parent Feature or Epic is done.
 14. regular-browser automation and required Maui host validation are reported
     separately and both pass before overall PASS when required;
-15. repairable failures offer a user-confirmed fresh `/debug-flow` chat and external
+15. repairable failures offer a user-confirmed fresh `/flow-debug` chat and external
     blockers do not;
 16. a repaired result is always followed by a new independent verification
     attempt.
@@ -75,3 +75,9 @@ The source is acceptable when:
     `PASS` under a nested partial mount requires `real-host-layout` evidence;
 23. a visible appearance deviation is recorded as a `FAIL` on its own
     criterion rather than dismissed as a styling limitation.
+24. it reads a file once at the range it needs, repeats no near-identical
+    search, and reads no schema or script source in place of running the
+    validator;
+25. observation capture evaluates the countable checks against this run's own
+    tool history, and an empty list means every check was evaluated and none
+    fired rather than that none was looked for.

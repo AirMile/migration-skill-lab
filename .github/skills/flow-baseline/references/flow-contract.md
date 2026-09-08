@@ -96,8 +96,8 @@ unit, design tokens instead of literal values) and the `layout` requirements
 (width, alignment and spacing against the retained sibling sections). Cite the
 counterpart with file and line in `reference` when one exists.
 
-The validator enforces this list downstream: `migrate-flow` must return a
-verdict per surface and `verify-flow` must status each one on its own. A
+The validator enforces this list downstream: `flow-migrate` must return a
+verdict per surface and `flow-verify` must status each one on its own. A
 surface that is not declared here can therefore never fail later, so an
 appearance difference the user would notice belongs in `visualParity` rather
 than in report prose. `scope.partialMount` is required too; `nested: false` is
@@ -105,8 +105,8 @@ a deliberate statement about the mount shape, not an omission.
 
 When the slice mounts inside a retained React parent, declare it in the
 contract as `scope.partialMount` with `nested: true`, the `retainedParent` and
-the `siblingSections` a migrated field must match. `migrate-flow` and
-`verify-flow` both read that flag to decide whether real-host evidence is
+the `siblingSections` a migrated field must match. `flow-migrate` and
+`flow-verify` both read that flag to decide whether real-host evidence is
 mandatory, so leaving it out weakens the two downstream checks without any
 visible error.
 
@@ -120,3 +120,52 @@ baseline.
 If a coverage report is not already available, do not create product-repository
 artifacts merely to obtain one. State the unavailable measurement, why it
 matters and the safe command/location the human must approve.
+
+## Approval checkpoint and continuation
+
+The run ends at one checkpoint, not at a summary. Build the decision block from
+the validated contract instead of from report prose, so the human reviews what
+`flow-migrate` will actually read:
+
+- `flowId`, the user-visible goal and the included/excluded boundary;
+- `scope.partialMount`, including a deliberate `nested: false`;
+- every `visualParity` id with the counterpart it must match;
+- `scope.allowedWritePaths` verbatim;
+- the test, typecheck and build commands, the browser and manual host scenarios
+  and the rollback;
+- `checkpointPolicy`, including `disabled`;
+- every open question, marked blocking or non-blocking.
+
+Offer three replies: approve, reject, or ask a question first. A blocking open
+question must be resolved before the approve option is offered at all.
+Approval writes a separate approved contract and baseline work-item handoff;
+the draft pair stays exactly as it was written.
+
+Plan mode is a session mode of the host, not something a skill can switch on.
+`/plan`, `--plan` and `--mode plan` belong to the user. When the session is
+already in plan mode, use its plan-approval mechanism for this checkpoint. That
+mode also forbids repository writes before approval, so write the report,
+contract and work-item snapshot after the approval instead of before it. Their
+content and validation do not change; only their position in the run does.
+
+Then ask which continuation the user wants, and perform only that one:
+
+1. Open a fresh interactive chat now, with the same working directory and
+   `--add-dir` arguments this session uses:
+
+   ```powershell
+   wt.exe -w 0 nt -d "<working-directory>" copilot -i "<invocation>"
+   ```
+
+2. Show `<invocation>` in this chat for the user to paste into a chat they open
+   themselves.
+3. Save `<invocation>` beside the baseline report as
+   `<flowId>-flow-migrate-prompt.md` for a later session.
+
+`<invocation>` is the same string in all three routes: `/flow-migrate` followed
+by the approved contract path, the approved work-item handoff path, the
+migration-skill-lab root, the product root and the run directory.
+`flow-migrate` reads its inputs from those files and never from this chat, so a
+saved invocation stays valid for a session opened days later. Keep the
+invocation on one line and free of semicolons, which `wt.exe` reads as a
+command separator, and prefer paths without spaces over nested quoting.

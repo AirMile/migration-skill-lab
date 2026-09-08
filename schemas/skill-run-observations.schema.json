@@ -20,7 +20,10 @@
     "artifactType": { "const": "skill-run-observations" },
     "skill": {
       "type": "string",
-      "enum": ["flow-baseline", "migrate-flow", "verify-flow", "debug-flow"]
+      "enum": [
+        "flow-baseline", "flow-migrate", "flow-verify", "flow-debug",
+        "migrate-flow", "verify-flow", "debug-flow"
+      ]
     },
     "skillVersion": {
       "type": "string",
@@ -52,7 +55,9 @@
             "blocked",
             "PASS",
             "FAIL",
-            "BLOCKED"
+            "BLOCKED",
+            "repaired",
+            "parked"
           ]
         },
         "summary": { "type": "string", "minLength": 1 },

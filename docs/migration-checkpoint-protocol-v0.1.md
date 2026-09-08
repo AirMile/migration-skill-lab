@@ -102,8 +102,8 @@ blocked milestone in `migration-result.json`.
 
 ## Push gate
 
-`migrate-flow` never pushes. After independent overall `PASS` and passed
-required host validation, `verify-flow`:
+`flow-migrate` never pushes. After independent overall `PASS` and passed
+required host validation, `flow-verify`:
 
 1. verifies the checkpoint SHAs and a clean worktree;
 2. displays remote name, branch and commit list;

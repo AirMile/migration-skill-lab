@@ -35,7 +35,7 @@ meaning.
 
 ## Relationship to the active workflow
 
-The workflow adds `flow-baseline`, `migrate-flow`, `debug-flow`, and
-`verify-flow`.
+The workflow adds `flow-baseline`, `flow-migrate`, `flow-debug`, and
+`flow-verify`.
 `flow-baseline` supersedes `migration-analyze` only for new POC work; the
 v0.1 source above remains the comparison point for earlier benchmark results.

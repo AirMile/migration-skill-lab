@@ -118,7 +118,7 @@ Every skill version declares:
 
 `migration-analyze` v0.1.0 remains preserved as a reviewed read-only benchmark
 reference. The source repository now also contains experimental v0.5.0 sources
-for `flow-baseline`, `migrate-flow` and `verify-flow`, plus `debug-flow`
+for `flow-baseline`, `flow-migrate` and `flow-verify`, plus `flow-debug`
 v0.1.0 and versioned
 functional and work-item handoff schemas, scoped checkpoint preflight and
 examples. No skill has been installed as a personal runtime
@@ -237,7 +237,7 @@ retained as the earlier benchmark reference. It also produces the first
 copy/paste Epic/Feature/Story/Task and standup handoff and records any
 explicitly approved checkpoint policy.
 
-### 2. `migrate-flow`
+### 2. `flow-migrate`
 
 May write only within a human-approved Flow Contract. It first adds missing
 React characterization tests, then implements the smallest Angular slice and
@@ -247,17 +247,17 @@ recorded as limitations;
 missing explicit scope, write allowlist, rollback or validation commands block
 the run.
 
-### 3. `verify-flow`
+### 3. `flow-verify`
 
 Read-only independent verification of the same Flow Contract. It reports
 `PASS`, `FAIL` or `BLOCKED` per criterion and returns diagnoses to
-`migrate-flow`; it never repairs product code itself. After complete PASS and
+`flow-migrate`; it never repairs product code itself. After complete PASS and
 required host validation, it may offer one explicitly confirmed push of the
 approved featurebranch and produces the final copy/paste work-item handoff.
 The three phases derive Story progress from weighted Tasks and keep technical
 checkpoints as Task evidence.
 
-### 4. `debug-flow`
+### 4. `flow-debug`
 
 Consumes a repairable verification failure in a fresh context, selects the
 cheapest valid `immediate`, `light` or `heavy` route, uses at most one attempt

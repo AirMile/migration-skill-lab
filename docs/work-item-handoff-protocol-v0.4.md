@@ -1,11 +1,11 @@
 ---
 document: work-item-handoff-protocol
-version: 0.3.0
+version: 0.4.0
 status: experimental
 date: 2026-09-08
 ---
 
-# Work-item handoff protocol v0.3
+# Work-item handoff protocol v0.4
 
 ## Purpose
 
@@ -19,13 +19,21 @@ for the human operator.
 | Phase | Producer | Primary evidence | Purpose |
 |---|---|---|---|
 | baseline | `flow-baseline` | Flow Contract | Fill initial templates and acceptance criteria |
-| migration | `migrate-flow` | Migration result | Report factual implementation progress and checkpoints |
-| verification | `verify-flow` | Verification result | Report PASS/FAIL/BLOCKED, push outcome and final proposal |
+| migration | `flow-migrate` | Migration result | Report factual implementation progress and checkpoints |
+| verification | `flow-verify` | Verification result | Report PASS/FAIL/BLOCKED, push outcome and final proposal |
 
 The migration snapshot hashes the baseline snapshot. The verification snapshot
 hashes the migration snapshot. Each later snapshot also records whether the
 human confirmed that the previous proposal was applied or not applied. Never
 overwrite an earlier snapshot.
+
+A rerun of the same phase is not a phase transition. From schemaVersion 4 a
+baseline may declare `supersedes` with the `path`, `sha256` and `runId` of an
+earlier baseline for the same flow. This is deliberately separate from
+`previousHandoff`, which means "the previous phase, and here is whether the
+human applied it". Passing both baselines to the validator in one call makes
+the action rules apply between them, so a rerun cannot quietly re-propose
+content that never moved. A first baseline for a flow omits the field.
 
 ## Actions and identity
 
@@ -39,6 +47,20 @@ Every Epic, Feature, User Story and Task uses `create`, `update` or
   action must be `no-change`; the validator rejects a no-op `update`. This is
   what keeps a later handoff short instead of re-emitting content the reader
   has already applied.
+- `no-change` must be honest in the other direction too: the validator rejects
+  a `no-change` whose fields, proposed state or proposed progress moved.
+- unchanged field text is copied from the previous snapshot byte for byte, not
+  regenerated. Regenerated prose comes back reworded, and a wording difference
+  is indistinguishable from a real change, so the item is forced to `update`
+  and the reader re-reviews something that never moved. This is the single
+  reason `no-change` was not reaching the board in practice.
+- `currentState` and `currentProgress` are never carried forward. They record
+  the external board as a human confirmed it for that run.
+- `richReleaseNotes` belongs to its own item. It says what changed about that
+  Epic, Feature or Story, not what the run did in general. Refreshing it on an
+  item the run left alone forces `update` and re-emits the whole item, which
+  defeats `no-change` by another route; this run's news belongs on the item
+  that moved and in the standup.
 - every Feature points to the parent Epic local ID;
 - every User Story points to the parent Feature local ID;
 - every Task points to the parent User Story local ID;
@@ -141,6 +163,13 @@ node .\scripts\render-work-item-handoff.mjs <snapshot.json>
 The renderer validates the snapshot and emits fields in Targetprocess template
 order. Use `--check` to detect generated Markdown drift.
 
+An item marked `no-change` renders as an identification block — action,
+external ID, title and confirmed board state — followed by a line saying not to
+touch it. Its field text is not restated in either render, because nobody may
+copy it and printing it invites a reader to diff prose that did not move. A
+`no-change` User Story still renders its Tasks: Task progress is what moves a
+Story, so the Tasks can change while the Story text does not.
+
 That full render is the archived artifact, not the working surface. For the
 handoff a human actually reads, run:
 
@@ -154,7 +183,9 @@ its own fenced block labelled with its Targetprocess field name, and separates
 four groups: change, create, still-to-create (unchanged re-proposals) and
 explicitly unchanged. Items already created get a `createdExternalIds`
 fragment to report back. Without `--since` it falls back to the complete set,
-which is correct for a first-phase snapshot.
+which is correct for a first-phase snapshot — except that a declared
+`no-change` is always listed under unchanged, with or without `--since`, since
+the validator has already proved that declaration honest.
 
 Show that output verbatim. Its value is that it is generated from the
 validated snapshot; a paraphrase reintroduces exactly the drift the canonical

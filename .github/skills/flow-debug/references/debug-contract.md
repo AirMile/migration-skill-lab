@@ -1,10 +1,10 @@
 # Debug contract
 
-Read this reference for every `debug-flow` run.
+Read this reference for every `flow-debug` run.
 
 ## Purpose
 
-`debug-flow` repairs one failed or repairable blocked migration candidate
+`flow-debug` repairs one failed or repairable blocked migration candidate
 inside an already approved Flow Contract. It is a scoped repair stage, not a
 new baseline, not a broader migration and not a verifier. Independent
 re-verification remains mandatory.
@@ -17,7 +17,7 @@ The run consumes exactly these versioned artifacts:
 - matching `migration-result.json`;
 - matching `verification-result.json` with overall `FAIL` or repairable
   `BLOCKED`;
-- matching `debug-handoff.json` produced by `verify-flow`.
+- matching `debug-handoff.json` produced by `flow-verify`.
 
 Reject the run when any artifact is missing, unapproved, incompatible,
 cross-flow or hash-mismatched. `debug-handoff.json` must point to the exact
@@ -84,7 +84,7 @@ whether the surface passes.
 
 ## Scope boundary
 
-All product edits must stay within `scope.allowedWritePaths`. `debug-flow`
+All product edits must stay within `scope.allowedWritePaths`. `flow-debug`
 never broadens the approved slice, rewrites the contract, or uses a failure as
 permission to change dependencies, lockfiles, configuration, backend contracts,
 Maui integration, Auth0 behavior or other host boundaries unless those exact
@@ -107,11 +107,11 @@ validations are green. Use the checkpoint verifier in order:
 5. `verify-checkpoint.mjs --verify-commit` with the same manifest and new SHA.
 
 Never use `git add -A`, `--no-verify`, amend, empty commits, force-push or any
-push from `debug-flow`.
+push from `flow-debug`.
 
 ## Outcome rules
 
-`debug-flow` may end only as:
+`flow-debug` may end only as:
 
 - `repaired`: the targeted reproduction now passes, declared validations are
   recorded honestly, changed paths remain allowlisted, and the attempt record
@@ -121,12 +121,12 @@ push from `debug-flow`.
 - `parked`: the `heavy` tier could not produce a safe local repair and a human
   decision is required.
 
-`debug-flow` never declares `PASS`. A `repaired` result is only a candidate
-repair and must hand off immediately to a fresh independent `verify-flow` run.
+`flow-debug` never declares `PASS`. A `repaired` result is only a candidate
+repair and must hand off immediately to a fresh independent `flow-verify` run.
 The verifying agent must not inherit the mutable debug context as proof.
 
 ## Chat transition
 
-After a repaired result, ask the user before opening a fresh `/verify-flow`
+After a repaired result, ask the user before opening a fresh `/flow-verify`
 chat. Never start a nested agent or perform the independent verification in the
 debug chat.

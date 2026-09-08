@@ -141,6 +141,17 @@ const validateNode = (value, schema, location, errors) => {
   }
 };
 
+// The pipeline skills were renamed into one flow-* family. Artifacts already
+// written carry the old names and are immutable evidence, so both spellings
+// resolve to one identity instead of the history being rewritten.
+const skillAliases = {
+  "migrate-flow": "flow-migrate",
+  "verify-flow": "flow-verify",
+  "debug-flow": "flow-debug",
+};
+
+const canonicalSkill = skill => skillAliases[skill] ?? skill;
+
 const validateArtifactRules = (value, errors) => {
   if (value.artifactType === "flow-contract") {
     const approval = value.approval;
@@ -436,17 +447,17 @@ const validateArtifactRules = (value, errors) => {
         primaryArtifactType: "flow-contract",
       },
       migration: {
-        skill: "migrate-flow",
+        skill: "flow-migrate",
         primaryArtifactType: "migration-result",
       },
       verification: {
-        skill: "verify-flow",
+        skill: "flow-verify",
         primaryArtifactType: "verification-result",
       },
     };
     const expected = expectedByPhase[value.handoffPhase];
 
-    if (expected && value.skill !== expected.skill) {
+    if (expected && canonicalSkill(value.skill) !== expected.skill) {
       errors.push(`$.skill must equal ${expected.skill} for ${value.handoffPhase}.`);
     }
 
@@ -480,6 +491,20 @@ const validateArtifactRules = (value, errors) => {
       errors.push(
         "$.previousApplication.handoffSha256 must match $.previousHandoff.sha256.",
       );
+    }
+
+    if (Object.hasOwn(value, "supersedes")) {
+      if (value.schemaVersion < 4) {
+        errors.push("$.supersedes requires schemaVersion 4.");
+      }
+      if (value.handoffPhase !== "baseline") {
+        errors.push(
+          "$.supersedes is only for a baseline rerun; later phases use $.previousHandoff.",
+        );
+      }
+      if (value.supersedes.runId === value.runId) {
+        errors.push("$.supersedes.runId must differ from $.runId.");
+      }
     }
 
     const manualApplication = value.manualApplication;
@@ -712,11 +737,11 @@ const validateArtifactRules = (value, errors) => {
 
   const allowedStatusBySkill = {
     "flow-baseline": new Set(["draft", "failed", "blocked"]),
-    "migrate-flow": new Set(["completed", "failed", "blocked"]),
-    "verify-flow": new Set(["PASS", "FAIL", "BLOCKED"]),
-    "debug-flow": new Set(["repaired", "blocked", "parked"]),
+    "flow-migrate": new Set(["completed", "failed", "blocked"]),
+    "flow-verify": new Set(["PASS", "FAIL", "BLOCKED"]),
+    "flow-debug": new Set(["repaired", "blocked", "parked"]),
   };
-  const allowedStatuses = allowedStatusBySkill[value.skill];
+  const allowedStatuses = allowedStatusBySkill[canonicalSkill(value.skill)];
 
   if (allowedStatuses && !allowedStatuses.has(primaryOutcome.status)) {
     errors.push(
@@ -793,6 +818,34 @@ const workItemContentEquals = (current, previous) =>
   JSON.stringify(current.fields ?? null) ===
     JSON.stringify(previous.fields ?? null);
 
+// An item that did not move must say so, and an item that says it did not move
+// must really be unchanged. Without both directions a reader either re-reads
+// text that never changed or misses a change hidden behind no-change.
+const validateWorkItemActions = (label, currentItems, previousItems) => {
+  for (const [localId, entry] of currentItems) {
+    const previousEntry = previousItems.get(localId);
+    if (!previousEntry) continue;
+
+    if (entry.item.action === "update") {
+      if (previousEntry.item.action === "create") continue;
+      if (workItemContentEquals(entry.item, previousEntry.item)) {
+        throw new Error(
+          `${label} work-item ${entry.kind} ${localId} is unchanged and must use action no-change.`,
+        );
+      }
+      continue;
+    }
+
+    if (entry.item.action === "no-change" &&
+      previousEntry.item.action !== "create" &&
+      !workItemContentEquals(entry.item, previousEntry.item)) {
+      throw new Error(
+        `${label} work-item ${entry.kind} ${localId} declares no-change but its fields, state or progress moved.`,
+      );
+    }
+  }
+};
+
 const validateArtifactLinks = artifacts => {
   const byType = new Map();
 
@@ -848,7 +901,7 @@ const validateArtifactLinks = artifacts => {
   if (migration && contract) {
     if (contract.value.status !== "approved" ||
       contract.value.approval.status !== "approved") {
-      throw new Error("migrate-flow requires a human-approved flow contract.");
+      throw new Error("flow-migrate requires a human-approved flow contract.");
     }
 
     if (migration.value.flowId !== contract.value.flowId) {
@@ -890,7 +943,7 @@ const validateArtifactLinks = artifacts => {
       throw new Error(
         "migration-result may only record the contract's automated test, typecheck, " +
           "build and checkpoint commands; browser-flow and host evidence belongs to " +
-          `verify-flow. Unowned: ${unownedMigrationCommands.join(", ")}.`,
+          `flow-verify. Unowned: ${unownedMigrationCommands.join(", ")}.`,
       );
     }
 
@@ -1210,7 +1263,7 @@ const validateArtifactLinks = artifacts => {
 
   if (debugResult && contract && migration && verification) {
     if (debugHandoff && debugHandoff.value.status !== "repairable") {
-      throw new Error("debug-flow cannot run for an external-blocked handoff.");
+      throw new Error("flow-debug cannot run for an external-blocked handoff.");
     }
     if (debugResult.value.flowId !== contract.value.flowId ||
       debugResult.value.repository.root !== contract.value.repository.root) {
@@ -1270,7 +1323,43 @@ const validateArtifactLinks = artifacts => {
         .map(artifact => [artifact.value.artifactType, artifact]),
     );
 
+    const baselineHandoffs = workItemHandoffs.filter(
+      handoff => handoff.value.handoffPhase === "baseline",
+    );
+    const supersedingBaseline = baselineHandoffs.find(handoff =>
+      Object.hasOwn(handoff.value, "supersedes"));
+    let supersededBaseline;
+
+    if (baselineHandoffs.length > 1) {
+      if (!supersedingBaseline || baselineHandoffs.length > 2) {
+        throw new Error(
+          "Only one baseline work-item handoff is allowed unless a later baseline supersedes exactly one earlier baseline.",
+        );
+      }
+      supersededBaseline = baselineHandoffs.find(
+        handoff => handoff !== supersedingBaseline,
+      );
+      if (supersedingBaseline.value.supersedes.sha256 !==
+        supersededBaseline.sha256) {
+        throw new Error(
+          "baseline work-item supersedes hash does not match the earlier baseline handoff.",
+        );
+      }
+      if (supersedingBaseline.value.supersedes.runId !==
+        supersededBaseline.value.runId) {
+        throw new Error(
+          "baseline work-item supersedes runId does not match the earlier baseline handoff.",
+        );
+      }
+      if (supersedingBaseline.value.flowId !== supersededBaseline.value.flowId) {
+        throw new Error(
+          "baseline work-item supersedes a handoff for a different flow.",
+        );
+      }
+    }
+
     for (const handoff of workItemHandoffs) {
+      if (handoff === supersededBaseline) continue;
       const phase = handoff.value.handoffPhase;
       if (handoffByPhase.has(phase)) {
         throw new Error(`Only one ${phase} work-item handoff is allowed.`);
@@ -1380,17 +1469,15 @@ const validateArtifactLinks = artifacts => {
         }
       }
 
-      for (const [localId, entry] of currentItems) {
-        if (entry.item.action !== "update") continue;
-        const previousEntry = previousItems.get(localId);
-        if (!previousEntry) continue;
-        if (previousEntry.item.action === "create") continue;
-        if (workItemContentEquals(entry.item, previousEntry.item)) {
-          throw new Error(
-            `${phase} work-item ${entry.kind} ${localId} is unchanged and must use action no-change.`,
-          );
-        }
-      }
+      validateWorkItemActions(phase, currentItems, previousItems);
+    }
+
+    if (supersededBaseline) {
+      validateWorkItemActions(
+        "baseline rerun",
+        collectWorkItemsByLocalId(supersedingBaseline.value),
+        collectWorkItemsByLocalId(supersededBaseline.value),
+      );
     }
 
     const verificationHandoff = handoffByPhase.get("verification");
@@ -1619,7 +1706,7 @@ const runSelfTest = async () => {
     validateArtifactLinks(externalBlockedDebug);
   } catch (error) {
     externalBlockedFailed = error.message.includes(
-      "debug-flow cannot run for an external-blocked handoff",
+      "flow-debug cannot run for an external-blocked handoff",
     );
   }
   if (!externalBlockedFailed) {
@@ -1929,7 +2016,7 @@ const runSelfTest = async () => {
         summary: "The host smoke was confirmed during the migration run.",
       });
     },
-    "browser-flow and host evidence belongs to verify-flow",
+    "browser-flow and host evidence belongs to flow-verify",
     "a migration-result recording host evidence as its own validation",
   );
 
@@ -2038,6 +2125,103 @@ const runSelfTest = async () => {
       "Handoff validator self-test did not reject a visual-parity failure for an undeclared surface.",
     );
   }
+
+  const baselineArtifact = artifacts.find(
+    artifact =>
+      artifact.value.artifactType === "work-item-handoff" &&
+      artifact.value.handoffPhase === "baseline",
+  );
+  const contractArtifact = artifacts.find(
+    artifact => artifact.value.artifactType === "flow-contract",
+  );
+
+  const buildRerun = mutate => {
+    const rerun = structuredClone(baselineArtifact);
+    rerun.value.schemaVersion = 4;
+    rerun.value.runId = `${baselineArtifact.value.runId}-rerun`;
+    rerun.value.supersedes = {
+      path: baselineArtifact.absolutePath,
+      sha256: baselineArtifact.sha256,
+      runId: baselineArtifact.value.runId,
+    };
+    for (const [, entry] of collectWorkItemsByLocalId(rerun.value)) {
+      if (entry.item.action !== "create") entry.item.action = "no-change";
+    }
+    mutate(rerun.value);
+    return [
+      structuredClone(contractArtifact),
+      structuredClone(baselineArtifact),
+      rerun,
+    ];
+  };
+
+  validateArtifactLinks(buildRerun(() => {}));
+
+  const expectRerunRejection = (mutate, expected, description) => {
+    let rejected = false;
+    try {
+      validateArtifactLinks(buildRerun(mutate));
+    } catch (error) {
+      rejected = error.message.includes(expected);
+    }
+    if (!rejected) {
+      throw new Error(`Handoff validator self-test did not reject ${description}.`);
+    }
+  };
+
+  expectRerunRejection(
+    rerun => {
+      rerun.epic.action = "update";
+    },
+    "is unchanged and must use action no-change",
+    "a baseline rerun that re-proposes an unchanged Epic as an update",
+  );
+
+  expectRerunRejection(
+    rerun => {
+      rerun.feature.fields.whyMatters = `${rerun.feature.fields.whyMatters} Reworded.`;
+    },
+    "declares no-change but its fields, state or progress moved",
+    "a baseline rerun that hides a reworded Feature behind no-change",
+  );
+
+  expectRerunRejection(
+    rerun => {
+      rerun.supersedes.sha256 = "0".repeat(64);
+    },
+    "supersedes hash does not match",
+    "a baseline rerun whose supersedes hash does not match the earlier baseline",
+  );
+
+  const structuralRerun = buildRerun(() => {})[2].value;
+  const expectRerunStructuralRejection = (mutate, expected, description) => {
+    const candidate = structuredClone(structuralRerun);
+    mutate(candidate);
+    const structuralErrors = [];
+    validateNode(candidate, workItemSchema, "$", structuralErrors);
+    validateArtifactRules(candidate, structuralErrors);
+    if (!structuralErrors.some(error => error.includes(expected))) {
+      throw new Error(
+        `Handoff validator self-test did not reject ${description}.`,
+      );
+    }
+  };
+
+  expectRerunStructuralRejection(
+    candidate => {
+      candidate.schemaVersion = 3;
+    },
+    "$.supersedes requires schemaVersion 4",
+    "a supersedes declaration below schemaVersion 4",
+  );
+
+  expectRerunStructuralRejection(
+    candidate => {
+      candidate.supersedes.runId = candidate.runId;
+    },
+    "$.supersedes.runId must differ from $.runId",
+    "a baseline that supersedes its own run",
+  );
 
   const versionedContract = structuredClone(
     artifacts.find(artifact => artifact.value.artifactType === "flow-contract")

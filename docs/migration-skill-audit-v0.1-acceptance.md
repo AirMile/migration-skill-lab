@@ -30,7 +30,7 @@ evidence without approval.
 
 The source is acceptable when:
 
-1. the example observation artifact validates and targets `migrate-flow`;
+1. the example observation artifact validates and targets `flow-migrate`;
 2. invalid evidence and mismatched target skills are rejected;
 3. static-only mode requires an explicit request;
 4. no finding is invented for a normal blocker or missing Angular convention;

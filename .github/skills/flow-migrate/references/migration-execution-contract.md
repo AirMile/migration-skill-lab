@@ -1,6 +1,6 @@
 # Migration execution contract
 
-Read this reference for every `migrate-flow` run.
+Read this reference for every `flow-migrate` run.
 
 ## Preconditions
 
@@ -45,7 +45,7 @@ approval. Stop with `BLOCKED` if any precondition is missing.
    slice is green. Behavior and appearance then carry separate evidence and
    separate checkpoints inside one flow.
 8. Run targeted tests, typecheck and build.
-   Leave manual browser-flow and Maui-WebView verification to `verify-flow`.
+   Leave manual browser-flow and Maui-WebView verification to `flow-verify`.
    When the migrated slice is a partial Angular mount nested inside a
    retained React parent, at least one authored or updated automated UI test
    must render it through that real parent component tree, not only as a
@@ -85,8 +85,8 @@ as migration-pass evidence.
 typecheck and build commands plus `verify-checkpoint.mjs` invocations, and
 nothing else. The validator rejects any other entry, including free-text ones
 like `Manual browser flow` or `Manual Maui-WebView smoke`. The boundary is
-that `migrate-flow` runs checks as a gate on its own work — may I checkpoint,
-may I call this `completed` — while `verify-flow` owns evidence and the
+that `flow-migrate` runs checks as a gate on its own work — may I checkpoint,
+may I call this `completed` — while `flow-verify` owns evidence and the
 verdict. Keep each `summary` to what ran and whether it passed; a summary that
 says what a green command proves about a contract scenario is a verification
 claim made in the wrong artifact.
@@ -111,10 +111,10 @@ Detect the message convention from repository history and use the approved
 external reference. Record commit SHA, subject, paths and validation summary.
 Attach checkpoint milestones to the stakeholder-readable implementation Task;
 do not create one Task per commit or calculate progress from commit count. Do
-not create empty commits. `migrate-flow` never pushes.
+not create empty commits. `flow-migrate` never pushes.
 
 Failures returned by independent verification are not a new normal migration
-attempt. `verify-flow` writes a debug handoff and a fresh `debug-flow` agent
+attempt. `flow-verify` writes a debug handoff and a fresh `flow-debug` agent
 owns bounded repair. A changed contract or expanded scope returns to
 `flow-baseline`.
 

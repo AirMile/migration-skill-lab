@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
-skill: migrate-flow
+skill: flow-migrate
 targetVersion: 0.9.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `migrate-flow` v0.9.0 acceptance criteria
+# `flow-migrate` v0.9.0 acceptance criteria
 
 ## Hard gates
 
@@ -43,7 +43,7 @@ The source is acceptable when:
 4. it produces a schema-valid migration result;
 5. it records unresolved Angular conventions as limitations instead of
    presenting them as approved standards;
-6. it hands failure diagnosis to `verify-flow` rather than self-certifying.
+6. it hands failure diagnosis to `flow-verify` rather than self-certifying.
 7. it does not confuse product validation failures or missing conventions with
    skill-improvement evidence;
 8. observation capture cannot change a completed, failed or blocked migration
@@ -55,9 +55,9 @@ The source is acceptable when:
 11. checkpoint SHA, subject, paths and validation evidence are recorded;
 12. it never updates Targetprocess or treats copy-ready progress as applied.
 13. it never equates commit count with progress or creates one Task per commit.
-14. repair attempts from verification belong to `debug-flow`, not this skill.
+14. repair attempts from verification belong to `flow-debug`, not this skill.
 15. it leaves manual browser-flow and Maui-WebView scenario verification to a
-    fresh independent `verify-flow` chat.
+    fresh independent `flow-verify` chat.
 16. it ends by offering that fresh chat through one focused user question and
     never starts a verifier subagent.
 17. it does not replace, hide or early-return from a parent React form while
@@ -83,3 +83,9 @@ The source is acceptable when:
     browser-flow or host entry recorded there is rejected.
 25. each validation `summary` states what ran and whether it passed, and never
     claims what a green command proves about a contract scenario.
+26. it reads a file once at the range it needs, repeats no near-identical
+    search, and reads no schema or script source in place of running the
+    validator;
+27. observation capture evaluates the countable checks against this run's own
+    tool history, and an empty list means every check was evaluated and none
+    fired rather than that none was looked for.

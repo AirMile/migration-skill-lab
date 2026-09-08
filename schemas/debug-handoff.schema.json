@@ -21,7 +21,7 @@
   "properties": {
     "schemaVersion": { "enum": [1, 2] },
     "artifactType": { "const": "debug-handoff" },
-    "skill": { "const": "verify-flow" },
+    "skill": { "enum": ["flow-verify", "verify-flow"] },
     "skillVersion": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"

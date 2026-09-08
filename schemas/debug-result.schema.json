@@ -26,7 +26,7 @@
   "properties": {
     "schemaVersion": { "const": 1 },
     "artifactType": { "const": "debug-result" },
-    "skill": { "const": "debug-flow" },
+    "skill": { "enum": ["flow-debug", "debug-flow"] },
     "skillVersion": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$"

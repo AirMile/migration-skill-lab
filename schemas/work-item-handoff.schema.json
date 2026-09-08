@@ -22,7 +22,7 @@
     "openQuestions"
   ],
   "properties": {
-    "schemaVersion": { "const": 3 },
+    "schemaVersion": { "enum": [3, 4] },
     "artifactType": { "const": "work-item-handoff" },
     "handoffPhase": {
       "type": "string",
@@ -30,7 +30,10 @@
     },
     "skill": {
       "type": "string",
-      "enum": ["flow-baseline", "migrate-flow", "verify-flow"]
+      "enum": [
+        "flow-baseline", "flow-migrate", "flow-verify",
+        "migrate-flow", "verify-flow"
+      ]
     },
     "skillVersion": {
       "type": "string",
@@ -73,6 +76,22 @@
         "sha256": {
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "supersedes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "runId"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         }
       }
     },

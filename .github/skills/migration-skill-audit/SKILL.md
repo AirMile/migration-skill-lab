@@ -7,7 +7,7 @@ description: Audit observed execution evidence for one migration flow skill and 
 
 Skill version: `0.1.0`.
 
-Audit one of `flow-baseline`, `migrate-flow`, `debug-flow` or `verify-flow` independently of
+Audit one of `flow-baseline`, `flow-migrate`, `flow-debug` or `flow-verify` independently of
 its active run. Use persisted observations and the complete source surface to
 find evidence-backed improvements. Never infer that audit approval authorizes
 product writes, publication or unrelated skill changes.

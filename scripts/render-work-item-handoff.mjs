@@ -41,7 +41,23 @@ const readSnapshot = async snapshotPath => {
 const renderBullets = values =>
   values.map(value => `- ${value}`).join("\n");
 
-const renderEpic = epic => `## Epic
+// An unchanged item is identified, not restated. Re-printing field text that
+// nobody may copy invites a reader to diff prose that did not move.
+const renderUnchanged = (heading, item) => `## ${heading}
+
+**Action:** ${item.action}
+**External ID:** ${item.externalId}
+**Title:** ${item.title}
+**Current state:** ${item.currentState}
+**Current board progress:** ${item.currentProgress}%
+
+Unchanged since the previous snapshot for this flow. Do not touch it in
+Targetprocess and do not re-copy its field text; read the snapshot that last
+recorded a change instead.`;
+
+const renderEpic = epic => epic.action === "no-change"
+  ? renderUnchanged("Epic", epic)
+  : `## Epic
 
 **Action:** ${epic.action}
 **External ID:** ${epic.externalId ?? "Assign after creation"}
@@ -77,7 +93,9 @@ ${epic.fields.richReleaseNotes}
 ${epic.structureComment}
 \`\`\``;
 
-const renderFeature = feature => `## Feature
+const renderFeature = feature => feature.action === "no-change"
+  ? renderUnchanged("Feature", feature)
+  : `## Feature
 
 **Action:** ${feature.action}
 **External ID:** ${feature.externalId ?? "Assign after creation"}
@@ -141,7 +159,15 @@ ${renderBullets(task.evidence)}
 
 ${task.blockers.length > 0 ? renderBullets(task.blockers) : "- None."}`;
 
-const renderStory = (story, index) => `## User Story ${index + 1}
+// A no-change Story still renders its Tasks: Task progress is what moves the
+// Story, so the Tasks can change while the Story text does not.
+const renderStory = (story, index) => story.action === "no-change"
+  ? `${renderUnchanged(`User Story ${index + 1}`, story)}
+
+### Tasks
+
+${story.tasks.map(renderTask).join("\n\n")}`
+  : `## User Story ${index + 1}
 
 **Action:** ${story.action}
 **External ID:** ${story.externalId ?? "Assign after creation"}
@@ -365,6 +391,12 @@ const renderInline = (snapshot, previousSnapshot) => {
       (repeated ? createdRepeat : created).push(entry);
       continue;
     }
+    // A declared no-change never prints its field text, with or without a
+    // --since snapshot. The validator already proves the declaration is honest.
+    if (entry.item.action === "no-change") {
+      unchanged.push(entry);
+      continue;
+    }
     if (!previousEntry) {
       changed.push({ entry, fields: itemFields(entry) });
       continue;
@@ -579,6 +611,60 @@ const runSelfTest = async () => {
         `Inline renderer self-test is missing ${JSON.stringify(text)} for a first-phase snapshot.`,
       );
     }
+  }
+
+  const unchangedSnapshot = structuredClone(verificationSnapshot);
+  unchangedSnapshot.epic.action = "no-change";
+  unchangedSnapshot.feature.action = "no-change";
+  const unchangedFull = renderSnapshot(unchangedSnapshot);
+
+  for (const text of [
+    unchangedSnapshot.epic.fields.whyMatters,
+    unchangedSnapshot.epic.fields.desiredOutcome,
+    unchangedSnapshot.feature.fields.whyMatters,
+    unchangedSnapshot.epic.structureComment,
+  ]) {
+    if (unchangedFull.includes(text)) {
+      throw new Error(
+        "Renderer self-test restated the field text of a no-change item.",
+      );
+    }
+  }
+  if (!unchangedFull.includes("Unchanged since the previous snapshot")) {
+    throw new Error(
+      "Renderer self-test is missing the no-change identification block.",
+    );
+  }
+  if (!unchangedFull.includes(unchangedSnapshot.stories[0].fields.userValue)) {
+    throw new Error(
+      "Renderer self-test collapsed a Story that is not marked no-change.",
+    );
+  }
+  if (unchangedFull.length >= renderSnapshot(verificationSnapshot).length) {
+    throw new Error(
+      "Renderer self-test produced no reduction for no-change items.",
+    );
+  }
+
+  const unchangedStory = structuredClone(unchangedSnapshot);
+  unchangedStory.stories[0].action = "no-change";
+  const unchangedStoryFull = renderSnapshot(unchangedStory);
+  if (unchangedStoryFull.includes(unchangedStory.stories[0].fields.userValue)) {
+    throw new Error(
+      "Renderer self-test restated the field text of a no-change Story.",
+    );
+  }
+  if (!unchangedStoryFull.includes(unchangedStory.stories[0].tasks[0].title)) {
+    throw new Error(
+      "Renderer self-test dropped the Tasks of a no-change Story.",
+    );
+  }
+
+  const unchangedInline = renderInline(unchangedSnapshot, migrationSnapshot);
+  if (unchangedInline.includes(unchangedSnapshot.epic.fields.whyMatters)) {
+    throw new Error(
+      "Inline renderer self-test restated the field text of a no-change item.",
+    );
   }
 
   console.log("Work-item renderer self-test passed.");

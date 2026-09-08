@@ -1,9 +1,13 @@
 ---
-name: migrate-flow
-description: Migrate one explicitly approved React-to-Angular flow within a declared product write scope, using a versioned Flow Contract. Use only with /migrate-flow.
+name: flow-migrate
+description: Migrate one explicitly approved React-to-Angular flow within a declared product write scope, using a versioned Flow Contract. Use only with /flow-migrate.
 ---
 
-# Migrate Flow
+# Flow Migrate
+
+Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
+`/flow-debug` as the repair loop back into a fresh `/flow-verify`.
+This skill is the second stage and the only one that writes product code.
 
 Skill version: `0.9.0`.
 
@@ -68,7 +72,7 @@ provisional convention as an approved Lely standard.
 7. Add Angular tests for the same behavior and run the declared targeted test,
    typecheck and build commands.
    Do not execute, solicit or record the contract's manual browser flow or
-   Maui-WebView smoke as migration verification; `verify-flow` owns that
+   Maui-WebView smoke as migration verification; `flow-verify` owns that
    independent evidence. The validator enforces this: `migration-result`
    `validation` may contain only the contract's declared test, typecheck and
    build commands plus `verify-checkpoint.mjs` invocations. A free-text entry
@@ -127,6 +131,14 @@ provisional convention as an approved Lely standard.
     `previousApplication`, including the external IDs Targetprocess assigned to
     any created item in `createdExternalIds`; never modify the baseline
     snapshot.
+    Copy each unchanged `fields` value from the baseline handoff byte for byte
+    and mark that item `no-change`. Rewording settled text forces `update`,
+    re-emits the whole item and asks a reader to re-review something this phase
+    did not touch; the validator rejects both a no-op `update` and a
+    `no-change` that hides a real change. Implementation normally moves the
+    Story and its implementation Task, not the Epic or Feature.
+    `richReleaseNotes` describes what changed about its own item, not what this
+    run did in general, so do not refresh it on an item this phase left alone.
 14. Update the implementation Task with the validated checkpoint milestones
    and actual completed work. Recalculate User Story progress from all Task
    contributions; never equate commit count with progress.
@@ -134,7 +146,7 @@ provisional convention as an approved Lely standard.
    step, blockers and the same calculated User Story progress.
 16. Record the final worktree status. Do not merge, push, publish or update the
    skill.
-17. End with one focused user question offering a fresh `/verify-flow` chat
+17. End with one focused user question offering a fresh `/flow-verify` chat
    with only the declared artifact paths and product root. Do not spawn a
    verifier subagent or perform verification in this chat.
 
@@ -161,9 +173,9 @@ Never:
   explicit confirmation.
 - create one Task per checkpoint commit or report progress that is not derived
   from the Task contribution model.
-- repair failures returned by `verify-flow`; those belong to `debug-flow`.
+- repair failures returned by `flow-verify`; those belong to `flow-debug`.
 - treat browser-flow or Maui-WebView confirmation as independent verification;
-  preserve those scenarios for the fresh `verify-flow` chat.
+  preserve those scenarios for the fresh `flow-verify` chat.
 - replace a parent React form unless every one of its rendered children is
   explicitly marked `migrate` in the approved rendered-surface inventory.
 
@@ -173,12 +185,30 @@ Never:
 validation outcomes, checkpoint evidence, coverage status, rollback
 instructions and limitations. `work-item-migration.json` contains the
 copy/paste Epic/Feature/Story/Task and standup progress update. Use
-`completed`, `failed` or `blocked` honestly. `verify-flow` consumes both
+`completed`, `failed` or `blocked` honestly. `flow-verify` consumes both
 artifacts and must not rely on earlier chat context.
 
 After writing the handoff, ask the user whether to open the fresh
-`/verify-flow` chat. A declined handoff is recorded as pending verification,
+`/flow-verify` chat. A declined handoff is recorded as pending verification,
 not as a verified migration.
+
+## Reading discipline
+
+Context is a budget this run spends once, and every re-read of the same bytes
+is paid again for nothing.
+
+- Read a file once, at the range you need. Return to it only for a range you
+  have not read; never re-read it whole after reading part of it, and never
+  request a range overlapping one you already hold.
+- Widen or narrow a search rather than repeating it. Two patterns that differ
+  only in alternation, wording or case return mostly the same hits, so the
+  second one buys nothing.
+- Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
+  Copy the shape from `examples\handoff\`, write the artifact, run
+  `validate-handoff.mjs` and act on its errors; the validator names what is
+  missing far more cheaply than a schema read does.
+- Resolve a module path before reading it. A directory may be a barrel or a
+  single file, so check which exists instead of guessing and failing.
 
 ## Post-run observation capture
 
@@ -191,16 +221,37 @@ reprioritize the migration workflow to analyze these signals.
 After `migration-result.json` is complete, or after the final `BLOCKED` or
 failed response when that artifact cannot be produced:
 
-1. Exclude product defects, expected precondition blockers, missing Angular
-   conventions themselves, executor noise, preferences and static speculation.
-2. Deduplicate semantically equivalent signals from this run and preserve their
+1. Evaluate this run's own tool history against these checks and record every
+   one that fired. They are countable, so answer them from the history rather
+   than from impression:
+   - the same file read more than twice, or re-read over a range already
+     held: `unnecessary-context-load`;
+   - two or more searches whose patterns differ only in alternation, wording
+     or case: `unnecessary-context-load`;
+   - a schema, validator or renderer source read instead of running the
+     command: `unnecessary-context-load`;
+   - a tool call that failed because this skill named a path, command or flag
+     that does not exist or does not behave as written:
+     `skill-caused-tool-failure`;
+   - a step performed by hand that a script in `scripts\` already performs:
+     `deterministic-step-candidate`;
+   - a user correction, a restated instruction, or the same question asked
+     twice: `user-correction` or `ambiguous-instruction`;
+   - an artifact that needed a repair pass before it validated:
+     `output-mismatch`.
+2. Exclude product defects, expected precondition blockers, missing Angular
+   conventions themselves, preferences and static speculation. Executor noise
+   means a host or transport failure unrelated to this skill; a tool call this
+   skill's own wording caused is never executor noise.
+3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-3. Write `<run-artifact-directory>\skill-run-observations.json`, including an
-   empty `observations` list when no signal qualifies.
-4. Validate it with
+4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
+   `observations` list is a claim that every check in step 1 was evaluated and
+   none fired; write it only when that is true.
+5. Validate it with
    `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<skill-run-observations.json>"`.
-5. Report a capture or validation failure separately without changing the
+6. Report a capture or validation failure separately without changing the
    primary migration result.
 
 The artifact is evidence for a later `migration-skill-audit`, not a change
