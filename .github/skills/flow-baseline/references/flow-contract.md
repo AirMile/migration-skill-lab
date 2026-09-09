@@ -49,7 +49,10 @@ descriptions only. Do not copy application source into JSON.
 Populate:
 
 - `repository` with the inspected root and revision;
-- `scope` with non-empty included paths and an explicit write allowlist;
+- `scope` with non-empty included paths and an explicit write allowlist. Every
+  path in that allowlist has been checked for consumers outside this flow, and
+  it contains a location for the new Angular code; a design with nowhere to land
+  cannot be implemented;
 - `renderedSurfaceInventory` with one entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded` and cited;
@@ -67,11 +70,18 @@ Populate:
   The approved successor artifact records the approver role, date and concise
   `approvedDecisions`; it does not rewrite the draft baseline.
 - `workItemContext` with the existing Epic, Feature and selected User Story
-  IDs;
-- `checkpointPolicy` with `disabled` until a human approves `auto-local`, the
-  exact branch, external reference, milestone IDs and post-PASS push policy.
+  IDs. Omit the ones that do not exist on the board yet; the matching work-item
+  entries then use `create` and the standup omits `storyExternalId`. A
+  placeholder ID reads like a real Targetprocess reference and is worse than an
+  honest proposal;
+- `checkpointPolicy` with `disabled` until a human approves `auto-local`, which
+  the validator refuses unless the contract is already approved. Only `mode` and
+  `pushPolicy` are required in a draft; `expectedBranch` and `externalRef`
+  become required on approval and `milestones` only for `auto-local`. Leave an
+  unassigned value absent rather than filling it with a placeholder.
   `authorizedByRole` and `authorizedAt` are present only for `auto-local`;
-- `validationPlan` with targeted tests, typecheck, build, an exact browser
+- `validationPlan` with targeted tests that terminate, typecheck, build, an
+  exact browser
   command and required manual host validation. Drafts may leave owner/command fields absent,
   but approval may not;
 - `rollback` with concrete scope-preserving instructions.

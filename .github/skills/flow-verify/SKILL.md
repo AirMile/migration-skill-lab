@@ -196,7 +196,10 @@ is paid again for nothing.
 - Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
   Copy the shape from `examples\handoff\`, write the artifact, run
   `validate-handoff.mjs` and act on its errors; the validator names what is
-  missing far more cheaply than a schema read does.
+  missing far more cheaply than a schema read does. When an error names a rule
+  but not the fix, and one more attempt does not resolve it, reading the rule in
+  `scripts\validate-handoff.mjs` is the cheaper route: record it as an
+  observation so the message gets improved instead of the next run guessing too.
 - Resolve a module path before reading it. A directory may be a barrel or a
   single file, so check which exists instead of guessing and failing.
 

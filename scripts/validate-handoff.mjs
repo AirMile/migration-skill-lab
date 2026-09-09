@@ -195,6 +195,28 @@ const validateArtifactRules = (value, errors) => {
       );
     }
 
+    // A draft states what it knows. Forcing a branch, board reference and
+    // milestone list before any of them exist only produces placeholders that
+    // read like real values.
+    if (checkpointPolicy.mode === "auto-local" &&
+      !checkpointPolicy.milestones?.length) {
+      errors.push(
+        "$.checkpointPolicy.milestones is required for auto-local mode.",
+      );
+    }
+    if (value.status === "approved") {
+      if (!checkpointPolicy.expectedBranch) {
+        errors.push(
+          "$.checkpointPolicy.expectedBranch is required for an approved contract.",
+        );
+      }
+      if (!checkpointPolicy.externalRef) {
+        errors.push(
+          "$.checkpointPolicy.externalRef is required for an approved contract.",
+        );
+      }
+    }
+
     if (value.status === "approved" || approval.status === "approved") {
       if (value.status !== "approved" || approval.status !== "approved") {
         errors.push("$.status and $.approval.status must both be approved.");
@@ -750,7 +772,9 @@ const validateArtifactRules = (value, errors) => {
     } else {
       if (standupStory.externalId !== value.standup.storyExternalId) {
         errors.push(
-          "$.standup.storyExternalId must match the selected story externalId.",
+          standupStory.action === "create"
+            ? "$.standup.storyExternalId must be omitted while its Story is still a create proposal."
+            : `$.standup.storyExternalId ${JSON.stringify(value.standup.storyExternalId)} must match the selected story externalId ${JSON.stringify(standupStory.externalId)}.`,
         );
       }
       if (standupStory.currentProgress !==
@@ -1444,25 +1468,52 @@ const validateArtifactLinks = artifacts => {
       }
 
       if (phase === "baseline") {
-        if (handoff.value.epic.externalId !==
-          primary.value.workItemContext.epicExternalId) {
-          throw new Error(
-            "baseline work-item Epic ID does not match flow-contract context.",
-          );
-        }
-        if (handoff.value.feature.externalId !==
-          primary.value.workItemContext.featureExternalId) {
-          throw new Error(
-            "baseline work-item Feature ID does not match flow-contract context.",
-          );
-        }
-        const storyIds = handoff.value.stories.map(story => story.externalId);
-        if (storyIds.length !== primary.value.workItemContext.storyExternalIds.length ||
-          storyIds.some(storyId =>
-            !primary.value.workItemContext.storyExternalIds.includes(storyId))) {
-          throw new Error(
-            "baseline work-item Story IDs do not match flow-contract context.",
-          );
+        // An item that is not on the board yet has no ID on either side. The
+        // contract omits it and the handoff proposes a create; inventing a
+        // placeholder ID to satisfy an equality check would put a value in the
+        // artifact that reads like a real Targetprocess reference.
+        const context = primary.value.workItemContext;
+        const requireIdentity = (item, contextId, kind) => {
+          if (contextId === undefined) {
+            if (item.action !== "create") {
+              throw new Error(
+                `baseline work-item ${kind} has no ID in flow-contract workItemContext, so it must use action create (found ${item.action}); add the external ID to the contract or propose a create.`,
+              );
+            }
+            return;
+          }
+          if (item.action === "create") {
+            throw new Error(
+              `baseline work-item ${kind} proposes create while flow-contract workItemContext already names ${contextId}; remove the ID from the contract or use update.`,
+            );
+          }
+          if (item.externalId !== contextId) {
+            throw new Error(
+              `baseline work-item ${kind} ID ${item.externalId} does not match flow-contract workItemContext ${contextId}.`,
+            );
+          }
+        };
+
+        requireIdentity(handoff.value.epic, context.epicExternalId, "Epic");
+        requireIdentity(
+          handoff.value.feature,
+          context.featureExternalId,
+          "Feature",
+        );
+
+        const contextStoryIds = context.storyExternalIds;
+        if (contextStoryIds === undefined) {
+          for (const story of handoff.value.stories) {
+            requireIdentity(story, undefined, `User Story ${story.localId}`);
+          }
+        } else {
+          const storyIds = handoff.value.stories.map(story => story.externalId);
+          if (storyIds.length !== contextStoryIds.length ||
+            storyIds.some(storyId => !contextStoryIds.includes(storyId))) {
+            throw new Error(
+              `baseline work-item Story IDs ${JSON.stringify(storyIds)} do not match flow-contract workItemContext ${JSON.stringify(contextStoryIds)}.`,
+            );
+          }
         }
       }
     }
@@ -2248,6 +2299,65 @@ const runSelfTest = async () => {
     },
     "supersedes hash does not match",
     "a baseline rerun whose supersedes hash does not match the earlier baseline",
+  );
+
+  // A brand-new Epic, Feature and Story must be expressible end to end: no ID
+  // on either side, action create, and no invented standup reference.
+  const buildCreateProposal = mutate => {
+    const pair = [
+      structuredClone(contractArtifact),
+      structuredClone(baselineArtifact),
+    ];
+    const [contract, handoff] = pair;
+    delete contract.value.workItemContext.epicExternalId;
+    delete contract.value.workItemContext.featureExternalId;
+    delete contract.value.workItemContext.storyExternalIds;
+    for (const item of [handoff.value.epic, handoff.value.feature,
+      ...handoff.value.stories]) {
+      item.action = "create";
+      delete item.externalId;
+    }
+    for (const story of handoff.value.stories) {
+      delete story.parentFeatureExternalId;
+    }
+    delete handoff.value.feature.parentEpicExternalId;
+    for (const story of handoff.value.stories) {
+      for (const task of story.tasks) delete task.parentStoryExternalId;
+    }
+    delete handoff.value.standup.storyExternalId;
+    mutate(contract.value, handoff.value);
+    return pair;
+  };
+
+  validateArtifactLinks(buildCreateProposal(() => {}));
+
+  const expectCreateRejection = (mutate, expected, description) => {
+    let rejected = false;
+    try {
+      validateArtifactLinks(buildCreateProposal(mutate));
+    } catch (error) {
+      rejected = error.message.includes(expected);
+    }
+    if (!rejected) {
+      throw new Error(`Handoff validator self-test did not reject ${description}.`);
+    }
+  };
+
+  expectCreateRejection(
+    (contract) => {
+      contract.workItemContext.epicExternalId = "700100";
+    },
+    "proposes create while flow-contract workItemContext already names 700100",
+    "a create proposal for an Epic the contract already identifies",
+  );
+
+  expectCreateRejection(
+    (contract, handoff) => {
+      handoff.epic.action = "update";
+      handoff.epic.externalId = "700100";
+    },
+    "has no ID in flow-contract workItemContext, so it must use action create",
+    "an update for an Epic the contract does not identify",
   );
 
   const structuralRerun = buildRerun(() => {})[2].value;

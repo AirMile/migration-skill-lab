@@ -346,7 +346,7 @@
     "workItemContext": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["epicExternalId", "featureExternalId", "storyExternalIds"],
+      "required": [],
       "properties": {
         "epicExternalId": {
           "type": "string",
@@ -372,10 +372,7 @@
       "additionalProperties": false,
       "required": [
         "mode",
-        "expectedBranch",
-        "externalRef",
-        "pushPolicy",
-        "milestones"
+        "pushPolicy"
       ],
       "properties": {
         "mode": {

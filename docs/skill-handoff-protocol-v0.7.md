@@ -67,6 +67,13 @@ branch, external reference and write allowlist. It does not authorize push.
 `flow-verify` may offer one push only after overall `PASS`, passed required
 host validation and a visible remote/branch/commit summary.
 
+A draft states only what is assigned. `checkpointPolicy` carries `mode` and
+`pushPolicy`; its branch, external reference and milestones become required on
+approval and for `auto-local`. An Epic, Feature or Story that is not on the
+board yet is omitted from `workItemContext` and proposed with `create`. A
+placeholder that satisfies a required field while naming something that does not
+exist is never acceptable, because a validated artifact is read as fact.
+
 Draft baseline artifacts are immutable historical evidence. Human approval
 creates a separate approved contract and matching baseline handoff; it does not
 erase historical pending/open wording. The approved contract records the
@@ -78,10 +85,12 @@ The checkpoint renders scope, partial mount, the rendered-surface inventory,
 the proposed target architecture, scenario summaries, required characterization,
 visual-parity surfaces, write allowlist, validation commands, rollback,
 checkpoint policy, decisions and open questions from the validated contract, and
-accepts approve, reject or a question. It is the review surface that replaced
-the baseline report, so it carries what a reader could disagree with and cites
-the rest. A
-blocking open question is resolved before approval is offered. Only after the
+accepts approve, a change request, reject or a question. It is the review
+surface that replaced the baseline report, so it carries what a reader could
+disagree with and cites the rest. A change request produces a successor draft
+pair beside the existing one; earlier drafts are never edited, because a review
+that found real defects is part of the record. A blocking open question is
+resolved before approval is offered. Only after the
 approved pair validates does the run offer one continuation the user picks: a
 fresh `flow-migrate` chat opened now, the invocation shown for pasting, or the
 invocation saved in the run directory.
@@ -137,7 +146,8 @@ is complete. This sidecar:
 
 - is validated independently against
   `schemas\skill-run-observations.schema.json`;
-- may contain an empty observation list;
+- may contain an empty observation list, which asserts that every countable
+  check was evaluated and none fired;
 - records skill-execution evidence, not product findings;
 - cannot change a Flow Contract, migration result or verification status;
 - is consumed only by a later `migration-skill-audit`;

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.9.0
+targetVersion: 0.10.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.9.0 acceptance criteria
+# `flow-baseline` v0.10.0 acceptance criteria
 
 ## Hard gates
 
@@ -130,3 +130,17 @@ The source is acceptable when:
     than being re-elicited from the user;
 36. confirmed current behavior is cited, not restated, so the contract cannot
     silently disagree with the source it describes.
+37. every validation command it records terminates; a watch-mode script is
+    never recorded as a test command;
+38. `scope.allowedWritePaths` contains a location for the new Angular code, and
+    every existing path in it was checked for consumers outside this flow;
+39. an item that is not on the board uses `create` with no external ID on
+    either side, and no placeholder ID is ever written;
+40. `checkpointPolicy` records only what is assigned: a draft carries `mode`
+    and `pushPolicy`, and never a placeholder branch, reference or milestone;
+41. every question it asks has answerable options, and it offers no route the
+    validator rejects, no command the safety boundary forbids and no value the
+    run can derive;
+42. the approval checkpoint offers a change request as well as approve, reject
+    and ask, and a change request produces a successor draft rather than an
+    edit to the existing one.
