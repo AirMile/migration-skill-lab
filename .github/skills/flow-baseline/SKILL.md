@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.10.0`.
+Skill version: `0.11.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -124,9 +124,21 @@ the reader's.
    contract it is simply lost, and `flow-migrate` asks a human to invent it a
    second time. Keep `targetArchitecture.status` at `proposed` until a human
    approves the contract.
+   Read the product's dependency manifest before filling in
+   `dependencyChanges`, and cite it. When the target framework is absent there,
+   `required` is `true` and the manifest, lockfile, build-config and TypeScript
+   paths belong in `paths`; a first slice cannot mount a framework the product
+   does not have. Never write `required: false` on the assumption that earlier
+   slices already added it: that is a claim about the codebase, and an unchecked
+   claim here hides the largest approval the migration needs.
    Capture observable visual parity (including layout insets, spacing, input
    containment and a reference screenshot when available). Mark every
    unapproved choice as proposed or open.
+   Check whether the product already has a component-rendering harness, such as
+   Storybook or an existing end-to-end runner, and name it in
+   `validationPlan.browserValidation` when it does. An existing harness needs no
+   owner, no tooling decision and no approval, so proposing an unassigned browser
+   runner beside one is a gap this skill created rather than found.
    A partial Angular mount may replace only inventory items marked `migrate`;
    it must remain inside the existing parent form when siblings are marked
    `retain-react`. Record that shape in the contract as

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.10.0
+targetVersion: 0.11.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.10.0 acceptance criteria
+# `flow-baseline` v0.11.0 acceptance criteria
 
 ## Hard gates
 
@@ -144,3 +144,8 @@ The source is acceptable when:
 42. the approval checkpoint offers a change request as well as approve, reject
     and ask, and a change request produces a successor draft rather than an
     edit to the existing one.
+43. `dependencyChanges` follows from the product's own dependency manifest, and
+    a missing target framework yields `required: true` with the manifest,
+    lockfile, build-config and TypeScript paths;
+44. an existing component-rendering harness is named in the validation plan
+    rather than an unassigned browser runner proposed beside it.
