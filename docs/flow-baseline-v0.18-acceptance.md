@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.17.0
+targetVersion: 0.18.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.17.0 acceptance criteria
+# `flow-baseline` v0.18.0 acceptance criteria
 
 ## Hard gates
 
@@ -219,4 +219,14 @@ The source is acceptable when:
 71. the boundary question shows the chosen candidate's write allowlist and asks
     in the same breath whether anything in it is off limits;
 72. the observation sidecar is named `skill-run-observations-flow-baseline.json`
-    so a later phase in the same run directory cannot overwrite it.
+    so a later phase in the same run directory cannot overwrite it;
+73.e continuation offers exactly three routes — open the next phase now
+    using the host's own mechanism, show the invocation to paste, or save it in
+    the run directory as a resumable checkpoint — and never opens a second
+    terminal window;
+74. a scenario names concrete values a tester can act on, never a category such
+    as "a robot with FeedPush capability" that a later phase has to resolve;
+75. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
+    computed by hand;
+76. a saved continuation prompt found in the run directory is reported in one
+    line and resumed from, not treated as a second run.

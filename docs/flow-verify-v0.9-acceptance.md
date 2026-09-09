@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.8.0
+targetVersion: 0.9.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-verify` v0.8.0 acceptance criteria
+# `flow-verify` v0.9.0 acceptance criteria
 
 ## Hard gates
 
@@ -80,4 +80,28 @@ The source is acceptable when:
     validator;
 25. observation capture evaluates the countable checks against this run's own
     tool history, and an empty list means every check was evaluated and none
-    fired rather than that none was looked for.
+    fired rather than that none was looked for;
+26. it conducts the manual validation instead of asking whether someone has
+    performed it; there is no owner to look for, and the person in the chat is
+    the tester;
+27. a walkthrough step names the control — the button, the field by its visible
+    label, the menu path, the keystroke — and never only the outcome, and never
+    a control the source does not contain;
+28. the expected result is stated verbatim inside the question, because a modal
+    covers the chat the moment it opens;
+29. items are named by their contract `visualParityId` and `surface` text, never
+    by invented shorthand;
+30. one verdict per item is recorded before moving on, a verdict never comes
+    from inference, and an item that already carries one is not asked again;
+31. it writes no prose report: `verification-result.json` is canonical and the
+    summary is inline;
+32. the visual verdict is assigned here, from the manual evidence, not carried
+    over from the migration result;
+33.e continuation offers exactly three routes — open the next phase now
+    using the host's own mechanism, show the invocation to paste, or save it in
+    the run directory as a resumable checkpoint — and never opens a second
+    terminal window;
+34. the applied/not-applied question is a confirmation of what the migration
+    handoff already recorded, not an open question asked afresh;
+35. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
+    computed by hand.

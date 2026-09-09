@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.17.0`.
+Skill version: `0.18.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -48,6 +48,11 @@ Confirm before deep analysis:
 - the manual verification scenarios and the rollback. Verification is manual:
   do not propose browser automation, a runner, or an owner to assign it to.
   The environment is not an input; it is a project constant, read below.
+
+A run directory may already hold a `<flowId>-<skill>-prompt.md` saved by an
+earlier phase that chose to continue later. Say in one line that you found it
+and are resuming from it. It is a checkpoint, not a second run: the artifacts
+it points at are the inputs, exactly as if the phases had run back to back.
 
 Read `<migration-skill-lab-root>\docs\project-constants.md` before the survey. It
 carries the facts that do not change per flow, and every one of them was once a
@@ -258,6 +263,11 @@ the reader's.
    Record a resolved conflict between sources as a `decisions` entry with its
    `topic`, `decision`, `rationale` and any `followUp`. An open conflict stays
    an open question instead.
+   A scenario names concrete values, never categories. "A robot with FeedPush
+   capability" is not something a tester can select; resolve it in the source
+   registry and name the type. `flow-verify` builds a click-by-click
+   walkthrough from these scenarios, and every category it finds there is a
+   lookup it has to repeat or a question it has to ask.
 8. When current behavior differs from a plausible improvement, do not choose
    silently. Ask one focused product question with these routes:
    - preserve current behavior for migration;
@@ -269,9 +279,11 @@ the reader's.
    with `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<flow-contract.json>"`. Write no analysis report, and no other file in
    the product repository or the notes vault.
-   Copy each block's shape from `examples\handoff\` before writing it. Every field
-   this skill names in prose has an exact shape there, and the last two runs
-   each spent a repair pass discovering one of them from a validator error.
+   Copy each block's shape from `examples\handoff\detail-drawer-line-edit\` before
+   writing it. That chain is a real run that passed end to end, at the
+   versions in force now, so every field this skill names in prose has an
+   exact shape there. Runs that skipped it each spent a repair pass
+   rediscovering one from a validator error.
 10. The contract is final when you write it. schemaVersion 6 has no `status`,
    no `approval` and no `targetArchitecture.status`, and the validator rejects
    them; there is no draft state and no approval gate to wait for. What bounds
@@ -332,6 +344,10 @@ the reader's.
    whole item and asks a reader to re-review something that did not move. Use
    `update` only for an item whose content, proposed state or proposed progress
    actually moved, and say in `evidence` what moved it. Record the earlier
+   Get every `path` and `sha256` pointer from
+   `node "<migration-skill-lab-root>\scripts\hash-artifact.mjs" <file>...`,
+   which prints the block to copy. Computing digests by hand and retyping the
+   hex is a step this repository already scripts.
    snapshot in `supersedes` with its path, sha256 and `runId`, and set
    `schemaVersion` 4 when you do; the validator then rejects both a no-op
    `update` and a `no-change` that hides a real change. A first baseline for a
@@ -410,21 +426,24 @@ the reader's.
    is. Their content and validation do not change; only their position in the
    run does. A skill cannot set the session mode: never enter or leave plan mode
    on the user's behalf.
-18. Ask which continuation the user wants and perform only the chosen one:
-   open a fresh interactive `/flow-migrate` chat now, show the invocation here
-   for the user to paste into a chat they open themselves, or save it in the
-   run directory for later. All three routes carry the same invocation,
-   built from the contract path, the work-item handoff path,
-   the migration-skill-lab root, the product root and the run directory; see
+18. Ask which continuation the user wants. All three routes carry the same
+   invocation, built from the contract path, the work-item handoff path, the
+   migration-skill-lab root, the product root and the run directory; see
    `references/flow-contract.md`.
-   A fresh chat is `/new` in this same CLI, followed by the invocation. A skill
-   cannot type a slash command on the user's behalf any more than it can enter
-   plan mode, so the first route is "run `/new`, then paste this" and not a
-   launch that promises what it cannot perform. Do not open a second terminal
-   window for it.
-   Never continue the migration in this chat and never delegate it to a
-   background agent, which cannot ask the user the questions `flow-migrate`
-   needs answered.
+   Offer exactly three routes and perform only the chosen one:
+   1. open a fresh chat for `/flow-migrate` now, carrying only the artifact paths
+      and the product root. Use whatever mechanism this host has for opening a
+      chat; never start a second terminal window for it;
+   2. show the invocation here for the user to paste into a chat they open
+      themselves;
+   3. stop here and save the invocation in the run directory as
+      `<flowId>-<next-skill>-prompt.md`.
+   Route 3 is a checkpoint, not an abandonment, and say so when you offer it:
+   every phase reads its inputs from the artifacts and never from this chat, so
+   the saved invocation still runs correctly days later.
+   Never continue the next phase in this chat, and never delegate it to a
+   background agent, which cannot ask the user the questions it needs
+   answered.
 
 ## Safety boundary
 
@@ -506,7 +525,7 @@ is paid again for nothing.
   only in alternation, wording or case return mostly the same hits, so the
   second one buys nothing.
 - Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
-  Copy the shape from `examples\handoff\`, write the artifact, run
+  Copy the shape from `examples\handoff\detail-drawer-line-edit\`, write the artifact, run
   `validate-handoff.mjs` and act on its errors; the validator names what is
   missing far more cheaply than a schema read does. When an error names a rule
   but not the fix, and one more attempt does not resolve it, reading the rule in
@@ -554,7 +573,7 @@ final `BLOCKED` or failed response when those artifacts cannot be produced:
    filename carries the skill because phases of one flow share a run directory,
    and a bare `skill-run-observations.json` means the second skill to finish
    silently overwrites the first one's evidence.
-   Copy the shape from `examples\handoff\` rather than writing it from this
+   Copy the shape from `examples\handoff\detail-drawer-line-edit\` rather than writing it from this
    description: an entry needs `id`, `category`, `observation`, `effect`,
    `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
    `primaryOutcome.status` is `draft`, `failed` or `blocked` for this skill and never `completed`. An empty

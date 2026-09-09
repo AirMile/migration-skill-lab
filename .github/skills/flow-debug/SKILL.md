@@ -163,7 +163,7 @@ is paid again for nothing.
   only in alternation, wording or case return mostly the same hits, so the
   second one buys nothing.
 - Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
-  Copy the shape from `examples\handoff\`, write the artifact, run
+  Copy the shape from `examples\handoff\detail-drawer-line-edit\`, write the artifact, run
   `validate-handoff.mjs` and act on its errors; the validator names what is
   missing far more cheaply than a schema read does. When an error names a rule
   but not the fix, and one more attempt does not resolve it, reading the rule in
@@ -212,7 +212,7 @@ produced:
    filename carries the skill because phases of one flow share a run directory,
    and a bare `skill-run-observations.json` means the second skill to finish
    silently overwrites the first one's evidence.
-   Copy the shape from `examples\handoff\` rather than writing it from this
+   Copy the shape from `examples\handoff\detail-drawer-line-edit\` rather than writing it from this
    description: an entry needs `id`, `category`, `observation`, `effect`,
    `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
    `primaryOutcome.status` is `repaired`, `blocked` or `parked` for this skill.

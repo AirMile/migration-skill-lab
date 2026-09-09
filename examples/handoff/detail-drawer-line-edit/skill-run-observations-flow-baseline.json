@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "skill-run-observations",
+  "skill": "flow-baseline",
+  "skillVersion": "0.17.0",
+  "runId": "detail-drawer-line-edit-baseline-1",
+  "flowId": "detail-drawer-line-edit",
+  "capturedAt": "2026-09-09T16:00:00Z",
+  "primaryOutcome": {
+    "status": "draft",
+    "summary": "The Flow Contract and work-item baseline were written and both validated on the first attempt.",
+    "artifactPath": "runs\\2026-09-09-detail-drawer-line-edit-baseline-1\\flow-contract.json",
+    "sha256": "c8b3533d34279b797a3cdf0f69523b94184d8d9e5cb563c7d898e01be46b3996"
+  },
+  "observations": [
+    {
+      "id": "stale-example-forced-schema-read",
+      "category": "unnecessary-context-load",
+      "observation": "The only available flow-contract example (examples\\handoff\\demo-line-drawer\\flow-contract.json) is schemaVersion 4 and still carries removed fields (status, approval, targetArchitecture.status, includedPaths/excludedPaths), while this run had to write schemaVersion 6, which forbids all of those and requires renderedSurfaceInventory/targetArchitecture/decisions/characterizationRequired that the example does not model at all. Copying the example's shape as instructed would have produced a contract the validator was certain to reject, so both schemas/flow-contract.schema.json and schemas/work-item-handoff.schema.json were read directly (three view calls each) to learn the current required properties before writing.",
+      "effect": "cost",
+      "evidence": [
+        "examples\\handoff\\demo-line-drawer\\flow-contract.json declares \"schemaVersion\": 4 and includes \"status\", \"approval\" and \"includedPaths\"/\"excludedPaths\", none of which schemaVersion 6 permits.",
+        "schemas\\flow-contract.schema.json required[] lists renderedSurfaceInventory-adjacent fields (targetArchitecture, decisions, characterizationRequired) that have no counterpart in the example file."
+      ],
+      "skillLocations": [
+        "SKILL.md reading discipline: \"Do not read schemas\\ or scripts\\ source to learn an artifact's shape. Copy the shape from examples\\handoff\\...\"",
+        "SKILL.md workflow step 9: \"Copy each block's shape from examples\\handoff\\ before writing it.\""
+      ],
+      "causality": "inferred",
+      "occurrenceCount": 2
+    }
+  ]
+}

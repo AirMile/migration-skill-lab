@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 4,
+  "artifactType": "verification-result",
+  "skill": "flow-verify",
+  "skillVersion": "0.8.0",
+  "runId": "detail-drawer-line-edit-verification-1",
+  "flowId": "detail-drawer-line-edit",
+  "verificationAttempt": 1,
+  "status": "PASS",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-line-edit\\flow-contract.json",
+    "sha256": "4fad5dcfc0639fdbbf8baefc1d9545f9cbdb8c37d70eb46de7dd89a57005268b"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\detail-drawer-line-edit\\migration-result.json",
+    "sha256": "d552c07d0f3b9d1d10a0431e52f6526675f9147d4de39b0b26348c6cfa54fd63"
+  },
+  "criteria": [
+    {
+      "scenarioId": "valid-length-edit",
+      "status": "PASS",
+      "evidence": [
+        "Automated: LineForm.angular-line-fields.test.tsx proves the debounced Length edit calls RichLine.updateLength with the halved (map-unit) value.",
+        "Manual (Route Assistant desktop, Juno Flex robot, real selected line): entering a new Length value visibly resized the line on the map, and Ctrl+Z undid a key-driven edit."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected."
+    },
+    {
+      "scenarioId": "valid-angle-edit",
+      "status": "PASS",
+      "evidence": [
+        "Automated: LineForm.functions.test.ts (retained, unchanged) covers updateAngle's history/branching guards.",
+        "Manual (Route Assistant desktop, Juno Flex robot): entering a new Angle value visibly rotated the line on the map, and Ctrl+Z undid a key-driven edit."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected."
+    },
+    {
+      "scenarioId": "fence-offset-selection-when-capable",
+      "status": "PASS",
+      "evidence": [
+        "Automated: LineForm.angular-line-fields.test.tsx proves selecting Left updates line.fenceOffset, calls offsetLine.updateOffsetLine() once and addToHistory() once.",
+        "Manual (Route Assistant desktop, Juno Flex robot, which carries the FeedPush capability): switching None/Left/Right visibly updated the offset line on the map, and Ctrl+Z undid each selection, including a non-key-driven one, matching the always-add-history rule."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected."
+    },
+    {
+      "scenarioId": "fence-offset-value-edit",
+      "status": "PASS",
+      "evidence": [
+        "Automated: LineForm.angular-line-fields.test.tsx renders the fence-offset-value field once Left/Right is active.",
+        "Manual (Route Assistant desktop, Juno Flex robot): entering a new, valid, non-zero distance moved the offset line on the map and Ctrl+Z undid it. Entering 0 and blurring restored the previous value (e.g. 20), reproducing LineForm.tsx's existing onBlur={restoreLengthIfInvalid} wiring on this field, not a regression."
+      ],
+      "diagnosis": "Matches the agreed outcome, including the shared restore-on-blur wiring already present on this field in the retained React implementation."
+    },
+    {
+      "scenarioId": "fence-offset-hidden-when-incapable",
+      "status": "PASS",
+      "evidence": [
+        "Manual (Route Assistant desktop): after switching the active robot to Brownies (no FeedPush capability) and creating/selecting a line, the Fence offset label, selector and distance field were entirely absent from the drawer."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected."
+    },
+    {
+      "scenarioId": "done-after-edit",
+      "status": "PASS",
+      "evidence": [
+        "Manual (Route Assistant desktop, Juno Flex robot): after editing Length/Angle/Fence offset on a single selected, non-creation line, clicking Done closed the drawer with the edits applied, and undo/redo kept working afterward."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected."
+    },
+    {
+      "scenarioId": "restore-invalid-length",
+      "status": "PASS",
+      "evidence": [
+        "Automated: LineForm.angular-line-fields.test.tsx proves a key-driven edit followed by clearing and blurring the Length field calls RichLine.updateLength with the two infinitesimal nudges (50.000000000005 then 49.999999999995) that restore the prior valid length.",
+        "Manual (Route Assistant desktop, Juno Flex robot): clearing a previously valid Length value and blurring the field restored the last valid value on an already-selected line."
+      ],
+      "diagnosis": "Matches the agreed outcome; no regression detected. Note (out of scope for this scenario, disclosed in migration-result.limitations): FocusNumberInput.tsx's separate near-zero-value hiding behavior while a line is actively being drawn is not reproduced in the Angular field. Manual observation during drawing showed 0.6, which is above the 0.1 hide threshold, so this specific test did not exercise the disclosed gap; this gap is not tied to any declared scenario or characterizationRequired hypothesis and does not affect this scenario's PASS."
+    }
+  ],
+  "visualCriteria": [
+    {
+      "visualParityId": "length-field",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (Route Assistant desktop, Juno Flex robot, real selected line reached through the product's real navigation flow): the Length field's bordered box, corner radius, icon placement, label-above-value layout and trailing 'cm' unit were compared directly against the retained Coordinates X/Y fields and found matching in width, alignment and spacing."
+      ],
+      "diagnosis": "Appearance and layout match the retained sibling Coordinates fields."
+    },
+    {
+      "visualParityId": "angle-field",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (Route Assistant desktop, Juno Flex robot, real selected line): the Angle field was compared against the same retained Coordinates X/Y fields and found matching in width, alignment and spacing."
+      ],
+      "diagnosis": "Appearance and layout match the retained sibling Coordinates fields."
+    },
+    {
+      "visualParityId": "fence-offset-selector",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (Route Assistant desktop, Juno Flex robot): the None/Left/Right selector's column layout, option spacing and active/inactive radio treatment were compared against the retained sibling sections in the same drawer and found matching."
+      ],
+      "diagnosis": "Appearance and layout match the retained sibling sections."
+    },
+    {
+      "visualParityId": "fence-offset-value-field",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (Route Assistant desktop, Juno Flex robot, Left/Right selected so the field renders): compared against the retained Coordinates X/Y fields and found matching in width, alignment and spacing."
+      ],
+      "diagnosis": "Appearance and layout match the retained sibling Coordinates fields."
+    }
+  ],
+  "validation": [
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.functions.test.ts",
+      "status": "passed",
+      "summary": "Ran as part of the wider directory run 'npm run test -- run src/features/floorPlanCreator/detailDrawer/lineForm/__tests__' (3 test files, 33 tests passed): the 24 retained LineForm.functions.test.ts characterization tests passed unchanged, confirming the retained business logic (length-doubling, history suppression, line-creation-mode branching) still holds."
+    },
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/lineForm/__tests__",
+      "status": "passed",
+      "summary": "Extended, non-required run beyond the declared testCommands: 3 test files, 33 tests passed, additionally covering the new FocusNumberInput.characterization.test.tsx (focus-debounce-timing) and the new LineForm.angular-line-fields.test.tsx (real parent tree)."
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "status": "passed",
+      "summary": "Full-repository typecheck passed with no errors."
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "summary": "tsc --noEmit && vite build completed successfully; production bundle built."
+    }
+  ],
+  "coverageDelta": {
+    "status": "not-measured",
+    "summary": "Per migration-result.coverageDelta, per-flow coverage is computed by CI (npm run test:ci uploading coverage/lcov.info to the Lely-Route-Assistant-Frontend SonarQube project); this verification run did not reproduce that measurement. Coverage was not used as a substitute for scenario evidence."
+  },
+  "manualValidation": {
+    "status": "passed",
+    "summary": "The declared scenario was performed directly in the running Route Assistant desktop application (title bar showing 'localhost' and 'react mode: development' badges) by the same person acting as tester, using a real line selected/drawn through the product's real navigation flow, switching between the Juno Flex robot (has FeedPush) and Brownies (lacks FeedPush) as needed. All 7 contract scenarios and all 4 visualParity surfaces were confirmed passing; a physical robot connection was not required and its absence is not a validation gap for this flow."
+  },
+  "browserValidation": {
+    "status": "not-run",
+    "summary": "validationPlan.browserValidation.required is false and declares no scenarios for this flow; not exercised.",
+    "evidenceSource": "real-host-layout"
+  },
+  "diagnosis": [],
+  "push": {
+    "policy": "never",
+    "status": "not-requested",
+    "remote": "origin",
+    "branch": "N/A",
+    "commitShas": [],
+    "upstreamSet": false,
+    "summary": "checkpointPolicy.mode is 'disabled' and checkpointPolicy.pushPolicy is 'never' in the Flow Contract; migration-result.checkpoints is empty, so there is nothing to push. No push was performed or requested."
+  }
+}

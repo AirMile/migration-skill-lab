@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 4,
+  "artifactType": "migration-result",
+  "skill": "flow-migrate",
+  "skillVersion": "0.11.0",
+  "runId": "detail-drawer-line-edit-migration-1",
+  "flowId": "detail-drawer-line-edit",
+  "status": "completed",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-line-edit\\flow-contract.json",
+    "sha256": "4fad5dcfc0639fdbbf8baefc1d9545f9cbdb8c37d70eb46de7dd89a57005268b"
+  },
+  "repository": {
+    "root": "C:\\Project\\frontend",
+    "revisionBefore": "ab76866c89d2709fd5ed4b079b22dff80c419883",
+    "revisionAfter": "ab76866c89d2709fd5ed4b079b22dff80c419883"
+  },
+  "changedPaths": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/LineForm.tsx",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.types.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.component.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/mount-line-fields.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/AngularLineFieldsHost.tsx",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/FocusNumberInput.characterization.test.tsx",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.angular-line-fields.test.tsx"
+  ],
+  "validation": [
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.functions.test.ts",
+      "status": "passed",
+      "summary": "24 existing characterization tests for LineForm.functions.ts passed unchanged, confirming the retained business logic (length-doubling, history suppression, line-creation-mode branching) still holds."
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "status": "passed",
+      "summary": "Full-repository typecheck passed, including the new Angular slice, the React host wrapper and both new test files."
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "summary": "tsc --noEmit && vite build completed; production bundle built with the added @angular/* dependencies."
+    }
+  ],
+  "coverageDelta": {
+    "status": "not-measured",
+    "summary": "Per testGaps, per-flow coverage is computed by CI (npm run test:ci uploading coverage/lcov.info to the Lely-Route-Assistant-Frontend SonarQube project) and this run did not reproduce that measurement; npm run test:ci was not run in the product worktree since it writes non-gitignored coverage/ and junit.xml artifacts."
+  },
+  "rollback": {
+    "status": "available",
+    "instructions": "Revert only the files listed in scope.allowedWritePaths (LineForm.tsx, the new lineForm/angular directory, the new additions under lineForm/__tests__, package.json, package-lock.json and tsconfig.json) to their state at revision ab76866c89d2709fd5ed4b079b22dff80c419883. Do not revert any other detail-drawer form, FocusNumberInput.tsx, or the RadioButton family. After reverting, run npm install once to drop the @angular/* packages from node_modules."
+  },
+  "limitations": [
+    "FocusNumberInput.tsx hides near-zero values while a line is actively being drawn (Stores.lines.creating gate in valueForInput()). This is not reproduced in the Angular fields: forbiddenAccess prohibits reading Stores.lines/Stores.shapes directly, and the approved adapter inputs carry no 'creating' flag to substitute for it. Not covered by any declared scenario or characterizationRequired hypothesis; recorded here as an unresolved convention gap rather than guessed at.",
+    "componentRef.setInput() cannot be used for the adapter inputs: signal-based input() fields never receive ɵcmp.inputs metadata under this repository's pure-JIT compilation (no ngtsc/AOT build step, per docs/project-constants.md#Compilation), so componentRef.setInput() silently no-ops for every input on a manually created component (confirmed by inspecting @angular/core's compileComponent()/directiveMetadata(), which only derives 'inputs' from decorator metadata, never from input() field analysis, which normally only ngtsc performs at build time). LineFieldsComponent instead exposes a public setAdapterInputs() method backed by internal writable signals, keeping the signal-based reactive design the project conventions call for while working under JIT. This is a discovered gap in the 'always use input()/output(), never @Input()/@Output()' convention specifically for programmatically-created (non-template-declared) components; it is not a change to targetArchitecture.boundary or scope.",
+    "restoreLengthRequested is an Angular output not literally named in the contract's adapter 'events' list (lengthChanged, angleChanged, fenceOffsetChanged, fenceOffsetValueChanged). It is the wiring needed to invoke the declared 'restoreLengthIfInvalid' command from both the Length and Distance fields' blur, matching LineForm.tsx's existing onBlur={restoreLengthIfInvalid} wiring on both fields today; it carries no new business logic.",
+    "Full pixel-level visual confirmation (padding, spacing, input containment) is only measurable in the Route Assistant desktop WebView per docs/project-constants.md#Manual-verification-environment, and validationPlan.manualValidation is explicitly reserved for flow-verify. This run's renderedSurfaceComparison is based on real-parent-tree DOM structure and directly reused design tokens (EColors, theme, @lely/tokens/enums), not a rendered screenshot.",
+    "The debounce timer is implemented per field instance rather than reusing FocusNumberInput.tsx's single module-level shared timer variable; this is a deliberate, more correct implementation choice (avoids cross-field debounce collisions) and does not change any declared scenario's 300ms timing.",
+    "No checkpoint entries are recorded: checkpointPolicy.mode is 'disabled' in the Flow Contract, so no local commit was created and all changes remain as uncommitted worktree changes."
+  ],
+  "renderedSurfaceComparison": {
+    "evidenceSource": "real-parent-tree",
+    "comparedAgainst": [
+      "Detectable",
+      "Coordinates"
+    ],
+    "observations": [
+      "LineForm.angular-line-fields.test.tsx renders the real <LineForm /> component tree (not an isolated custom-element fixture) and finds the Angular-mounted host alongside every retained sibling: Selected Line label, LineRiskCard, Detectable section, MapObjectDistances/Coordinates, Done button and delete button.",
+      "The set-first-point placeholder branch, the Detectable capability gate and the Fence offset capability gate all continue to be evaluated by the retained LineForm.tsx exactly as before; only the Length/Angle/Fence offset selector/value fields moved into the Angular host node.",
+      "The Angular fields reuse the exact same design tokens as the retained components: EColors.border/text/textLight for borders and text colors, theme.radius for corner radius, theme.typography.text.sm/xs for font sizing, and the same @lely/tokens/enums values (LelyBorderColorLight.PRIMARY_DEFAULT, LelyBackgroundColorLight.BRAND_PRIMARY, LelyBorderWidth/LelyBorderRadius/LelySpacing) that RadioButtonBase.tsx and RadioButtonGroup.tsx use, rather than literal values."
+    ],
+    "surfaces": [
+      {
+        "visualParityId": "length-field",
+        "verdict": "addressed",
+        "observations": [
+          "Bordered field box uses theme.radius and EColors.border, matching HoverInput.tsx's Wrapper styling.",
+          "The StraightLine icon is the exact SVG path data copied from components/icons/StraightLine.tsx, positioned left of a label rendered above the value, with a trailing 'cm' unit inside the same field box.",
+          "The field is styled at width: 100% inside the same FormWrapper vertical rhythm as the retained Detectable and Coordinates sections, adding no extra padding on top of FormWrapper.",
+          "Pixel-exact width parity against the rendered Detectable/Coordinates siblings is only confirmable in the Route Assistant desktop WebView (docs/project-constants.md#Manual-verification-environment); this verdict is based on matching CSS declarations (width: 100%, shared tokens) and DOM structure observed via the real-parent-tree test, not a rendered screenshot."
+        ]
+      },
+      {
+        "visualParityId": "angle-field",
+        "verdict": "addressed",
+        "observations": [
+          "Same bordered field box treatment as the Length field, using the Angle icon's exact SVG path data copied from components/icons/Angle.tsx.",
+          "Label above the value, trailing '°' unit inside the same field box, same theme.radius corner radius as the retained input.",
+          "As with Length, final pixel confirmation of vertical unit centering is reserved for the manual host validation in flow-verify."
+        ]
+      },
+      {
+        "visualParityId": "fence-offset-selector",
+        "verdict": "addressed",
+        "observations": [
+          "The radio group fieldset reuses RadioButtonGroupStyled's exact rule set: 1px solid EColors.border, 4px border-radius, column direction with LelySpacing.SM gap between options, and LelySpacing.LG horizontal padding per row.",
+          "Each radio row reproduces RadioButtonBase.tsx's circle+dot structure using the same @lely/tokens/enums values (LelyBorderColorLight.PRIMARY_DEFAULT for the circle border, LelyBackgroundColorLight.BRAND_PRIMARY for the selected dot, LelyBorderWidth.BASE/LelyBorderRadius.XL/MD) rather than literal colors.",
+          "Field width matches the Detectable section's RadioButtonGroup (both render at width: 100% inside the same FormWrapper column)."
+        ]
+      },
+      {
+        "visualParityId": "fence-offset-value-field",
+        "verdict": "addressed",
+        "observations": [
+          "Same bordered field box treatment as Length/Angle, using FeedFenceOffsetIcon's exact SVG path data copied from shared/icons/FeedFenceOffsetIcon.tsx.",
+          "Label above the value, trailing 'cm' unit inside the same field box, same theme.radius as the retained input and the same field width as the Detectable and Coordinates sections."
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}

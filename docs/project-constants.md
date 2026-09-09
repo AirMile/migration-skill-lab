@@ -71,6 +71,17 @@ Consequences for how components are written:
   `@Input()` and `@Output()` field decorators. `useDefineForClassFields` is
   `true` in this repository and field decorators conflict with it.
 
+### Passing inputs to a mounted component
+
+`componentRef.setInput()` does not work here. Signal-based `input()` fields
+never receive `ɵcmp.inputs` metadata under pure JIT, because that metadata is
+emitted by the ahead-of-time compiler this setup deliberately does not run, so
+`setInput()` throws on a name it cannot find.
+
+A mounted component therefore exposes one public method that assigns its
+internal signals, and the host effect calls that. Found by the first slice on
+2026-09-09; without it the next slice rediscovers it the same way.
+
 ## TypeScript configuration
 
 One line in `tsconfig.json`:

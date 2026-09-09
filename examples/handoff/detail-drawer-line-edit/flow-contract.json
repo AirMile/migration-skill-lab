@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 6,
+  "artifactType": "flow-contract",
+  "skill": "flow-baseline",
+  "skillVersion": "0.17.0",
+  "runId": "detail-drawer-line-edit-baseline-1",
+  "flowId": "detail-drawer-line-edit",
+  "repository": {
+    "root": "C:\\Project\\frontend",
+    "revision": "ab76866c89d2709fd5ed4b079b22dff80c419883"
+  },
+  "scope": {
+    "startState": "A line is selected in the Floor Plan Creator, or a line is actively being drawn with one point already placed, so LineForm.tsx renders its editable fields (LineForm.tsx:38-117).",
+    "endState": "The edited Length, Angle and, where the active robot has the FeedPush capability, Fence offset are applied to the selected or in-progress line, and the map editor has closed the drawer with the retained Done button (LineForm.tsx:249, LineForm.functions.ts:120-156).",
+    "allowedWritePaths": [
+      "src/features/floorPlanCreator/detailDrawer/lineForm/LineForm.tsx",
+      "src/features/floorPlanCreator/detailDrawer/lineForm/angular",
+      "src/features/floorPlanCreator/detailDrawer/lineForm/__tests__",
+      "package.json",
+      "package-lock.json",
+      "tsconfig.json"
+    ],
+    "partialMount": {
+      "nested": true,
+      "retainedParent": "LineForm",
+      "siblingSections": [
+        "Detectable",
+        "Coordinates"
+      ]
+    }
+  },
+  "renderedSurfaceInventory": [
+    {
+      "id": "set-first-point-placeholder",
+      "surface": "Placeholder shown while the line tool is active but no first point is set",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:80"
+    },
+    {
+      "id": "selected-line-label",
+      "surface": "Selected Line: {index} text",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:121"
+    },
+    {
+      "id": "line-risk-card",
+      "surface": "LineRiskCard",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:125"
+    },
+    {
+      "id": "length-field",
+      "surface": "Length FocusNumberInput",
+      "status": "migrate",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:128"
+    },
+    {
+      "id": "angle-field",
+      "surface": "Angle FocusNumberInput",
+      "status": "migrate",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:147"
+    },
+    {
+      "id": "fence-offset-selector",
+      "surface": "Fence offset label and None/Left/Right RadioButtonGroup, gated on hasCapability(FeedPush)",
+      "status": "migrate",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:160"
+    },
+    {
+      "id": "fence-offset-value-field",
+      "surface": "Fence offset distance FocusNumberInput, gated on fenceOffset !== None",
+      "status": "migrate",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:186"
+    },
+    {
+      "id": "detectable-section",
+      "surface": "Detectable / Not US detectable RadioButtonWithIcon group, gated on hasCapability(DetectableUndetectableWalls)",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:209"
+    },
+    {
+      "id": "distances-and-coordinates",
+      "surface": "MapObjectDistances plus Coordinates Details (PointFormFields A and B), hidden while the line tool is active with the created line selected",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:228"
+    },
+    {
+      "id": "done-button",
+      "surface": "DoneButton",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:249"
+    },
+    {
+      "id": "delete-button",
+      "surface": "NavbarDeleteMapElement",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:250"
+    }
+  ],
+  "targetArchitecture": {
+    "boundary": {
+      "angularOwns": [
+        "Length field input bound to RichLine.updateLength (LineForm.functions.ts:37-57)",
+        "Angle field input bound to RichLine.updateAngle (LineForm.functions.ts:59-75)",
+        "Fence offset selector (None/Left/Right) bound to line.fenceOffset (LineForm.functions.ts:83-88)",
+        "Fence offset distance field bound to line.fenceOffsetValue (LineForm.functions.ts:90-100)"
+      ],
+      "reactRetains": [
+        "LineForm.tsx as the mounting host and FormWrapper drawer shell",
+        "Selected Line label",
+        "LineRiskCard",
+        "Detectable / Not US detectable radio section",
+        "MapObjectDistances and Coordinates (Details + PointFormFields)",
+        "DoneButton",
+        "NavbarDeleteMapElement",
+        "Set-first-point placeholder"
+      ]
+    },
+    "adapter": {
+      "inputs": [
+        "length: number (cm, real.length*2, LineForm.tsx:132)",
+        "angle: number (degrees, positiveDegrees(real.angle.deg), LineForm.tsx:151)",
+        "fenceOffset: EFeedFenceOffset (LineForm.tsx:170-182)",
+        "fenceOffsetValue: number (cm, fenceOffsetValue*2, LineForm.tsx:191)",
+        "hasFeedPushCapability: boolean (LineForm.tsx:160)"
+      ],
+      "commands": [
+        "updateLength(value: string | undefined)",
+        "updateAngle(value: string | undefined)",
+        "updateFeedFenceOffset(value: EFeedFenceOffset)",
+        "updateFeedFenceOffsetValue(value: string | undefined)",
+        "restoreLengthIfInvalid(input: string | number | undefined)"
+      ],
+      "events": [
+        "lengthChanged",
+        "angleChanged",
+        "fenceOffsetChanged",
+        "fenceOffsetValueChanged"
+      ],
+      "nonSuccessOutcome": "An empty, non-numeric, zero-length (for Length) or unchanged value is silently ignored, matching the existing guards in updateLength/updateAngle/updateFeedFenceOffsetValue (LineForm.functions.ts:37-100); no error state is rendered.",
+      "forbiddenAccess": [
+        "DOM queries outside the mounted host node",
+        "Stores.lines / Stores.shapes global state beyond the values passed in as adapter inputs",
+        "ElementCreationManager and FloorPlanMaker.history APIs directly; these stay behind the adapter commands that LineForm.tsx already implements"
+      ]
+    },
+    "lifecycle": [
+      "The Angular application is created with createApplication() and mounted with createComponent() from a React effect on a ref, per docs\\project-constants.md#Embedding",
+      "The same React effect destroys the Angular application on unmount",
+      "The host effect re-supplies all adapter inputs and forces a resync whenever the selected line's id changes, since RichLine identity is not itself an Angular input",
+      "Change detection is zoneless via provideExperimentalZonelessChangeDetection(), per docs\\project-constants.md#Change-detection"
+    ],
+    "styling": [
+      "Templates are inline in @Component, never a separate .html file, per docs\\project-constants.md#Compilation",
+      "Field appearance matches the retained FocusNumberInput family using design tokens (EColors.*, theme.radius, theme.spacing) rather than literal values, see HoverInput.tsx:98-128 and NumberInput.tsx:46-60",
+      "No additional padding is added on top of the existing FormWrapper vertical rhythm"
+    ],
+    "dependencyChanges": {
+      "required": true,
+      "packages": [
+        "@angular/core@19.2.25",
+        "@angular/common@19.2.25",
+        "@angular/compiler@19.2.25",
+        "@angular/platform-browser@19.2.25"
+      ],
+      "paths": [
+        "package.json",
+        "package-lock.json",
+        "tsconfig.json"
+      ],
+      "note": "This is the first Angular slice in the repository; package.json's dependencies block currently has no @angular/* entry (confirmed by inspection)."
+    }
+  },
+  "scenarios": [
+    {
+      "id": "valid-length-edit",
+      "given": "A line is selected and the Length field shows its current real length (LineForm.tsx:128-145).",
+      "when": "The map editor enters a new, valid, changed length value.",
+      "then": [
+        "The line's real length updates via RichLine.updateLength.",
+        "Distance lines are cleared and recreated for the single line.",
+        "A history entry is added only when the change was key-driven."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:37",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:150"
+      ]
+    },
+    {
+      "id": "valid-angle-edit",
+      "given": "A line is selected and the Angle field shows its current angle (LineForm.tsx:147-158).",
+      "when": "The map editor enters a new, valid angle value.",
+      "then": [
+        "The line's real angle updates via RichLine.updateAngle.",
+        "Distance lines are cleared and recreated for the single line.",
+        "A history entry is added only when the change was key-driven."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:59",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:197"
+      ]
+    },
+    {
+      "id": "fence-offset-selection-when-capable",
+      "given": "The active robot has the FeedPush capability, so the Fence offset selector renders (LineForm.tsx:160-185).",
+      "when": "The map editor chooses None, Left or Right.",
+      "then": [
+        "line.fenceOffset updates to the chosen value.",
+        "line.offsetLine.updateOffsetLine() recalculates the offset line.",
+        "A history entry is always added, unlike the key-gated Length and Angle edits."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:83",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:246"
+      ]
+    },
+    {
+      "id": "fence-offset-value-edit",
+      "given": "Fence offset is Left or Right, so the fence-offset distance field renders (LineForm.tsx:186-205).",
+      "when": "The map editor enters a new, valid offset distance.",
+      "then": [
+        "line.fenceOffsetValue updates in map units (value / 2).",
+        "line.offsetLine.updateOffsetLine() recalculates the offset line.",
+        "A history entry is added."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:90",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:257"
+      ]
+    },
+    {
+      "id": "fence-offset-hidden-when-incapable",
+      "given": "The active robot lacks the FeedPush capability.",
+      "when": "The Detail Drawer renders the selected or in-progress line.",
+      "then": [
+        "The Fence offset label, selector and distance field do not render at all."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:160",
+        "C:\\Project\\frontend\\src\\app\\providers\\useRobotManager.tsx:94"
+      ]
+    },
+    {
+      "id": "done-after-edit",
+      "given": "The map editor has finished adjusting Length, Angle and/or Fence offset for a single, non-creation line selection.",
+      "when": "The map editor clicks the retained Done button.",
+      "then": [
+        "onDone() enforces a minimum length default, deselects elements, refreshes the lines store and writes a Move history item.",
+        "The drawer closes because MapMakerManager.deselectElements() clears the selection."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:120",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:385"
+      ]
+    },
+    {
+      "id": "restore-invalid-length",
+      "given": "The user pressed a key that cleared the Length field to empty or zero after a nonzero valid length.",
+      "when": "The Length field loses focus.",
+      "then": [
+        "The last valid length is restored through two infinitesimal nudges so the bound input value prop changes and re-renders."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:102",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\__tests__\\LineForm.functions.test.ts:283"
+      ]
+    }
+  ],
+  "visualParity": [
+    {
+      "id": "length-field",
+      "surface": "Length field in the selected-line drawer",
+      "counterpart": "FocusNumberInput as rendered by the retained Coordinates section (PointFormFields X/Y fields)",
+      "appearance": [
+        "Bordered field box with the theme.radius corner radius used by HoverInput.tsx:106.",
+        "Straight-line icon left of the label (EIconNames.StraightLine, LineForm.tsx:130).",
+        "Label above the value, not beside it.",
+        "Trailing 'cm' unit inside the same field box.",
+        "Border and text colors come from EColors.* / theme.colors.border tokens (HoverInput.tsx:109-128), not literals."
+      ],
+      "layout": [
+        "Field width matches the Detectable and Coordinates sections.",
+        "The trailing unit is vertically centered with the value.",
+        "The migrated field adds no padding on top of the parent FormWrapper."
+      ],
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:41"
+    },
+    {
+      "id": "angle-field",
+      "surface": "Angle field in the selected-line drawer",
+      "counterpart": "FocusNumberInput as rendered by the retained Coordinates section (PointFormFields X/Y fields)",
+      "appearance": [
+        "Bordered field box with the same theme.radius corner radius as the retained input.",
+        "Angle icon left of the label (EIconNames.Angle, LineForm.tsx:150).",
+        "Label above the value, not beside it.",
+        "Trailing '°' unit inside the same field box."
+      ],
+      "layout": [
+        "Field width matches the Detectable and Coordinates sections.",
+        "The trailing unit is vertically centered with the value."
+      ],
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:41"
+    },
+    {
+      "id": "fence-offset-selector",
+      "surface": "Fence offset None/Left/Right selector",
+      "counterpart": "The retained Detectable / Not US detectable RadioButtonWithIcon group",
+      "appearance": [
+        "Same RadioButtonGroup column layout and spacing as the Detectable section.",
+        "Same active/inactive visual treatment as RadioButton / RadioButtonWithIcon."
+      ],
+      "layout": [
+        "Field width matches the Detectable section.",
+        "Vertical spacing between options matches the Detectable section."
+      ],
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:209"
+    },
+    {
+      "id": "fence-offset-value-field",
+      "surface": "Fence offset distance field",
+      "counterpart": "FocusNumberInput as rendered by the retained Coordinates section (PointFormFields X/Y fields)",
+      "appearance": [
+        "Bordered field box with the same theme.radius corner radius as the retained input.",
+        "FeedFenceOffsetIcon left of the label (LineForm.tsx:189).",
+        "Label above the value, not beside it.",
+        "Trailing 'cm' unit inside the same field box."
+      ],
+      "layout": [
+        "Field width matches the Detectable and Coordinates sections.",
+        "The trailing unit is vertically centered with the value."
+      ],
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:41"
+    }
+  ],
+  "characterizationRequired": [
+    {
+      "id": "focus-debounce-timing",
+      "hypothesis": "The migrated fields must reproduce FocusNumberInput's 300ms onChange debounce and its suspension of global keyboard shortcuts (Delete/Backspace) while focused, or typing in a migrated field will behave differently from every other detail-drawer field.",
+      "proveBefore": "valid-length-edit, valid-angle-edit, fence-offset-value-edit",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:29",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:79",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\FocusNumberInput.tsx:120"
+      ]
+    },
+    {
+      "id": "length-doubling-semantics",
+      "hypothesis": "The displayed Length, and the offset distance, are real.length/fenceOffsetValue doubled (map-unit-to-cm conversion tied to the line being represented symmetrically); the Angular adapter must apply and reverse this doubling exactly, not just pass values through.",
+      "proveBefore": "valid-length-edit, fence-offset-value-edit",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.tsx:132",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:39",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:96"
+      ]
+    },
+    {
+      "id": "history-entry-suppression",
+      "hypothesis": "Length and Angle only push an undo/redo history entry when isInputKeyPressed is true, so a programmatic restore (restoreLengthIfInvalid) must not itself create unwanted history entries; the Angular command boundary must preserve this distinction rather than always recording history like the Fence offset commands do.",
+      "proveBefore": "valid-length-edit, valid-angle-edit, restore-invalid-length",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:55",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:73",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:102"
+      ]
+    },
+    {
+      "id": "line-creation-mode-interaction",
+      "hypothesis": "While the line being edited is still the one actively being drawn (ElementCreationManager.lineCreator.line?.id() === line.id()), editing Length or Angle must call secondClickHandler() instead of the normal refresh/history path; the Angular command boundary must preserve this branch rather than always taking the normal-edit path.",
+      "proveBefore": "valid-length-edit, valid-angle-edit",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:48",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\lineForm\\LineForm.functions.ts:65"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "topic": "Slice boundary for the Detail Drawer LineForm flow",
+      "decision": "Angular owns Length, Angle and the Fence offset selector plus its distance field; LineForm.tsx (as mounting host), the Selected Line label, LineRiskCard, the Detectable section, Coordinates/Distances, DoneButton and NavbarDeleteMapElement stay in React.",
+      "rationale": "Of the three candidates evaluated, this is the only one that satisfies all four boundary criteria (one owner, no shared infrastructure in the write allowlist, a measurable retained neighbour, bounded branches) while covering the literal user-visible goal. Length+Angle-only under-covers the stated Fence offset requirement. A full LineForm replacement would pull DoneButton and NavbarDeleteMapElement into the cut, both generic detail-drawer chrome shared by every other object type (11 external importers each), and would leave no retain-react sibling to compare visual parity against.",
+      "followUp": "A later slice may migrate the Detectable section or the Coordinates section, each of which already has a retained sibling of its own kind (RadioButtonWithIcon family, FocusNumberInput family) to compare against."
+    },
+    {
+      "topic": "Reuse of shared React input and radio components",
+      "decision": "FocusNumberInput.tsx (12 external importers) and RadioButtonGroup/RadioButton/RadioButtonWithIcon (26 external importers) stay untouched; the Angular fields reproduce their appearance and debounce/keyboard-shortcut-suspension behavior independently instead of editing or wrapping them.",
+      "rationale": "Editing either shared file would change behavior for every other detail-drawer form (chargerForm, cornerStripForm, dumpStationForm, lidarForm, and others), which is outside this flow's ownership."
+    }
+  ],
+  "testGaps": [
+    "LineForm.tsx's own render and branching logic (the hasCapability gates, tab order, and the set-first-point placeholder branch) has no automated test; only the pure functions in LineForm.functions.ts are covered by __tests__/LineForm.functions.test.ts.",
+    "No automated test proves the 300ms debounce or the Escape/keyboard-shortcut-suspension timing that FocusNumberInput.tsx documents in its own comments.",
+    "Per-flow coverage for lineForm/__tests__/LineForm.functions.test.ts was not retrieved this run; CI computes it via npm run test:ci and uploads coverage/lcov.info to the Lely-Route-Assistant-Frontend SonarQube project."
+  ],
+  "openQuestions": [],
+  "workItemContext": {
+    "epicExternalId": "522482",
+    "featureExternalId": "522511",
+    "storyExternalIds": [
+      "522512"
+    ]
+  },
+  "checkpointPolicy": {
+    "mode": "disabled",
+    "pushPolicy": "never"
+  },
+  "validationPlan": {
+    "testCommands": [
+      "npm run test -- run src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.functions.test.ts"
+    ],
+    "installCommand": "npm install",
+    "typecheckCommand": "npx tsc --noEmit",
+    "buildCommand": "npm run build",
+    "browserValidation": {
+      "required": false,
+      "scenarios": []
+    },
+    "manualValidation": {
+      "required": true,
+      "environment": "Route Assistant desktop application running the local frontend and local backend, title bar showing 'localhost' and 'react mode: development' badges, per docs\\project-constants.md#Manual-verification-environment.",
+      "scenario": "Select an existing line, then separately draw a new one with one point placed: edit Length to a new value and confirm the map line resizes; edit Angle and confirm the map line rotates; on a robot with FeedPush capability, switch Fence offset between None/Left/Right, edit its distance value, and confirm the offset line updates and that the Fence offset controls are absent on a robot without that capability; clear the Length field and blur it to confirm the last valid value is restored; click Done and confirm the drawer closes with the edits applied and undo/redo still working."
+    }
+  },
+  "rollback": "Revert only the files listed in scope.allowedWritePaths (LineForm.tsx, the new lineForm/angular directory, any additions under lineForm/__tests__, package.json, package-lock.json and tsconfig.json) to their state at revision ab76866c89d2709fd5ed4b079b22dff80c419883. Do not revert any other detail-drawer form, FocusNumberInput.tsx, or the RadioButton family, since this slice never touches them. After reverting, run npm install once to drop the @angular/* packages from node_modules."
+}

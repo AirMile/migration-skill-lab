@@ -510,6 +510,20 @@ const validateArtifactRules = (value, errors) => {
           "$.renderedSurfaceComparison.surfaces must use unique visualParityId values.",
         );
       }
+      // The party that wrote the code records what it did; flow-verify decides
+      // whether it matches. Before schemaVersion 4 migrate judged its own work
+      // from evidence the contract disqualifies for a nested mount.
+      const recordsWork = value.schemaVersion >= 4;
+      const allowed = recordsWork
+        ? ["addressed", "not-addressed"]
+        : ["matches", "deviates", "not-checked"];
+      for (const surface of surfaces) {
+        if (!allowed.includes(surface.verdict)) {
+          errors.push(
+            `$.renderedSurfaceComparison.surfaces ${surface.visualParityId} uses verdict ${surface.verdict}; from schemaVersion 4 a migration-result records addressed or not-addressed and flow-verify owns matches or deviates.`,
+          );
+        }
+      }
     }
     return;
   }
@@ -1164,10 +1178,10 @@ const validateArtifactLinks = artifacts => {
         );
       }
     }
+    const approvedMilestones =
+      contract.value.checkpointPolicy.milestones ?? [];
     for (const checkpoint of migration.value.checkpoints) {
-      if (!contract.value.checkpointPolicy.milestones.includes(
-        checkpoint.milestone,
-      )) {
+      if (!approvedMilestones.includes(checkpoint.milestone)) {
         throw new Error(
           `checkpoint milestone ${checkpoint.milestone} is not approved by the Flow Contract.`,
         );
@@ -1245,7 +1259,10 @@ const validateArtifactLinks = artifacts => {
             `renderedSurfaceComparison names visual parity surface ${surface.visualParityId}, which the flow-contract does not declare.`,
           );
         }
-        if (surface.verdict !== "matches") {
+        const settled = migration.value.schemaVersion >= 4
+          ? "addressed"
+          : "matches";
+        if (surface.verdict !== settled) {
           throw new Error(
             `A completed migration-result cannot leave visual parity surface ${surface.visualParityId} on verdict ${surface.verdict}.`,
           );
@@ -1390,7 +1407,10 @@ const validateArtifactLinks = artifacts => {
       contract.value.checkpointPolicy.pushPolicy) {
       throw new Error("verification push policy does not match flow-contract.");
     }
-    if (verification.value.push.branch !==
+    const pushWasAttempted = verification.value.push.status !== "not-requested" &&
+      contract.value.checkpointPolicy.mode !== "disabled";
+    if (pushWasAttempted &&
+      verification.value.push.branch !==
       contract.value.checkpointPolicy.expectedBranch) {
       throw new Error("verification push branch does not match flow-contract.");
     }
@@ -2240,6 +2260,82 @@ const runSelfTest = async () => {
       throw new Error(`Handoff validator self-test did not reject ${description}.`);
     }
   };
+
+  // From schemaVersion 4 a migration-result records what it addressed; the
+  // verdict is flow-verify's. Both vocabularies stay valid under their own
+  // version so archived runs keep validating.
+  const migrationVerdictCase = (schemaVersion, verdict) => {
+    const migration = structuredClone(
+      artifacts.find(
+        artifact => artifact.value.artifactType === "migration-result",
+      ).value,
+    );
+    migration.schemaVersion = schemaVersion;
+    for (const surface of migration.renderedSurfaceComparison.surfaces) {
+      surface.verdict = verdict;
+    }
+    const migrationErrors = [];
+    validateArtifactRules(migration, migrationErrors);
+    return migrationErrors;
+  };
+
+  if (migrationVerdictCase(4, "addressed").length > 0) {
+    throw new Error(
+      "Handoff validator self-test rejected a schemaVersion 4 migration-result recording addressed surfaces.",
+    );
+  }
+  if (!migrationVerdictCase(4, "matches").some(error =>
+    error.includes("flow-verify owns matches or deviates"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a schemaVersion 4 migration-result judging its own visual parity.",
+    );
+  }
+  if (!migrationVerdictCase(3, "addressed").some(error =>
+    error.includes("uses verdict addressed"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a schemaVersion 3 migration-result using the newer verdict vocabulary.",
+    );
+  }
+
+  // A disabled checkpoint policy has no branch to push to, and a contract that
+  // approved no milestones is a rejection rather than a crash.
+  const noPushLinks = structuredClone(artifacts);
+  for (const artifact of noPushLinks) {
+    if (artifact.value.artifactType === "flow-contract") {
+      artifact.value.checkpointPolicy = { mode: "disabled", pushPolicy: "never" };
+    }
+    if (artifact.value.artifactType === "migration-result") {
+      artifact.value.checkpoints = [];
+    }
+    if (artifact.value.artifactType === "verification-result") {
+      artifact.value.push = {
+        policy: "never",
+        status: "not-requested",
+        remote: "origin",
+        branch: "N/A",
+        commitShas: [],
+        upstreamSet: false,
+        summary: "Nothing to push: checkpoints are disabled for this flow.",
+      };
+    }
+  }
+  validateArtifactLinks(noPushLinks);
+
+  expectLinkRejection(
+    ({ contract, migration }) => {
+      delete contract.checkpointPolicy.milestones;
+      migration.checkpoints = [
+        {
+          milestone: "unapproved-milestone",
+          status: "committed",
+          paths: [...migration.changedPaths],
+          summary: "A checkpoint whose milestone no contract approved.",
+        },
+      ];
+    },
+    "is not approved by the Flow Contract",
+    "a checkpoint against a contract that approved no milestones",
+  );
 
   expectLinkRejection(
     ({ migration }) => {

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.11.0
+targetVersion: 0.12.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-migrate` v0.11.0 acceptance criteria
+# `flow-migrate` v0.12.0 acceptance criteria
 
 ## Hard gates
 
@@ -107,4 +107,15 @@ The source is acceptable when:
 33. `migration-result.json` and the work-item handoff are validated in the same
     invocation as the Flow Contract, never alone;
 34. the observation sidecar is named `skill-run-observations-flow-migrate.json`
-    so it cannot overwrite the baseline's in a shared run directory.
+    so it cannot overwrite the baseline's in a shared run directory;
+35. typecheck and build run once at the end of a coherent milestone, not after
+    every edit, and the targeted test carries the iteration;
+36. `renderedSurfaceComparison.surfaces` records `addressed` or `not-addressed`
+    at schemaVersion 4 and never a `matches` verdict; the visual judgement is
+    `flow-verify`'s;
+37.e continuation offers exactly three routes — open the next phase now
+    using the host's own mechanism, show the invocation to paste, or save it in
+    the run directory as a resumable checkpoint — and never opens a second
+    terminal window;
+38. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
+    computed by hand.

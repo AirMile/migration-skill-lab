@@ -22,7 +22,7 @@
     "checkpoints"
   ],
   "properties": {
-    "schemaVersion": { "enum": [2, 3] },
+    "schemaVersion": { "enum": [2, 3, 4] },
     "artifactType": { "const": "migration-result" },
     "skill": { "enum": ["flow-migrate", "migrate-flow"] },
     "skillVersion": {
@@ -154,7 +154,13 @@
               },
               "verdict": {
                 "type": "string",
-                "enum": ["matches", "deviates", "not-checked"]
+                "enum": [
+                  "matches",
+                  "deviates",
+                  "not-checked",
+                  "addressed",
+                  "not-addressed"
+                ]
               },
               "observations": {
                 "type": "array",

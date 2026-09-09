@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.11.0`.
+Skill version: `0.12.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -59,6 +59,11 @@ Confirm all inputs before any product write:
 - the checkpoint policy, expected branch and external reference from the
   Flow Contract.
 
+A run directory may already hold a `<flowId>-<skill>-prompt.md` saved by an
+earlier phase that chose to continue later. Say in one line that you found it
+and are resuming from it. It is a checkpoint, not a second run: the artifacts
+it points at are the inputs, exactly as if the phases had run back to back.
+
 Run `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
 "<flow-contract.json>" "<work-item-baseline.json>"` before using the
 artifacts. Stop and report `BLOCKED`
@@ -102,12 +107,19 @@ established Lely standard.
    `packages` at their pinned versions, and no file outside `paths`. The
    contract carries an exact set because a version chosen here is an
    unapproved convention.
-7. Run `validationPlan.installCommand` after any manifest or configuration
+7. Iterate with the targeted test command alone. Run typecheck and build once,
+   at the end of a coherent milestone, not after every edit: on a repository of
+   this size the targeted test already costs a minute and the build more, and
+   repeating them after each change proves nothing the final run does not.
+   This is the largest cost in this phase.
+   Run `validationPlan.installCommand` after any manifest or configuration
    change, before the checks below. A slice that adds packages and then
    typechecks without installing them fails on missing modules and reports a
-   defect that does not exist. Record the install like any other command, with
-   what ran and whether it passed; the validator permits it in `validation`
-   when the contract declares it, and requires nothing when it does not.
+   defect that does not exist.
+   Record the install in `validation` with what ran and whether it passed. The
+   validator permits it when the contract declares it and requires nothing when
+   it does not, so an unrecorded install leaves the next reader unable to tell
+   whether the checks ran against the new packages at all.
    Then add Angular tests for the same behavior and run the declared targeted
    test, typecheck and build commands.
    Do not execute, solicit or record the contract's manual browser flow or
@@ -118,6 +130,10 @@ established Lely standard.
    such as `Manual browser flow` is rejected, so do not ask the user to
    confirm host behavior in order to record it here.
    These checks are a gate on your own work, not evidence of correctness.
+   `flow-verify` runs the same three commands again, and that is not
+   duplicated effort: yours tell you when to stop, its runs are the evidence.
+   Neither replaces the other, so do not skip a check because the next phase
+   will repeat it.
    Record what ran and whether it passed; do not describe what a green
    command proves about a contract scenario. An automated test that mounts an
    isolated fixture is not evidence about drawer padding, spacing or input
@@ -159,13 +175,21 @@ established Lely standard.
    `renderedSurfaceComparison`: the `evidenceSource` you actually used, the
    retained sibling sections you compared against, and the concrete style and
    layout observations. Only `real-parent-tree` is accepted for a completed
-   nested migration; an isolated fixture is not sufficient. Record one
-   `surfaces` entry per declared `visualParity` id with its verdict and
-   observations; the validator refuses a `completed` result that skips a
-   declared surface or leaves one on `deviates` or `not-checked`. It must
-   validate with the handoff validator together with the Flow Contract.
+   nested migration; an isolated fixture is not sufficient.
+   Record one `surfaces` entry per declared `visualParity` id, at
+   schemaVersion 4, as `addressed` or `not-addressed` with your observations.
+   Record what you did, not whether it matches. The verdict is `flow-verify`'s:
+   an automated test in jsdom is not evidence about padding, spacing or
+   containment, and this contract disqualifies it for a nested mount, so a
+   `matches` written here is the author grading their own work with evidence
+   the contract already rejected. The validator refuses a `completed` result
+   that skips a declared surface or leaves one `not-addressed`.
+   It must validate with the handoff validator together with the Flow
+   Contract.
 13. Write and validate `work-item-migration.json`, pointing to the exact
-    migration result and previous work-item handoff hashes. Render the
+    migration result and previous work-item handoff hashes, taken from
+    `node "<migration-skill-lab-root>\scripts\hash-artifact.mjs" <file>...`
+    rather than computed by hand. Render the
     copy/paste Markdown with factual progress and no unverified completion,
     then run `render-work-item-handoff.mjs --inline <snapshot> --since
     <work-item-baseline.json>` and show its output verbatim in this chat as the
@@ -195,9 +219,24 @@ established Lely standard.
    step, blockers and the same calculated User Story progress.
 16. Record the final worktree status. Do not merge, push, publish or update the
    skill.
-17. End with one focused user question offering a fresh `/flow-verify` chat
-   with only the declared artifact paths and product root. Do not spawn a
-   verifier subagent or perform verification in this chat.
+17. End with one focused user question about the continuation. The invocation
+   carries the contract path, the migration-result path, the migration-skill-lab
+   root, the product root and the run directory, and nothing from this chat.
+   Offer exactly three routes and perform only the chosen one:
+   1. open a fresh chat for `/flow-verify` now, carrying only the artifact paths
+      and the product root. Use whatever mechanism this host has for opening a
+      chat; never start a second terminal window for it;
+   2. show the invocation here for the user to paste into a chat they open
+      themselves;
+   3. stop here and save the invocation in the run directory as
+      `<flowId>-<next-skill>-prompt.md`.
+   Route 3 is a checkpoint, not an abandonment, and say so when you offer it:
+   every phase reads its inputs from the artifacts and never from this chat, so
+   the saved invocation still runs correctly days later.
+   Never continue the next phase in this chat, and never delegate it to a
+   background agent, which cannot ask the user the questions it needs
+   answered.
+   Do not spawn a verifier subagent or perform verification in this chat.
 
 ## Safety boundary
 
@@ -255,7 +294,7 @@ is paid again for nothing.
   only in alternation, wording or case return mostly the same hits, so the
   second one buys nothing.
 - Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
-  Copy the shape from `examples\handoff\`, write the artifact, run
+  Copy the shape from `examples\handoff\detail-drawer-line-edit\`, write the artifact, run
   `validate-handoff.mjs` and act on its errors; the validator names what is
   missing far more cheaply than a schema read does. When an error names a rule
   but not the fix, and one more attempt does not resolve it, reading the rule in
@@ -303,7 +342,7 @@ failed response when that artifact cannot be produced:
    filename carries the skill because phases of one flow share a run directory,
    and a bare `skill-run-observations.json` means the second skill to finish
    silently overwrites the first one's evidence.
-   Copy the shape from `examples\handoff\` rather than writing it from this
+   Copy the shape from `examples\handoff\detail-drawer-line-edit\` rather than writing it from this
    description: an entry needs `id`, `category`, `observation`, `effect`,
    `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
    `primaryOutcome.status` is `completed`, `failed` or `blocked` for this skill. An empty

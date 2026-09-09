@@ -44,10 +44,11 @@ Targetprocess was changed.
 
 ## Storage and confidentiality
 
-- `flow-baseline` writes no report. Its contract is the durable artifact and
-  its review summary is where a human checks it; a second prose copy of a
-  validated artifact only drifts. Put a human-readable verification report in
-  `C:\Obsidian\Notes 2025\Lely\Angular migratie\analyses`.
+- No phase writes a prose report. Each one's JSON artifact is durable and its
+  inline summary is where a human checks it; a second copy in Markdown drifts
+  the moment either side is edited. A report can be rendered from the validated
+  JSON whenever one is wanted, the way `render-work-item-handoff.mjs` renders a
+  work-item handoff.
 - Put only compact, non-sensitive JSON artifacts in
   `C:\Project\migration-skill-lab\runs\<run-id>`.
 - Keep source code, credentials, tokens and private URLs out of every
@@ -190,6 +191,23 @@ failure is reported separately and never converted into a success-shaped
 primary result.
 
 ## Failure loop
+
+`flow-verify` conducts the manual validation rather than asking whether
+someone has performed it. It builds a walkthrough from the contract's scenarios
+and visual parity entries, presents one item at a time with the concrete
+control to act on and the expected result stated in the question, and collects
+one verdict per item before moving on. The person in the chat is the tester;
+there is no separate owner to assign.
+
+The visual verdict belongs to that phase alone. From migration-result
+schemaVersion 4 `flow-migrate` records `addressed` or `not-addressed` — what it
+did — and `flow-verify` decides `matches` or `deviates`. An automated test in
+jsdom is not evidence about padding, spacing or containment, so the phase that
+wrote the code cannot also clear its own visual work.
+
+Both phases run the contract's test, typecheck and build commands, and that is
+deliberate rather than duplicated: `flow-migrate` runs them as a gate on its
+own work, `flow-verify` runs them as the evidence.
 
 `flow-verify` reports `PASS`, `FAIL` or `BLOCKED` per contract scenario. It
 does not repair product code. For a local repairable result it writes a

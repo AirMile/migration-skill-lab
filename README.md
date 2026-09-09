@@ -8,12 +8,16 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.17.0, `flow-migrate` v0.11.0 and
-  `flow-verify` v0.8.0 source skills;
+- experimental `flow-baseline` v0.18.0, `flow-migrate` v0.12.0 and
+  `flow-verify` v0.9.0 source skills;
 - experimental `flow-debug` v0.2.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
-  dependency-free validator;
+  dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
+  a complete chain from a run that passed end to end, at the versions in force,
+  which is the shape reference every skill copies from;
+- `scripts\hash-artifact.mjs`, which prints the path-and-sha256 pointer block
+  one artifact needs to reference another;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
   preflight;
 - schema-valid post-run observation sidecars for later skill audits;

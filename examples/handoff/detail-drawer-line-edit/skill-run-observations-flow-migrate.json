@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "skill-run-observations",
+  "skill": "flow-migrate",
+  "skillVersion": "0.11.0",
+  "runId": "detail-drawer-line-edit-migration-1",
+  "flowId": "detail-drawer-line-edit",
+  "capturedAt": "2026-09-09T00:00:00Z",
+  "primaryOutcome": {
+    "status": "completed",
+    "summary": "The bounded Angular Length/Angle/Fence offset slice is implemented, its declared test/typecheck/build validation passed, and migration-result.json plus work-item-migration.json validate against the Flow Contract.",
+    "artifactPath": "runs\\2026-09-09-detail-drawer-line-edit-baseline-1\\migration-result.json",
+    "sha256": "d91185ce6171e4fd81388e17e0560585ff4cf821ae9061a3b1e56a5c8af2e2c4"
+  },
+  "observations": [
+    {
+      "id": "validator-crashes-on-checkpoints-without-milestones",
+      "category": "output-mismatch",
+      "observation": "validate-handoff.mjs throws an uncaught TypeError ('Cannot read properties of undefined (reading includes)') instead of a structured validation error when a migration-result.json includes any 'checkpoints' entry while the Flow Contract's checkpointPolicy has no 'milestones' array (this contract's checkpointPolicy is only {mode: 'disabled', pushPolicy: 'never'}, with no 'milestones' key at all). The first migration-result.json draft recorded one 'skipped' checkpoint entry to document that checkpointPolicy.mode is disabled; validation crashed instead of naming the rule, so a second attempt with an empty checkpoints array was needed before the artifact validated.",
+      "effect": "cost",
+      "evidence": [
+        "First validate-handoff.mjs invocation on migration-result.json threw: 'TypeError: Cannot read properties of undefined (reading includes)' at validateArtifactLinks (scripts/validate-handoff.mjs:1168), inside 'for (const checkpoint of migration.value.checkpoints) { if (!contract.value.checkpointPolicy.milestones.includes(...',",
+        "flow-contract.json's checkpointPolicy is {\"mode\": \"disabled\", \"pushPolicy\": \"never\"} with no 'milestones' property.",
+        "Removing the checkpoints entry (using an empty array) let the same migration-result.json validate cleanly on the next attempt."
+      ],
+      "skillLocations": [
+        "scripts/validate-handoff.mjs:1167-1174 (validateArtifactLinks)"
+      ],
+      "causality": "confirmed",
+      "occurrenceCount": 1
+    },
+    {
+      "id": "read-validator-source-to-diagnose-crash",
+      "category": "unnecessary-context-load",
+      "observation": "Diagnosing the checkpoints/milestones crash above required reading scripts/validate-handoff.mjs around the throwing line, since the error was an uncaught TypeError rather than a named validation rule. Per the skill's own reading-discipline guidance this is the sanctioned fallback when an error doesn't name a fix and a retry doesn't resolve it, but it still cost a source read of the validator that a clearer error message (e.g. treating a missing checkpointPolicy.milestones as 'no milestones approved' rather than dereferencing it) would have avoided.",
+      "effect": "cost",
+      "evidence": [
+        "Read scripts/validate-handoff.mjs:1130-1180 to find the exact line dereferencing checkpointPolicy.milestones before retrying with an empty checkpoints array."
+      ],
+      "skillLocations": [
+        "scripts/validate-handoff.mjs:1167-1174 (validateArtifactLinks)"
+      ],
+      "causality": "confirmed",
+      "occurrenceCount": 1
+    },
+    {
+      "id": "manual-sha256-hash-computation",
+      "category": "deterministic-step-candidate",
+      "observation": "Cross-referencing artifacts (flow-contract.json, work-item-baseline.json, migration-result.json) required manually running Get-FileHash three separate times and hand-copying the lowercase hex digest into the next artifact's JSON. This is a fully deterministic step (hash a file, insert the value) that a small script (e.g. 'scripts/hash-artifact.mjs <path>' or an option on validate-handoff.mjs to print the expected hash) would remove entirely, and would also remove the risk of a copy/paste mismatch.",
+      "effect": "cost",
+      "evidence": [
+        "Ran Get-FileHash -Algorithm SHA256 on flow-contract.json and work-item-baseline.json before writing migration-result.json.",
+        "Ran Get-FileHash -Algorithm SHA256 on migration-result.json again after it stabilized, to fill work-item-migration.json's primaryArtifact.sha256."
+      ],
+      "skillLocations": [
+        "SKILL.md workflow step 12-13 (writing migration-result.json and work-item-migration.json)"
+      ],
+      "causality": "inferred",
+      "occurrenceCount": 3
+    }
+  ]
+}

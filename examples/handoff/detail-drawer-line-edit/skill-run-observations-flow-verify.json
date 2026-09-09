@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "skill-run-observations",
+  "skill": "flow-verify",
+  "skillVersion": "0.8.0",
+  "runId": "detail-drawer-line-edit-verification-1",
+  "flowId": "detail-drawer-line-edit",
+  "capturedAt": "2026-09-09T15:50:00Z",
+  "primaryOutcome": {
+    "status": "PASS",
+    "summary": "All 7 declared scenarios and all 4 visual parity surfaces passed with automated evidence plus manual Route Assistant desktop validation (real-host-layout); verification-result.json and work-item-verification.json were produced and validate against their schemas.",
+    "artifactPath": "runs\\2026-09-09-detail-drawer-line-edit-baseline-1\\verification-result.json",
+    "sha256": "178000be820b1368fb4862c3731432660e35d9c338cfd3791365582763ff99b7"
+  },
+  "observations": [
+    {
+      "id": "validator-unconditional-push-branch-check-with-optional-field",
+      "category": "skill-caused-tool-failure",
+      "observation": "validate-handoff.mjs unconditionally checks verification-result.push.branch === flowContract.checkpointPolicy.expectedBranch, but flow-contract.schema.json marks checkpointPolicy.expectedBranch as optional, and this flow's Flow Contract legitimately omits it (checkpointPolicy is only {mode: 'disabled', pushPolicy: 'never'}). verification-result.schema.json requires push.branch to be a non-empty string, so no value can satisfy both the schema and this cross-check when a flow declares pushPolicy 'never' without an expectedBranch. This blocked combined validation of flow-contract.json + verification-result.json, and transitively of work-item-verification.json (which requires verification-result.json as its primary artifact), for the entire remainder of the run.",
+      "effect": "cost",
+      "evidence": [
+        "node scripts\\validate-handoff.mjs flow-contract.json migration-result.json verification-result.json threw 'Error: verification push branch does not match flow-contract.' at validateArtifactLinks (scripts/validate-handoff.mjs:1393-1396), both before and after changing push.branch from 'N/A' to other placeholder attempts.",
+        "flow-contract.json's checkpointPolicy is {\"mode\": \"disabled\", \"pushPolicy\": \"never\"} with no 'expectedBranch' key at all, which schemas/flow-contract.schema.json:387-390 allows (expectedBranch is not in checkpointPolicy.required).",
+        "schemas/verification-result.schema.json:208-216 requires push.branch as a non-empty string unconditionally, with no allowance for a 'never'-policy flow to omit or null it.",
+        "verification-result.json and work-item-verification.json each independently passed JSON Schema validation (the error only occurs after schema validation succeeds, inside the cross-artifact business-rule check)."
+      ],
+      "skillLocations": [
+        "scripts/validate-handoff.mjs:1389-1396 (validateArtifactLinks)",
+        "schemas/flow-contract.schema.json:387-390 (checkpointPolicy.expectedBranch)",
+        "schemas/verification-result.schema.json:205-258 (push.branch required)"
+      ],
+      "causality": "confirmed",
+      "occurrenceCount": 2
+    },
+    {
+      "id": "manual-sha256-hash-computation",
+      "category": "deterministic-step-candidate",
+      "observation": "Cross-referencing artifacts (flow-contract.json, migration-result.json, work-item-migration.json, verification-result.json) required manually running Get-FileHash four separate times and hand-copying the lowercase hex digest into the next artifact's JSON. flow-migrate's own prior run already flagged this same pattern (see skill-run-observations-flow-migrate.json's 'manual-sha256-hash-computation'); it recurred identically in this verification run, reinforcing that a small hashing helper script would remove it for every phase of the pipeline, not just one.",
+      "effect": "cost",
+      "evidence": [
+        "Ran Get-FileHash -Algorithm SHA256 on flow-contract.json and migration-result.json before writing verification-result.json.",
+        "Ran Get-FileHash -Algorithm SHA256 on work-item-migration.json and verification-result.json before writing work-item-verification.json."
+      ],
+      "skillLocations": [
+        "SKILL.md workflow step 12-13 (writing verification-result.json and work-item-verification.json)"
+      ],
+      "causality": "inferred",
+      "occurrenceCount": 4
+    },
+    {
+      "id": "verification-result-schema-repair-pass",
+      "category": "output-mismatch",
+      "observation": "The first draft of verification-result.json failed schema validation twice before it validated: browserValidation.status used 'not-applicable' instead of the schema's enum ('not-run'), and push was missing the always-required remote/branch/commitShas/upstreamSet fields (which the skill instructions do not mention are required even when no push occurs). Two repair passes were needed.",
+      "effect": "cost",
+      "evidence": [
+        "First validate-handoff.mjs run on verification-result.json alone reported: '$.browserValidation.status must be one of: passed, failed, blocked, not-run.' and '$.push.remote is required.' / '$.push.branch is required.' / '$.push.commitShas is required.' / '$.push.upstreamSet is required.'"
+      ],
+      "skillLocations": [
+        "references/verification-contract.md (does not document the push object's always-required fields for a no-push flow)",
+        "schemas/verification-result.schema.json:206-258 (push required fields)"
+      ],
+      "causality": "confirmed",
+      "occurrenceCount": 1
+    },
+    {
+      "id": "ad-hoc-visual-parity-labels-confused-user",
+      "category": "user-correction",
+      "observation": "The verifier introduced its own shorthand labels ('V1 Length', 'V2 Angle', 'V3 Fence offset selector', 'V4 Fence offset distance') when asking the user to perform manual visual parity checks. These labels are not part of the Flow Contract's visualParityId terminology (length-field, angle-field, fence-offset-selector, fence-offset-value-field) and the user explicitly said they did not understand what was meant, requiring a follow-up clarification message before the check could proceed.",
+      "effect": "clarity",
+      "evidence": [
+        "User message: 'ik snap niet wat je bedoelt met v1 length v2 angle v3 ence enz'",
+        "Verifier had asked to compare 'V1 Length', 'V2 Angle', 'V3 Fence offset-selector', 'V4 Fence offset-afstandsveld' against retained siblings without first explaining these were just ad-hoc labels."
+      ],
+      "skillLocations": [
+        "references/verification-contract.md (does not prescribe how to phrase manual visual-parity instructions for a non-technical tester)"
+      ],
+      "causality": "confirmed",
+      "occurrenceCount": 1
+    },
+    {
+      "id": "manual-scenario-omits-concrete-robot-type",
+      "category": "ambiguous-instruction",
+      "observation": "flow-contract.json's validationPlan.manualValidation.scenario refers only to 'a robot with FeedPush capability' without naming a concrete robot type. The user asked which robot to select, which required the verifier to inspect useRobotManager.tsx's ROBOT_REGISTRY to determine that only ERobotType.Juno carries ERobotCapability.FeedPush, before manual validation of scenarios 3-4 could proceed.",
+      "effect": "clarity",
+      "evidence": [
+        "User message: 'stap 3 snap ik niet welke robot heeft dat'",
+        "flow-contract.json validationPlan.manualValidation.scenario says 'on a robot with FeedPush capability' without naming Juno.",
+        "src/app/providers/useRobotManager.tsx:87-99 shows only ERobotType.Juno's capabilities set includes ERobotCapability.FeedPush."
+      ],
+      "skillLocations": [
+        "runs\\2026-09-09-detail-drawer-line-edit-baseline-1\\flow-contract.json validationPlan.manualValidation.scenario (produced by flow-baseline, not flow-verify)"
+      ],
+      "causality": "inferred",
+      "occurrenceCount": 1
+    }
+  ]
+}

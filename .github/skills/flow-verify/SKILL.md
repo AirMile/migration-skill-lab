@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.8.0`.
+Skill version: `0.9.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -27,8 +27,10 @@ Confirm before verification:
 - migration-skill-lab root containing the validator and schemas;
 - product root and expected worktree/revision;
 - declared test, typecheck and build commands;
-- declared report destination and run-artifact directory;
-- required manual or Maui-WebView validation scenario and its owner.
+- the run-artifact directory;
+- the contract's required manual validation scenario and its environment. There
+  is no separate owner to look for: the person in this chat is the tester, and
+  this skill leads them through it.
 - baseline and migration work-item handoff paths and the real manual
   application outcome of the latest proposal;
 - checkpoint and push policy from the approved Flow Contract.
@@ -62,10 +64,35 @@ outside the declared flow.
 6. Check coverage only for the selected flow and only where measurement is
    approved. Treat a percentage as supporting evidence, never as scenario
    parity by itself.
-7. Exercise browser-compatible scenarios in the regular browser when declared,
-   using the running Vite UI and backend. Keep host-specific socket/lifecycle
-   scenarios for the declared Maui-WebView smoke test; browser evidence cannot
-   substitute for host evidence.
+7. Lead the manual validation. Do not ask whether someone has already done it:
+   the person in this chat is the tester, the environment is on the project
+   constants page, and conducting the walkthrough is this skill's work.
+   Build it from the contract's `scenarios` and `visualParity`, and add the
+   entries in `migration-result.limitations` as places a difference is already
+   expected. Present one item at a time.
+   A step names the control, not the outcome: the button, the field by its
+   visible label, the menu path, the keystroke. "Click the field labelled
+   Length" and not "check the length input". You have read the source, so use
+   the real label, the real `dataTestId` and the real tab order, and never name
+   a control you have not found there.
+   State the expected result verbatim in the question itself. A modal covers
+   the chat the moment it opens, so anything left outside the question is
+   unreadable exactly when it is needed.
+   After a run of ordinary steps ask for `ok`. After a step later steps depend
+   on, ask for the concrete value the tester now sees, never for a repeat of a
+   number your own step supplied.
+   Name every item by its contract `visualParityId` and `surface` text. Invented
+   shorthand such as "V1" means the tester is answering about something the
+   artifacts do not contain.
+   Never ask for an observation a person cannot make: no "watch for a change"
+   without the tester knowing the starting value, and no picking one row out of
+   hundreds.
+   Collect one verdict per item and record it before moving on: pass, fail,
+   tweak (works, but I want it different), or cannot test this. A verdict never
+   comes from inference. A bare "yes it works" without an observation earns one
+   clarifying question, not a pass.
+   An item that already carries a verdict is never asked again, so a
+   walkthrough interrupted halfway resumes where it stopped.
    Record a comparable visual artifact or explicit observed layout values for
    the actual drawer; a fixture for the isolated custom element is supporting
    evidence only. For any scenario with a directly comparable retained React
@@ -102,11 +129,18 @@ outside the declared flow.
    ask one explicit push confirmation. Push only that branch; set upstream
    only after showing that this is the first push. Record decline or failure
    honestly.
-12. Write a human-readable verification report and
-   `verification-result.json`, including the push outcome, in declared
-   approved locations.
+12. Write `verification-result.json`, including the push outcome, in the run
+   directory. Write no prose report: the JSON is canonical, and a second copy
+   in Markdown drifts the moment either side is edited. Show a short summary in
+   this chat instead, one line per scenario and per visual criterion, with the
+   overall status.
+   `push` always requires `remote`, `branch`, `commitShas` and `upstreamSet`,
+   including for a flow with nothing to push; record `not-requested` with the
+   reason. `browserValidation.status` has no `not-applicable`, only `not-run`.
 13. Write `work-item-verification.json`, pointing to the exact verification
-    result and migration handoff hashes. Propose User Story `Done` only for
+    result and migration handoff hashes, taken from
+    `node "<migration-skill-lab-root>\scripts\hash-artifact.mjs" <file>...`
+    rather than computed by hand. Propose User Story `Done` only for
     overall `PASS` with passed required host validation. Render the final
     copy/paste Markdown, then run `render-work-item-handoff.mjs --inline
     <snapshot> --since <work-item-migration.json>` and show its output verbatim
@@ -116,6 +150,10 @@ outside the declared flow.
     handoff in `previousApplication`, including the external IDs Targetprocess
     assigned to any created item in `createdExternalIds`; never update
     Targetprocess directly or rewrite an earlier snapshot.
+    Ask this as a confirmation, not as an open question. The migration handoff
+    already recorded an outcome minutes earlier, so quote it and ask whether it
+    still holds. A user who has answered the same question in every phase of
+    one afternoon is being asked to restate what the artifacts already say.
     Copy each unchanged `fields` value from the migration handoff byte for byte
     and mark that item `no-change`. Rewording settled text forces `update`,
     re-emits the whole item and asks a reader to re-review something this phase
@@ -135,9 +173,26 @@ outside the declared flow.
     `validate-handoff.mjs`.
 17. Compare product status after validation with the initial status and report
    any delta. Return repairable diagnoses to `flow-migrate`; do not fix them.
-18. For an overall `PASS`, ask one focused user question before opening a fresh
-   `/flow-baseline` chat for a separately selected next flow. Do not open a
-   successor chat when no next flow is selected.
+18. For an overall `PASS`, ask one focused user question about the
+   continuation. The next phase is a fresh `/flow-baseline` for a separately
+   selected next flow, so offer it only once the user has named that flow;
+   without one, report the PASS and stop.
+   Offer exactly three routes and perform only the chosen one:
+   1. open a fresh chat for `/flow-baseline` now, carrying only the artifact paths
+      and the product root. Use whatever mechanism this host has for opening a
+      chat; never start a second terminal window for it;
+   2. show the invocation here for the user to paste into a chat they open
+      themselves;
+   3. stop here and save the invocation in the run directory as
+      `<flowId>-<next-skill>-prompt.md`.
+   Route 3 is a checkpoint, not an abandonment, and say so when you offer it:
+   every phase reads its inputs from the artifacts and never from this chat, so
+   the saved invocation still runs correctly days later.
+   Never continue the next phase in this chat, and never delegate it to a
+   background agent, which cannot ask the user the questions it needs
+   answered.
+   Return a `FAIL` or `BLOCKED` to `flow-debug` instead, through the same three
+   routes.
 
 ## Safety boundary
 
@@ -170,8 +225,9 @@ manual observation, expected behavior, actual evidence, suspected boundary and
 the smallest recommended next action. `flow-migrate` owns repairs. A contract
 change requires `flow-baseline` and renewed human approval.
 
-The verifier owns regular-browser and Maui-WebView evidence. It may open a
-fresh `/flow-debug` chat only after the user confirms a repairable handoff.
+The verifier owns the manual evidence and conducts the walkthrough that
+produces it. It may open a fresh `/flow-debug` chat only after the user
+confirms a repairable handoff.
 
 ## Push and backlog handoff
 
@@ -194,7 +250,7 @@ is paid again for nothing.
   only in alternation, wording or case return mostly the same hits, so the
   second one buys nothing.
 - Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
-  Copy the shape from `examples\handoff\`, write the artifact, run
+  Copy the shape from `examples\handoff\detail-drawer-line-edit\`, write the artifact, run
   `validate-handoff.mjs` and act on its errors; the validator names what is
   missing far more cheaply than a schema read does. When an error names a rule
   but not the fix, and one more attempt does not resolve it, reading the rule in
@@ -243,7 +299,7 @@ produced:
    filename carries the skill because phases of one flow share a run directory,
    and a bare `skill-run-observations.json` means the second skill to finish
    silently overwrites the first one's evidence.
-   Copy the shape from `examples\handoff\` rather than writing it from this
+   Copy the shape from `examples\handoff\detail-drawer-line-edit\` rather than writing it from this
    description: an entry needs `id`, `category`, `observation`, `effect`,
    `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
    `primaryOutcome.status` is `PASS`, `FAIL` or `BLOCKED` for this skill. An empty
