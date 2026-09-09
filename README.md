@@ -136,15 +136,19 @@ reasoning, and the mechanical steps are already scripts.
 
 ## Migration workflow
 
-1. `flow-baseline` is read-only for the product repository. It creates a
-   human-readable behavior baseline and a draft `flow-contract.json` for one
-   human-selected flow.
-2. `flow-baseline` ends at one approval checkpoint. It renders scope, write
+1. `flow-baseline` is read-only for the product repository. It creates one
+   draft `flow-contract.json` for one human-selected flow, carrying the scope,
+   surface inventory, target architecture, scenarios and open questions. It
+   writes no report: a prose copy of a validated artifact drifts, and no later
+   skill reads it.
+2. `flow-baseline` ends at one approval checkpoint, which is the review
+   surface in place of a report. It renders scope, the surface inventory, the
+   proposed architecture, scenario summaries, required characterization, write
    allowlist, validation commands, rollback, checkpoint policy and open
    questions from the validated contract; a human approves, rejects or asks a
    question. Approval writes the approved successor pair, and the user then
    picks one continuation: open a fresh `flow-migrate` chat now, paste the
-   invocation into a chat of their own, or save it beside the report for later.
+   invocation into a chat of their own, or save it in the run directory.
    Plan mode is the user's to enable; when a session already runs in it, the
    checkpoint uses its plan-approval dialog and the artifacts are written after
    approval.

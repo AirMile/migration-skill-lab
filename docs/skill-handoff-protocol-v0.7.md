@@ -45,7 +45,9 @@ Targetprocess was changed.
 
 ## Storage and confidentiality
 
-- Put human-readable baseline and verification reports in
+- `flow-baseline` writes no report. Its contract is the durable artifact and
+  its approval checkpoint is the review surface; a second prose copy of a
+  validated artifact only drifts. Put a human-readable verification report in
   `C:\Obsidian\Notes 2025\Lely\Angular migratie\analyses`.
 - Put only compact, non-sensitive JSON artifacts in
   `C:\Project\migration-skill-lab\runs\<run-id>`.
@@ -72,13 +74,17 @@ approver, approval date and concise resolved decisions. Checkpoint authorization
 fields exist only when its mode is `auto-local`.
 
 `flow-baseline` asks for that approval at one checkpoint at the end of its run.
-The checkpoint renders scope, partial mount, visual-parity surfaces, write
-allowlist, validation commands, rollback, checkpoint policy and open questions
-from the validated contract, and accepts approve, reject or a question. A
+The checkpoint renders scope, partial mount, the rendered-surface inventory,
+the proposed target architecture, scenario summaries, required characterization,
+visual-parity surfaces, write allowlist, validation commands, rollback,
+checkpoint policy, decisions and open questions from the validated contract, and
+accepts approve, reject or a question. It is the review surface that replaced
+the baseline report, so it carries what a reader could disagree with and cites
+the rest. A
 blocking open question is resolved before approval is offered. Only after the
 approved pair validates does the run offer one continuation the user picks: a
 fresh `flow-migrate` chat opened now, the invocation shown for pasting, or the
-invocation saved beside the baseline report.
+invocation saved in the run directory.
 
 A host plan mode is a session mode the user controls. A skill never switches it
 on. When a session already runs in plan mode, the checkpoint uses that mode's
@@ -104,9 +110,9 @@ Every artifact has `schemaVersion`, `skillVersion`, `runId`, `flowId` and
 revision or content-hash pointers. A consumer rejects an incompatible version,
 a mismatched flow, missing artifact or unknown status.
 
-A schema accepts more than one `schemaVersion` at a time: `flow-contract` and
-`verification-result` accept 3 and 4, `migration-result` accepts 2 and 3, and
-`debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
+A schema accepts more than one `schemaVersion` at a time: `flow-contract`
+accepts 3, 4 and 5, `verification-result` accepts 3 and 4, `migration-result`
+accepts 2 and 3, and `debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
 optional and the validator's rule layer makes it mandatory for the newer
 version. Completed runs stay valid at the version they were written under,
 which matters because a draft baseline and its artifacts are immutable
@@ -127,7 +133,7 @@ daily standup block with the same percentage.
 ## Diagnostic observation sidecars
 
 Each skill writes `skill-run-observations.json` only after its primary artifact
-or report is complete. This sidecar:
+is complete. This sidecar:
 
 - is validated independently against
   `schemas\skill-run-observations.schema.json`;
@@ -205,8 +211,8 @@ the ID only after the item exists, through
 
 Each phase shows its handoff inline in the chat through
 `render-work-item-handoff.mjs --inline ... --since <previous snapshot>`, which
-reports only what moved. The full Markdown render remains the archived
-artifact. See `docs\work-item-handoff-protocol-v0.4.md`.
+reports only what moved. The full Markdown render is available on demand from
+the validated snapshot; a run does not write it. See `docs\work-item-handoff-protocol-v0.4.md`.
 
 ## Improvement loop
 

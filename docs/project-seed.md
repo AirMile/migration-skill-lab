@@ -170,7 +170,9 @@ Do not use a live symlink. Record the source version in both locations.
 
 ### Confidential run reports
 
-Canonical confidential reports are stored under:
+`flow-baseline` writes no report; its contract is the durable artifact and
+its approval checkpoint is the review surface. Canonical confidential
+reports from the phases that still produce one are stored under:
 
 `C:\Obsidian\Notes 2025\Lely\Angular migratie\analyses`
 

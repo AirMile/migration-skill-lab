@@ -255,6 +255,60 @@ const validateArtifactRules = (value, errors) => {
       }
     }
 
+    if (value.schemaVersion >= 5) {
+      // From schemaVersion 5 the contract is the only durable artifact, so the
+      // design and the surface classification live in it rather than in a
+      // human-readable report that no later skill reads.
+      if (!value.renderedSurfaceInventory?.length) {
+        errors.push(
+          "$.renderedSurfaceInventory is required from schemaVersion 5; flow-migrate compares it against the real render tree.",
+        );
+      }
+      if (!value.targetArchitecture) {
+        errors.push(
+          "$.targetArchitecture is required from schemaVersion 5; without it flow-migrate has to re-elicit the design it was handed.",
+        );
+      }
+    }
+
+    if (value.targetArchitecture &&
+      value.status === "approved" &&
+      value.targetArchitecture.status !== "approved") {
+      errors.push(
+        "$.targetArchitecture.status must be approved when the contract is approved.",
+      );
+    }
+
+    if (value.renderedSurfaceInventory) {
+      const inventoryIds = value.renderedSurfaceInventory.map(entry => entry.id);
+      if (new Set(inventoryIds).size !== inventoryIds.length) {
+        errors.push("$.renderedSurfaceInventory must use unique ids.");
+      }
+
+      // A migrated surface without a parity entry cannot fail downstream, and a
+      // parity entry for a retained surface asks flow-verify to judge something
+      // this slice never touches.
+      const migrateIds = new Set(
+        value.renderedSurfaceInventory
+          .filter(entry => entry.status === "migrate")
+          .map(entry => entry.id),
+      );
+      for (const id of migrateIds) {
+        if (!value.visualParity?.some(entry => entry.id === id)) {
+          errors.push(
+            `$.renderedSurfaceInventory declares ${id} as migrate without a matching $.visualParity entry.`,
+          );
+        }
+      }
+      for (const entry of value.visualParity ?? []) {
+        if (!migrateIds.has(entry.id)) {
+          errors.push(
+            `$.visualParity declares ${entry.id}, which $.renderedSurfaceInventory does not mark migrate.`,
+          );
+        }
+      }
+    }
+
     if (value.visualParity) {
       const visualIds = value.visualParity.map(entry => entry.id);
       if (new Set(visualIds).size !== visualIds.length) {
@@ -774,7 +828,10 @@ const loadArtifact = async filePath => {
     throw new Error(`${absolutePath} failed schema validation:\n- ${errors.join("\n- ")}`);
   }
 
-  if (value.artifactType === "flow-contract") {
+  // A baseline report is optional from schemaVersion 5: the contract itself is
+  // the durable artifact. When an older contract still points at one, its hash
+  // is still proof that the pointer and the file agree.
+  if (value.artifactType === "flow-contract" && value.baselineReport) {
     const reportPath = path.isAbsolute(value.baselineReport.path) ?
       value.baselineReport.path :
       path.resolve(path.dirname(absolutePath), value.baselineReport.path);
@@ -2241,6 +2298,106 @@ const runSelfTest = async () => {
       );
     }
   }
+
+  const contractV5 = () => {
+    const contract = structuredClone(
+      artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
+        .value,
+    );
+    contract.schemaVersion = 5;
+    delete contract.baselineReport;
+    contract.renderedSurfaceInventory = contract.visualParity.map(entry => ({
+      id: entry.id,
+      surface: entry.surface,
+      status: "migrate",
+    }));
+    contract.renderedSurfaceInventory.push({
+      id: "retained-risk-card",
+      surface: "Line risk card",
+      status: "retain-react",
+    });
+    contract.targetArchitecture = {
+      status: contract.status === "approved" ? "approved" : "proposed",
+      boundary: {
+        angularOwns: ["The migrated selected-line controls only."],
+        reactRetains: ["Selection, drawlib, history and host integration."],
+      },
+      adapter: {
+        inputs: ["Line identity and current values."],
+        commands: ["Request a value change."],
+        events: ["Accepted snapshot."],
+        nonSuccessOutcome: "The adapter reports an explicit rejection.",
+      },
+      lifecycle: ["Unmount cancels pending timers."],
+      styling: ["Use existing design tokens rather than literal values."],
+    };
+    return contract;
+  };
+
+  const expectContractRejection = (mutate, expected, description) => {
+    const contract = contractV5();
+    mutate(contract);
+    const contractErrors = [];
+    validateArtifactRules(contract, contractErrors);
+    if (!contractErrors.some(error => error.includes(expected))) {
+      throw new Error(
+        `Handoff validator self-test did not reject ${description}.`,
+      );
+    }
+  };
+
+  const cleanV5Errors = [];
+  validateArtifactRules(contractV5(), cleanV5Errors);
+  if (cleanV5Errors.length > 0) {
+    throw new Error(
+      `Handoff validator self-test rejected a valid schemaVersion 5 contract: ${cleanV5Errors.join(", ")}`,
+    );
+  }
+
+  expectContractRejection(
+    contract => {
+      delete contract.renderedSurfaceInventory;
+    },
+    "$.renderedSurfaceInventory is required from schemaVersion 5",
+    "a schemaVersion 5 contract without a rendered-surface inventory",
+  );
+
+  expectContractRejection(
+    contract => {
+      delete contract.targetArchitecture;
+    },
+    "$.targetArchitecture is required from schemaVersion 5",
+    "a schemaVersion 5 contract without a target architecture",
+  );
+
+  expectContractRejection(
+    contract => {
+      contract.status = "approved";
+      contract.targetArchitecture.status = "proposed";
+    },
+    "$.targetArchitecture.status must be approved when the contract is approved",
+    "an approved contract whose target architecture is still proposed",
+  );
+
+  expectContractRejection(
+    contract => {
+      contract.renderedSurfaceInventory.push({
+        id: "undeclared-surface",
+        surface: "A migrated control nobody declared parity for",
+        status: "migrate",
+      });
+    },
+    "as migrate without a matching $.visualParity entry",
+    "a migrated surface with no declared visual parity",
+  );
+
+  expectContractRejection(
+    contract => {
+      contract.renderedSurfaceInventory[0].status = "retain-react";
+    },
+    "which $.renderedSurfaceInventory does not mark migrate",
+    "a visual-parity entry for a surface this slice retains",
+  );
 
   const flatVisualContract = structuredClone(
     artifacts.find(artifact => artifact.value.artifactType === "flow-contract")

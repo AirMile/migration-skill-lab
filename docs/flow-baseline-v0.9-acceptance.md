@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.8.0
+targetVersion: 0.9.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.8.0 acceptance criteria
+# `flow-baseline` v0.9.0 acceptance criteria
 
 ## Hard gates
 
@@ -22,13 +22,15 @@ an implementation run the user did not choose, or stores sensitive content.
   and cleanup behavior.
 - A cited evidence ledger with `Confirmed`, `Inference` and `Open question`.
 - Existing relevant tests, their proved behavior and prioritized evidence gaps.
-- A draft report and `flow-contract.json` that validate against the handoff
-  schema.
+- A draft `flow-contract.json` at schemaVersion 5 that validates against the
+  handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`.
+- No analysis report, no rendered work-item Markdown and no other file beyond
+  the contract, the work-item snapshot and the observation artifact.
 - A before/after Git-visible product worktree comparison.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
-- A schema-valid baseline work-item snapshot and deterministic copy/paste
-  Markdown with Epic/Feature/Story/Task identity, fields, state and progress.
+- A schema-valid baseline work-item snapshot with Epic/Feature/Story/Task
+  identity, fields, state and progress, shown inline rather than written twice.
 - Items that did not move marked `no-change` with their previous field text
   copied verbatim, rendered as an identification line rather than restated.
 - Task contribution weights totaling 100, calculated Story progress and a
@@ -40,9 +42,11 @@ an implementation run the user did not choose, or stores sensitive content.
 - A machine-readable validation plan and rollback; approval is impossible
   while required test, typecheck, build or host details are absent.
 - One approval checkpoint rendered from the validated contract, covering scope,
-  partial mount, visual-parity surfaces, write allowlist, validation commands,
-  rollback, checkpoint policy and open questions, with approve, reject and
-  ask-a-question as the only replies.
+  partial mount, the surface inventory, the proposed architecture, scenario
+  summaries, required characterization, visual-parity surfaces, write allowlist,
+  validation commands, rollback, checkpoint policy, decisions and open
+  questions, with approve, reject and ask-a-question as the only replies. It
+  restates no confirmed behavior, because a citation is checked by opening it.
 - An approved successor contract and work-item handoff written only after an
   explicit approval, leaving the draft pair unchanged.
 - Exactly one user-chosen continuation: a fresh `flow-migrate` chat opened now,
@@ -119,3 +123,10 @@ The source is acceptable when:
 33. `richReleaseNotes` is refreshed only on an item the run actually moved,
     so per-run narrative cannot force an unchanged Epic or Feature into
     `update`.
+34. it writes the contract, the work-item snapshot and the observation
+    artifact and nothing else, and never a prose document that duplicates a
+    validated artifact;
+35. the target architecture reaches `flow-migrate` inside the contract rather
+    than being re-elicited from the user;
+36. confirmed current behavior is cited, not restated, so the contract cannot
+    silently disagree with the source it describes.

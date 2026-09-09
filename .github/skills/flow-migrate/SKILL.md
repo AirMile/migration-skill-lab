@@ -27,7 +27,10 @@ Confirm all inputs before any product write:
 - contract `status: approved` and `approval.status: approved`;
 - migration-skill-lab root containing the validator and schemas;
 - product root and declared branch/worktree;
-- available Angular convention evidence and explicit POC design choices;
+- the contract's `targetArchitecture`, which carries the approved boundary,
+  typed adapter, lifecycle and styling rules; ask the user only for what the
+  contract leaves open, and never re-invent a design it already states;
+- any Angular convention evidence the contract does not cover;
 - exact allowed product write paths, matching the contract;
 - exact approved dependency, lockfile, TypeScript and Vite changes required by
   the bounded target architecture, or explicit evidence that none are needed;
@@ -52,9 +55,12 @@ provisional convention as an approved Lely standard.
 2. Record the product revision and Git-visible worktree status. Preserve all
    pre-existing changes.
 3. Confirm each requested file change is inside `allowedWritePaths`.
-4. Compare the approved rendered-surface inventory with the current React
-   render tree before replacing anything. A partial Angular mount must not
-   return early from, replace or hide a parent form that still owns
+4. Compare the contract's `renderedSurfaceInventory` with the current React
+   render tree before replacing anything. Read the cited source for each
+   surface rather than trusting a remembered description: the inventory says
+   which surfaces this slice owns, the source says how they behave today.
+   A partial Angular mount must not return early from, replace or hide a
+   parent form that still owns
    `retain-react` controls. The comparison covers visual style (icon, label
    placement, border, radius, color tokens) and layout fit (padding, margin
    and width parity with retained sibling sections) for any migrated field
@@ -66,6 +72,10 @@ provisional convention as an approved Lely standard.
 5. Add or update only the React characterizing tests required by the approved
    scenarios. Run them against the existing React implementation before
    changing the selected behavior.
+   Every `characterizationRequired` entry is one of those tests and it comes
+   first: it records a hypothesis the baseline could not prove, so replacing
+   the behavior it names before settling it means migrating a guess. Record the
+   outcome, including a hypothesis the test disproves.
    Include one rendered test that proves every retained control remains visible
    across the relevant conditional capability branches.
 6. Implement the smallest Angular change that meets the same scenarios.

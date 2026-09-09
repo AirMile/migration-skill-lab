@@ -170,8 +170,9 @@ copy it and printing it invites a reader to diff prose that did not move. A
 `no-change` User Story still renders its Tasks: Task progress is what moves a
 Story, so the Tasks can change while the Story text does not.
 
-That full render is the archived artifact, not the working surface. For the
-handoff a human actually reads, run:
+That full render is available on demand, not something a run writes: the JSON
+is canonical and the Markdown can be regenerated from it whenever a human wants
+the whole document. For the handoff a human actually reads during a run, run:
 
 ```powershell
 node .\scripts\render-work-item-handoff.mjs --inline <snapshot.json> --since <previous-snapshot.json>

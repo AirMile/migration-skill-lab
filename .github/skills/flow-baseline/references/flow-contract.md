@@ -8,29 +8,37 @@ Create a compact behavioral handoff, not an Angular design. The handoff must
 give a later migration run enough evidence to know what may change, what must
 remain observable and which unknowns block writing.
 
-## Required baseline report sections
+## What the contract carries, and what it cites
 
-Use this order:
+There is no separate baseline report. The contract is the only durable
+analysis artifact, and the run's chat summary is the review surface. Two
+categories decide where something belongs.
 
-1. Scope and feature boundary: user goal, start/end state, included paths,
-   exclusions and confidence.
-2. Behavior baseline: happy path, validation, errors, loading/empty/recovery,
-   keyboard interaction, state mutation, persistence, side effects and cleanup.
-   Mark non-applicable categories explicitly.
-3. Evidence ledger: cited Confirmed evidence, Inferences with validation steps,
-   contradictions and Open questions with owner, impact and blocker phase.
-4. Existing test evidence and gaps: what assertions prove, observed execution
-   when available, manual checks, coverage evidence and evidence priority.
-5. Migration handoff: scenarios, allowed write paths, approval required before
-   writing, validation commands and rollback constraints.
-6. Sprint-backlog handoff: current Epic/Feature/Story/Task identity and
-   relations, proposed field content, state/progress, manual application
-   status, daily standup and any evidence-backed create proposal.
-7. Target architecture: a bounded proposal for component ownership, typed
-   adapter, state, mount/unmount, styling, browser automation, Maui smoke
-   validation and exact dependency/build paths. Do not redesign the full app.
-   Include a rendered-surface inventory that marks every child control and
-   conditional branch as `migrate`, `retain-react` or `excluded`.
+Carry it in the contract when a later reader cannot recover it from the product
+source:
+
+- scope decisions: what is in, what is out, what may be written;
+- the rendered-surface classification, which is a choice about this slice and
+  not a fact about the code;
+- the target architecture, because the Angular side does not exist yet;
+- visual-parity requirements: which surface must match which retained
+  counterpart, and along which dimensions;
+- scenarios, as the behavior this migration promises to preserve;
+- hypotheses that took cross-file reasoning and still need characterizing;
+- decisions taken between conflicting sources, and the questions still open;
+- validation commands, rollback, checkpoint policy and the approval record.
+
+Cite it instead when the product source already holds it:
+
+- how a control behaves today: the conversion arithmetic, the debounce window,
+  the history rule, the tab order, the exact spacing tokens. A scenario names
+  the behavior and points at the file and line that proves it.
+- which controls the current form renders, and under what condition.
+
+The reason is not brevity. A restated mechanism is a copy that silently
+disagrees with the source the day someone edits it, and `flow-migrate` opens
+that source anyway to write the code. A citation cannot go stale without the
+staleness being visible.
 
 ## `flow-contract.json`
 
@@ -41,9 +49,18 @@ descriptions only. Do not copy application source into JSON.
 Populate:
 
 - `repository` with the inspected root and revision;
-- `baselineReport` with the persisted report path and SHA-256;
 - `scope` with non-empty included paths and an explicit write allowlist;
+- `renderedSurfaceInventory` with one entry per visible control, conditional
+  branch, child component and action, each `migrate`, `retain-react` or
+  `excluded` and cited;
+- `targetArchitecture` with the ownership boundary, the typed adapter
+  (`inputs`, `commands`, `events`, `nonSuccessOutcome`, `forbiddenAccess`),
+  lifecycle and styling rules and `dependencyChanges`, at status `proposed`
+  until a human approves the contract;
 - `scenarios` as Given/When/Then observable outcomes with evidence pointers;
+- `characterizationRequired` for each unproven hypothesis, with the behavior it
+  blocks;
+- `decisions` for a conflict between sources that has been resolved;
 - `testGaps` only for behavior without adequate evidence;
 - `openQuestions` for unknowns that cannot be inferred safely;
 - `approval` as `pending` until a human has explicitly approved the scope.
@@ -59,9 +76,10 @@ Populate:
   but approval may not;
 - `rollback` with concrete scope-preserving instructions.
 
-The baseline report's rendered-surface inventory is binding during partial
-migration. A component may not replace a parent React form when that would hide
-an item marked `retain-react`.
+`renderedSurfaceInventory` is binding during partial migration. A component may
+not replace a parent React form when that would hide an item marked
+`retain-react`. Every `migrate` entry needs a `visualParity` entry with the same
+id, and `visualParity` may not name anything else.
 
 ## Work-item handoff
 
@@ -100,7 +118,7 @@ The validator enforces this list downstream: `flow-migrate` must return a
 verdict per surface and `flow-verify` must status each one on its own. A
 surface that is not declared here can therefore never fail later, so an
 appearance difference the user would notice belongs in `visualParity` rather
-than in report prose. `scope.partialMount` is required too; `nested: false` is
+than in the chat summary. `scope.partialMount` is required too; `nested: false` is
 a deliberate statement about the mount shape, not an omission.
 
 When the slice mounts inside a retained React parent, declare it in the
@@ -124,7 +142,7 @@ matters and the safe command/location the human must approve.
 ## Approval checkpoint and continuation
 
 The run ends at one checkpoint, not at a summary. Build the decision block from
-the validated contract instead of from report prose, so the human reviews what
+the validated contract instead of from remembered prose, so the human reviews what
 `flow-migrate` will actually read:
 
 - `flowId`, the user-visible goal and the included/excluded boundary;
@@ -144,9 +162,9 @@ the draft pair stays exactly as it was written.
 Plan mode is a session mode of the host, not something a skill can switch on.
 `/plan`, `--plan` and `--mode plan` belong to the user. When the session is
 already in plan mode, use its plan-approval mechanism for this checkpoint. That
-mode also forbids repository writes before approval, so write the report,
-contract and work-item snapshot after the approval instead of before it. Their
-content and validation do not change; only their position in the run does.
+mode also forbids repository writes before approval, so write the contract and
+work-item snapshot after the approval instead of before it. Their content and
+validation do not change; only their position in the run does.
 
 Then ask which continuation the user wants, and perform only that one:
 
@@ -159,7 +177,7 @@ Then ask which continuation the user wants, and perform only that one:
 
 2. Show `<invocation>` in this chat for the user to paste into a chat they open
    themselves.
-3. Save `<invocation>` beside the baseline report as
+3. Save `<invocation>` in the run directory as
    `<flowId>-flow-migrate-prompt.md` for a later session.
 
 `<invocation>` is the same string in all three routes: `/flow-migrate` followed
