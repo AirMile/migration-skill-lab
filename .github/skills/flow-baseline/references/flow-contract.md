@@ -180,22 +180,28 @@ Prioritize missing tests by user risk, integration boundary and missing
 scenario evidence. A global percentage must not substitute for a per-flow
 baseline.
 
-If a coverage report is not already available, do not create product-repository
-artifacts merely to obtain one. State the unavailable measurement, why it
-matters and the safe command and location it would need.
+Read the CI configuration before concluding that no coverage exists. A pipeline
+that runs a coverage script, keeps its output as a build artifact or uploads it
+to an analysis service is a repository fact, and a report produced there is
+available even though the working tree holds none. Record such a measurement as
+not retrieved for this run, with where it lives; "no measurement is available"
+is a different and stronger claim, and it is false whenever CI already takes it.
+
+If a coverage report really is not available anywhere, do not create
+product-repository artifacts merely to obtain one. State the unavailable
+measurement, why it matters and the safe command and location it would need.
 
 ## Review summary and continuation
 
-The run ends at one checkpoint, not at a summary. Build the decision block from
+The run ends at one review summary, not at a checkpoint. Build it from
 the validated contract instead of from remembered prose, so the human reviews what
 `flow-migrate` will actually read:
 
 - `flowId`, the user-visible goal and the included/excluded boundary;
 - `scope.partialMount`, including a deliberate `nested: false`;
 - every `visualParity` id with the counterpart it must match;
-- `scope.allowedWritePaths` verbatim;
-- `scope.allowedWritePaths`, because that list is the only thing bounding the
-  next phase's writes;
+- `scope.allowedWritePaths` verbatim, because that list is the only thing
+  bounding the next phase's writes;
 - the test, typecheck and build commands, the manual verification scenarios and
   the rollback;
 - `checkpointPolicy`, including `disabled`;
@@ -217,8 +223,15 @@ Then ask which continuation the user wants, and perform only that one:
    `--add-dir` arguments this session uses:
 
    ```powershell
-   wt.exe -w 0 nt -d "<working-directory>" copilot -i "<invocation>"
+   wt.exe -w 0 nt -d "<working-directory>" copilot.cmd -i "<invocation>"
    ```
+
+   The `.cmd` is required. npm installs the CLI as `copilot.cmd` and
+   `copilot.ps1` with no `copilot.exe`, and `wt.exe nt` starts its command
+   through `CreateProcess`, which does not apply `PATHEXT`. A bare `copilot`
+   therefore fails with `0x80070002`, "the system cannot find the file
+   specified", which names the executable and not the artifact paths in the
+   invocation.
 
 2. Show `<invocation>` in this chat for the user to paste into a chat they open
    themselves.

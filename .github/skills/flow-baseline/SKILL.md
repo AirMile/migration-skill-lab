@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.15.0`.
+Skill version: `0.16.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -35,32 +35,35 @@ Confirm before deep analysis:
 - any hard constraint the user already knows, such as a component that must
   not be touched. The boundary itself is not an input: step 4 puts candidate
   boundaries to the user once the survey can show what each one costs;
-- whether existing coverage evidence is available. Never offer the product's own
+- whether existing coverage evidence is available. Read the product's CI
+  configuration before asking, and name what you found: a pipeline that runs a
+  coverage script, the artifact it keeps and any analysis service it uploads to
+  are repository facts, so ask whether the user can retrieve those figures
+  rather than whether coverage exists at all. Never offer the product's own
   coverage script: `test:ci` writes a `coverage\` tree and `junit.xml` into the
   product repository, and neither is gitignored, so the run would dirty the
   worktree it is required to leave untouched. Either record the gap, or offer
   one command you have constructed to write outside the product root, naming
-  that location.
+  that location. A gap that CI already measures is recorded as not retrieved
+  for this run, never as a measurement that does not exist.
 - the most recent validated work-item handoff for this `flowId`, when one
   exists; it supplies the Epic, Feature and User Story identity, parent
   relations and field text, so ask for those only when no such snapshot exists;
 - whether a new Epic, Feature or User Story is requested;
 - current User Story Tasks, when any exist; otherwise propose the three
   stakeholder-readable Tasks the handoff protocol fixes;
-- declared work-item handoff JSON destination;
-- the proposed product branch, external work-item reference and push policy for
-  the later migration. Do not offer to enable `auto-local` here: the validator
-  refuses `auto-local` without an expected branch and external reference.
-  `pushPolicy` is `never` whenever the mode
-  is `disabled`: without checkpoints the pipeline creates no commit it could
-  push, and `confirm-after-pass` beside a disabled mode reads like a standing
-  authorization. Leave the branch, reference and milestones absent when they are
-  not yet assigned rather than inventing a placeholder that reads like a real
-  value.
-- the manual verification scenarios and rollback. Verification is manual: do
-  not propose browser automation, a runner, or an owner to assign it to. Record
-  what a person walks through, and leave an unresolved value absent rather than
-  inventing one.
+- nothing about checkpoints. Record `mode: disabled` with `pushPolicy: never`
+  and say so in one line. Only a user who asks for `auto-local` unprompted
+  changes that, and then the expected branch and external reference are theirs
+  to supply. Do not put the choice to them: the validator refuses `auto-local`
+  without those two, `confirm-after-pass` beside a disabled mode reads like a
+  standing authorization, and offering a mode whose inputs do not exist yet
+  invites a placeholder that reads like a real value.
+- the manual verification scenarios, their environment, and the rollback.
+  Verification is manual: do not propose browser automation, a runner, or an
+  owner to assign it to. The environment is required, so propose the one the
+  product's own scripts and configuration point at and ask the user to correct
+  or name it, rather than asking where a tester works from nothing.
 
 Derive the test, typecheck and build commands from the product's own
 `package.json` rather than asking for them, and verify each one terminates. A
@@ -74,6 +77,14 @@ exists, reuse its exact `flowId` so `supersedes` and `--since` still match. The
 run directory is `<migration-skill-lab-root>\runs\<date>-<flowId>-baseline-<n>`.
 State both in one line and continue. Ask only when the derived directory already
 exists or the flow maps to more than one plausible id.
+
+These are the questions this run does not ask, because it has already answered
+them: where to write either artifact, which run directory to use, what the
+`flowId` is, which test, typecheck and build commands to run, and which
+checkpoint mode to record. State each derived value in one line and continue.
+A question whose answer is in the product repository, in this skill or in the
+run directory pattern costs the user a turn to tell you something you knew, and
+it is the failure this skill is asked about most.
 
 Also confirm:
 
@@ -248,8 +259,14 @@ the reader's.
    which then needs its expected branch and external reference. The contract
    carries concrete test, typecheck and build commands and a rollback; those are
    what `flow-migrate` runs, so an absent one is a missing input rather than an
-   open question. An unresolved decision stays in `openQuestions`, and
-   `flow-migrate` reports `BLOCKED` when one of them prevents implementing.
+   open question. An `openQuestions` entry is something this run could not
+   determine: a technical unknown, or a choice that needs information nobody in
+   this run holds. A choice this run could have made is not one of them. Decide
+   it, or put it to the user at the step that raises it, and record the answer
+   as a `decisions` entry; parking it instead spends a `flow-migrate` run on a
+   `BLOCKED` report about something no one is waiting on. `flow-migrate` reports
+   `BLOCKED` on the entries that remain, so each one has to be worth stopping a
+   migration for.
    Write `rollback` as the concrete undo for this slice: which files return to
    which state, and what a revert must not disturb. "Revert the checkpoints
    `migration-result.json` records" is not a rollback plan; it restates how the

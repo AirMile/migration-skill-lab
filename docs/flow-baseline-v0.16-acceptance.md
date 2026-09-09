@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.15.0
+targetVersion: 0.16.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.15.0 acceptance criteria
+# `flow-baseline` v0.16.0 acceptance criteria
 
 ## Hard gates
 
@@ -183,4 +183,19 @@ The source is acceptable when:
     not disturb, instead of restating that `migration-result.json` records the
     checkpoint SHAs;
 59. required manual validation names both the scenario and the environment it
-    is walked through in, because no owner is assigned to work it out.
+    is walked through in, because no owner is assigned to work it out;
+60. the run asks nothing it has already answered: neither artifact's
+    destination, the run directory, the `flowId`, the validation commands nor
+    the checkpoint mode reaches the user as a question;
+61. the checkpoint mode is recorded as `disabled` with `pushPolicy: never` and
+    stated in one line; `auto-local` is never offered as a choice;
+62. the CI configuration is read before any claim about coverage, and a
+    measurement CI already takes is recorded as not retrieved for this run
+    rather than as unavailable;
+63. the manual-validation environment is proposed from the product's own
+    scripts and configuration for the user to correct, not asked open-ended;
+64. every `openQuestions` entry is something this run could not determine; a
+    choice it could have made is decided or put to the user, never parked for
+    `flow-migrate` to report `BLOCKED` on;
+65. a launch route names `copilot.cmd`, because `wt.exe nt` resolves its
+    command through `CreateProcess` and no `copilot.exe` exists.
