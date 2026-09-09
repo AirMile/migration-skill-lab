@@ -25,8 +25,8 @@ This lab contains:
 
 Reviewed personal runtime snapshots are installed under `~\.copilot\skills`;
 the repository remains their versioned source of truth. The representative POC
-remains blocked until its conventions, product-write approval, validation plan
-and runtime publication have been separately reviewed and approved.
+remains open until its conventions, validation plan and runtime publication
+have been separately reviewed.
 
 ## Safety boundary
 
@@ -138,24 +138,24 @@ reasoning, and the mechanical steps are already scripts.
 
 1. `flow-baseline` is read-only for the product repository. It surveys the
    selected flow's rendered surfaces, puts two or three candidate boundaries to
-   the user with what each one costs, and then creates one draft
+   the user with what each one costs, and then creates one final
    `flow-contract.json` carrying the chosen scope, surface inventory, target
    architecture, scenarios and open questions. It writes no report: a prose copy
    of a validated artifact drifts, and no later skill reads it.
-2. `flow-baseline` ends at one approval checkpoint, which is the review
-   surface in place of a report. It renders scope, the surface inventory, the
-   proposed architecture, scenario summaries, required characterization, write
-   allowlist, validation commands, rollback, checkpoint policy and open
-   questions from the validated contract; a human approves, rejects or asks a
-   question. Approval writes the approved successor pair, and the user then
-   picks one continuation: open a fresh `flow-migrate` chat now, paste the
-   invocation into a chat of their own, or save it in the run directory.
-   Plan mode is the user's to enable; when a session already runs in it, the
-   checkpoint uses its plan-approval dialog and the artifacts are written after
-   approval.
-3. `flow-migrate` writes only inside that approved scope. It proves missing
-   React behavior first, then implements the smallest Angular slice, creates
-   approved scoped local checkpoints and writes `migration-result.json`.
+2. `flow-baseline` ends at one review summary, which is the review surface in
+   place of a report. It renders scope, the surface inventory, the architecture,
+   scenario summaries, required characterization, the write allowlist,
+   validation commands, rollback, checkpoint policy, decisions and open
+   questions from the validated contract. There is no approval gate: from
+   schemaVersion 6 a contract has no `status` and no `approval`, and what bounds
+   the next phase is `scope.allowedWritePaths`. The user then picks one
+   continuation: open a fresh `flow-migrate` chat now, paste the invocation into
+   a chat of their own, or save it in the run directory. Plan mode is the user's
+   to enable; when a session already runs in it, the artifacts are written after
+   it is exited.
+3. `flow-migrate` writes only inside `scope.allowedWritePaths`. It proves
+   missing React behavior first, then implements the smallest Angular slice,
+   creates scoped local checkpoints and writes `migration-result.json`.
 4. `flow-verify` is read-only for product code. It independently evaluates the
    same contract and writes `verification-result.json` with `PASS`, `FAIL` or
    `BLOCKED`. After full PASS it may offer one confirmed featurebranch push.
@@ -178,7 +178,7 @@ Task progress; checkpoint commits are evidence for the implementation Task,
 not separate Tasks. The skills never update Targetprocess directly or claim
 that copy-ready content was applied.
 
-See `docs\skill-handoff-protocol-v0.7.md`. Skills exchange artifacts through
+See `docs\skill-handoff-protocol-v0.8.md`. Skills exchange artifacts through
 the ignored `runs\` directory; they must not rely on prior chat context.
 
 ## Improvement lifecycle

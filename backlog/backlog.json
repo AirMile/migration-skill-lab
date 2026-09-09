@@ -216,11 +216,10 @@
       "id": "run-line-drawer-poc-workflow",
       "title": "Run selected-line drawer POC workflow",
       "type": "benchmark",
-      "status": "blocked",
+      "status": "ready",
       "phase": "P2",
-      "description": "Run the migration skill chain for the selected floor-plan line detail-drawer POC after scope, target architecture, product-write authorization, browser automation, host validation and available convention evidence are confirmed.",
+      "description": "Run the migration skill chain for the selected floor-plan line detail-drawer POC. The Flow Contract is final when written and its scope.allowedWritePaths bounds what flow-migrate may touch; verification is manual. The remaining unknown is the Angular embedding technique and the packages it needs.",
       "dependencies": [
-        "collect-angular-conventions",
         "validate-three-skill-workflow-v0",
         "build-work-item-checkpoint-flow",
         "build-debug-flow"
@@ -238,9 +237,8 @@
         "product-frontend"
       ],
       "openQuestions": [
-        "Who approves the POC scope, product writes and rollback?",
-        "Which available Angular conventions and POC-specific design choices apply to the embedded detail drawer?",
-        "Which Maui environment and owner provide the required manual validation?"
+        "Which Angular embedding technique mounts the migrated fields inside the retained React parent?",
+        "Which Angular package set and build integration does that technique need?"
       ]
     },
     {

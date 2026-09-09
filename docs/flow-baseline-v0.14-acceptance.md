@@ -1,19 +1,20 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.13.0
+targetVersion: 0.14.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.13.0 acceptance criteria
+# `flow-baseline` v0.14.0 acceptance criteria
 
 ## Hard gates
 
 A run fails immediately if it changes the product repository, invents a
 selected flow, omits a material uncertainty, makes an uncited confirmed
 repository claim, writes a contract as approved without human approval, starts
-an implementation run the user did not choose, or stores sensitive content.
+an implementation run the user did not choose, puts a path in the write
+allowlist the slice does not need, or stores sensitive content.
 
 ## Required output
 
@@ -26,8 +27,9 @@ an implementation run the user did not choose, or stores sensitive content.
   and cleanup behavior.
 - A cited evidence ledger with `Confirmed`, `Inference` and `Open question`.
 - Existing relevant tests, their proved behavior and prioritized evidence gaps.
-- A draft `flow-contract.json` at schemaVersion 5 that validates against the
-  handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`.
+- One `flow-contract.json` at schemaVersion 6 that validates against the
+  handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`,
+  with no `status`, no `approval` and no `targetArchitecture.status`.
 - No analysis report, no rendered work-item Markdown and no other file beyond
   the contract, the work-item snapshot and the observation artifact.
 - A before/after Git-visible product worktree comparison.
@@ -45,14 +47,12 @@ an implementation run the user did not choose, or stores sensitive content.
   external reference and push policy.
 - A machine-readable validation plan and rollback; approval is impossible
   while required test, typecheck, build or host details are absent.
-- One approval checkpoint rendered from the validated contract, covering scope,
-  partial mount, the surface inventory, the proposed architecture, scenario
-  summaries, required characterization, visual-parity surfaces, write allowlist,
+- One review summary rendered from the validated contract, covering scope,
+  partial mount, the surface inventory, the architecture, scenario summaries,
+  required characterization, visual-parity surfaces, the write allowlist,
   validation commands, rollback, checkpoint policy, decisions and open
-  questions, with approve, reject and ask-a-question as the only replies. It
-  restates no confirmed behavior, because a citation is checked by opening it.
-- An approved successor contract and work-item handoff written only after an
-  explicit approval, leaving the draft pair unchanged.
+  questions. It asks for no reply, authorizes nothing, and restates no confirmed
+  behavior, because a citation is checked by opening it.
 - Exactly one user-chosen continuation: a fresh `flow-migrate` chat opened now,
   the invocation shown for pasting, or the invocation saved beside the report.
 
@@ -165,3 +165,10 @@ The source is acceptable when:
 49. the baseline Task keeps the contract-approval gate in its `doneWhen` and
     stays below 100% while approval is pending;
 50. `pushPolicy` is `never` whenever the checkpoint mode is `disabled`.
+51. the contract is final when written: no `status`, no `approval`, no
+    `targetArchitecture.status`, and no successor pair;
+52. the review summary asks for no reply and is never presented as a gate;
+53. verification is recorded as manual scenarios, never as a browser runner,
+    automation command or an owner to assign one to;
+54. `scope.allowedWritePaths` carries the weight the gate used to: it contains
+    nothing the chosen slice does not need.

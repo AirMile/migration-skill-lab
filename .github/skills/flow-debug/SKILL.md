@@ -1,6 +1,6 @@
 ---
 name: flow-debug
-description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow within an already approved write scope, then hand off to a fresh independent re-verification. Use only with /flow-debug.
+description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow inside the write scope its contract declares, then hand off to a fresh independent re-verification. Use only with /flow-debug.
 ---
 
 # Flow Debug
@@ -14,7 +14,7 @@ Skill version: `0.2.0`.
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
 Repair one failed or repairable blocked migration only within the already
-approved contract and artifact chain. Prefer a fresh isolated agent context.
+contract and artifact chain. Prefer a fresh isolated agent context.
 Reload required state from versioned artifacts, not earlier chat memory.
 `flow-debug` may prepare a repair candidate, but it never declares `PASS`.
 
@@ -22,7 +22,7 @@ Reload required state from versioned artifacts, not earlier chat memory.
 
 Confirm all inputs before any product write:
 
-- path to the approved `flow-contract.json`;
+- path to the `flow-contract.json`;
 - path to the corresponding `migration-result.json`;
 - path to a `verification-result.json` whose overall status is `FAIL` or a
   repairable `BLOCKED`;
@@ -30,9 +30,8 @@ Confirm all inputs before any product write:
 - migration-skill-lab root containing the validator, schemas and
   `scripts\verify-checkpoint.mjs`;
 - product root, expected branch and current Git-visible worktree status;
-- contract `status: approved` and `approval.status: approved`;
 - exact `allowedWritePaths`, targeted validation commands, rollback guidance
-  and checkpoint policy from the same approved contract;
+  and checkpoint policy from the same contract;
 - proof that the consumed artifacts share the same `flowId` and recorded
   content hashes;
 - declared run-artifact directory.
@@ -145,7 +144,7 @@ updates, changed paths, validation outcomes, checkpoint evidence, remaining
 limitations and the final `repaired`, `blocked` or `parked` status.
 
 A `repaired` result is incomplete without a fresh independent `flow-verify`
-handoff that reuses the approved contract and current product state from disk.
+handoff that reuses the contract and current product state from disk.
 A contract change, broadened scope or new approval requirement returns to
 `flow-baseline` or a human decision instead of continuing in `flow-debug`.
 

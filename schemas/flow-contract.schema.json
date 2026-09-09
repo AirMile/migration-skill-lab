@@ -11,20 +11,18 @@
     "skillVersion",
     "runId",
     "flowId",
-    "status",
     "repository",
     "scope",
     "scenarios",
     "testGaps",
     "openQuestions",
-    "approval",
     "workItemContext",
     "checkpointPolicy",
     "validationPlan",
     "rollback"
   ],
   "properties": {
-    "schemaVersion": { "enum": [3, 4, 5] },
+    "schemaVersion": { "enum": [3, 4, 5, 6] },
     "artifactType": { "const": "flow-contract" },
     "skill": { "const": "flow-baseline" },
     "skillVersion": {
@@ -194,7 +192,7 @@
     "targetArchitecture": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "boundary", "adapter", "lifecycle", "styling"],
+      "required": ["boundary", "adapter", "lifecycle", "styling"],
       "properties": {
         "status": {
           "type": "string",

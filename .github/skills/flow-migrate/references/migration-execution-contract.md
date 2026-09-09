@@ -6,7 +6,8 @@ Read this reference for every `flow-migrate` run.
 
 The migration may start only when:
 
-- `flow-contract.json` validates and is human-approved;
+- `flow-contract.json` validates, and every path this run writes is inside its
+  `scope.allowedWritePaths`;
 - all product paths to change are explicitly listed in
   `scope.allowedWritePaths`;
 - the user explicitly authorizes product writes for this run;

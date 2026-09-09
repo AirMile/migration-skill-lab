@@ -1,27 +1,26 @@
 ---
 document: skill-handoff-protocol
-version: 0.7.0
+version: 0.8.0
 status: experimental
 date: 2026-09-08
 ---
 
-# Migration handoff protocol v0.7.0
+# Migration handoff protocol v0.8.0
 
 ## Purpose
 
 The skills communicate through small, versioned files rather than implicit
-chat context. This makes scope, approval, evidence and failures reviewable
+chat context. This makes scope, decisions, evidence and failures reviewable
 between runs.
 
 ## Artifact chain
 
 ```text
 flow-baseline
-  -> flow-contract.json (draft)
-  -> work-item-baseline.json (draft)
-  -> approval checkpoint
-  -> flow-contract.json (approved)
-  -> work-item-baseline.json (approved)
+  -> boundary choice from surveyed candidates
+  -> flow-contract.json
+  -> work-item-baseline.json
+  -> review summary
   -> user-chosen fresh flow-migrate chat
   -> flow-migrate
   -> migration-result.json
@@ -46,7 +45,7 @@ Targetprocess was changed.
 ## Storage and confidentiality
 
 - `flow-baseline` writes no report. Its contract is the durable artifact and
-  its approval checkpoint is the review surface; a second prose copy of a
+  its review summary is where a human checks it; a second prose copy of a
   validated artifact only drifts. Put a human-readable verification report in
   `C:\Obsidian\Notes 2025\Lely\Angular migratie\analyses`.
 - Put only compact, non-sensitive JSON artifacts in
@@ -55,60 +54,57 @@ Targetprocess was changed.
   artifact.
 - Never create an artifact in the product repository.
 
-## Human gate
+## Human decisions
 
 `flow-baseline` runs in two parts. It first surveys the route's rendered
 surfaces and the importers each one has outside the flow, then puts two or three
 candidate boundaries to the user and records the chosen one, with the rejected
 ones, as a `decisions` entry. Only then does the deep baseline run. The boundary
-is a human decision, but it is taken with the evidence rather than before it;
-asking for it up front is what let two runs over the same route produce
-different cuts.
+is the human decision this pipeline actually needs, and it is taken with the
+evidence rather than before it; asking for it up front is what let two runs over
+the same route produce different cuts.
 
-`flow-baseline` produces a draft contract. A human must explicitly approve the
-scope, acceptance criteria and `allowedWritePaths` before `flow-migrate` can
-write product code. `flow-migrate` must stop if the contract or the user input
-does not prove that approval.
+There is no approval gate. From schemaVersion 6 a Flow Contract has no `status`
+and no `approval`: it is final when it is written, and the validator rejects
+those fields. A lab with one operator gained nothing from a draft state, a
+successor pair and a checkpoint that asked the same person who had just answered
+every question in the run.
 
-The same approval may authorize `auto-local` checkpoint commits for the exact
-branch, external reference and write allowlist. It does not authorize push.
-`flow-verify` may offer one push only after overall `PASS`, passed required
-host validation and a visible remote/branch/commit summary.
+What bounds `flow-migrate` is `scope.allowedWritePaths`. That list is the only
+control over what an implementation run may touch, so the baseline checks every
+path in it for consumers outside the flow and records the trade-off when a
+shared one is included anyway. `flow-migrate` refuses every write outside the
+list and stops rather than widening it.
 
-A draft states only what is assigned. `checkpointPolicy` carries `mode` and
-`pushPolicy`; its branch, external reference and milestones become required on
-approval and for `auto-local`. An Epic, Feature or Story that is not on the
-board yet is omitted from `workItemContext` and proposed with `create`. A
-placeholder that satisfies a required field while naming something that does not
-exist is never acceptable, because a validated artifact is read as fact.
+`checkpointPolicy` records only what is assigned: `mode` and `pushPolicy`, with
+`pushPolicy` `never` whenever the mode is `disabled`. `auto-local` additionally
+requires its expected branch, external reference and milestones. It does not
+authorize push; `flow-verify` may offer one push only after overall `PASS`,
+passed required host validation and a visible remote/branch/commit summary.
 
-Draft baseline artifacts are immutable historical evidence. Human approval
-creates a separate approved contract and matching baseline handoff; it does not
-erase historical pending/open wording. The approved contract records the
-approver, approval date and concise resolved decisions. Checkpoint authorization
-fields exist only when its mode is `auto-local`.
+Verification is manual. The contract records the scenarios a person walks
+through; it does not propose a browser runner, an automation command or an owner
+to assign one to.
 
-`flow-baseline` asks for that approval at one checkpoint at the end of its run.
-The checkpoint renders scope, partial mount, the rendered-surface inventory,
-the proposed target architecture, scenario summaries, required characterization,
-visual-parity surfaces, write allowlist, validation commands, rollback,
-checkpoint policy, decisions and open questions from the validated contract, and
-accepts approve, a change request, reject or a question. It is the review
-surface that replaced the baseline report, so it carries what a reader could
-disagree with and cites the rest. A change request produces a successor draft
-pair beside the existing one; earlier drafts are never edited, because a review
-that found real defects is part of the record. A blocking open question is
-resolved before approval is offered. Only after the
-approved pair validates does the run offer one continuation the user picks: a
-fresh `flow-migrate` chat opened now, the invocation shown for pasting, or the
-invocation saved in the run directory.
+An Epic, Feature or Story that is not on the board yet is omitted from
+`workItemContext` and proposed with `create`. A placeholder that satisfies a
+required field while naming something that does not exist is never acceptable,
+because a validated artifact is read as fact.
+
+`flow-baseline` ends at one review summary. It renders scope, partial mount, the
+rendered-surface inventory, the target architecture, scenario summaries,
+required characterization, visual-parity surfaces, the write allowlist,
+validation commands, rollback, checkpoint policy, decisions and open questions
+from the validated contract. It is the review surface that replaced the baseline
+report, so it carries what a reader could disagree with and cites the rest. It
+asks for no reply: wanting the boundary, the allowlist or a scenario different
+is a reason to run the baseline again.
 
 A host plan mode is a session mode the user controls. A skill never switches it
-on. When a session already runs in plan mode, the checkpoint uses that mode's
-plan-approval mechanism, and the artifacts are written after approval because
-that mode forbids repository writes before it. The implementation phase always
-runs in its own chat: a background agent cannot ask for the approvals
-`flow-migrate` requires.
+on. When a session already runs in plan mode, the artifacts are written after it
+is exited, because that mode forbids repository writes. The implementation phase
+always runs in its own chat: a background agent cannot ask the user the
+questions `flow-migrate` needs answered.
 
 ## Artifact requirements
 
@@ -128,11 +124,11 @@ revision or content-hash pointers. A consumer rejects an incompatible version,
 a mismatched flow, missing artifact or unknown status.
 
 A schema accepts more than one `schemaVersion` at a time: `flow-contract`
-accepts 3, 4 and 5, `verification-result` accepts 3 and 4, `migration-result`
+accepts 3 to 6, `verification-result` accepts 3 and 4, `migration-result`
 accepts 2 and 3, and `debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
 optional and the validator's rule layer makes it mandatory for the newer
 version. Completed runs stay valid at the version they were written under,
-which matters because a draft baseline and its artifacts are immutable
+which matters because a run's artifacts are immutable
 historical evidence. Skills always write the newest version, so a new run
 cannot opt out of the newer rules by staying behind.
 
@@ -174,12 +170,12 @@ chat.
 `flow-debug` chooses `immediate`, `light` or `heavy`, uses at most one attempt
 per tier and writes `debug-result.json`. A repaired result must be checked by a
 fresh independent `flow-verify`. External blockers do not start debug. A
-contract change requires a new baseline and renewed human approval.
+contract change requires a new baseline run.
 
 The caller owns the complete workflow, not `flow-verify` itself. It passes only
 the declared artifact paths and repository root into the user-confirmed fresh
 debug chat. After a repaired result it asks the user before opening another
-fresh verifier with the approved contract, migration result and debug result.
+fresh verifier with the contract, migration result and debug result.
 The artifact chain remains the fallback when isolated subagents are
 unavailable; no skill relies on nested skill invocation or prior chat memory.
 

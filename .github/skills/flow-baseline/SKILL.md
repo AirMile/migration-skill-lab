@@ -9,17 +9,17 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.13.0`.
+Skill version: `0.14.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
 
 Analyze one explicitly selected flow. Survey its rendered surfaces, let the
-user choose a boundary from evidence rather than up front, then produce a draft
+user choose a boundary from evidence rather than up front, then produce a final
 `flow-contract.json` carrying the behavior baseline, the surface inventory and
 a bounded target-architecture proposal, plus a short review summary in this
-chat. Do not implement Angular code or present the proposal as an approved
-team standard.
+chat. Do not implement Angular code or present the proposed architecture as an
+established team standard.
 
 The contract is the only durable analysis artifact. Do not write a separate
 prose report: everything a later skill needs belongs in the contract, and a
@@ -45,20 +45,22 @@ Confirm before deep analysis:
   exists; it supplies the Epic, Feature and User Story identity, parent
   relations and field text, so ask for those only when no such snapshot exists;
 - whether a new Epic, Feature or User Story is requested;
-- current User Story Tasks, or approval to propose stakeholder-readable Tasks
-  for baseline, implementation and independent verification;
+- current User Story Tasks, when any exist; otherwise propose the three
+  stakeholder-readable Tasks the handoff protocol fixes;
 - declared work-item handoff JSON destination;
 - the proposed product branch, external work-item reference and push policy for
   the later migration. Do not offer to enable `auto-local` here: the validator
-  refuses it unless the contract is already approved, so a draft can only record
-  `disabled` and the proposed values. `pushPolicy` is `never` whenever the mode
+  refuses `auto-local` without an expected branch and external reference.
+  `pushPolicy` is `never` whenever the mode
   is `disabled`: without checkpoints the pipeline creates no commit it could
   push, and `confirm-after-pass` beside a disabled mode reads like a standing
   authorization. Leave the branch, reference and milestones absent when they are
   not yet assigned rather than inventing a placeholder that reads like a real
   value.
-- the required manual host scenario and rollback; leave unresolved draft fields
-  absent rather than inventing them.
+- the manual verification scenarios and rollback. Verification is manual: do
+  not propose browser automation, a runner, or an owner to assign it to. Record
+  what a person walks through, and leave an unresolved value absent rather than
+  inventing one.
 
 Derive the test, typecheck and build commands from the product's own
 `package.json` rather than asking for them, and verify each one terminates. A
@@ -154,35 +156,33 @@ the reader's.
    Name where the new Angular code lands, and put that path in
    `scope.allowedWritePaths`. A contract that describes a component without a
    directory to create it in cannot be implemented: `flow-migrate` refuses every
-   write outside the allowlist, so the design would be approved and then
-   immediately blocked.
+   write outside the allowlist, so the design would be recorded and then
+   immediately unimplementable.
    This is the one part of the analysis that is not recoverable from the
    product source, because the Angular side does not exist yet. Left out of the
    contract it is simply lost, and `flow-migrate` asks a human to invent it a
-   second time. Keep `targetArchitecture.status` at `proposed` until a human
-   approves the contract.
+   second time.
    Read the product's dependency manifest before filling in
    `dependencyChanges`, and cite it. When the target framework is absent there,
    `required` is `true` and the manifest, lockfile, build-config and TypeScript
    paths belong in `paths`; a first slice cannot mount a framework the product
    does not have. Never write `required: false` on the assumption that earlier
    slices already added it: that is a claim about the codebase, and an unchecked
-   claim here hides the largest approval the migration needs.
+   claim here hides the largest decision the migration needs.
    The mount or embedding mechanism is part of `targetArchitecture`, not a
-   detail under it. While it is unresolved the architecture is unresolved, so
-   the question blocks approval and the checkpoint may not offer approval on the
-   grounds that only the behavior baseline is being approved. An approved
-   contract requires `targetArchitecture.status: approved`, and the validator
-   enforces that, so describing such a question as non-blocking sets up an
-   approval that cannot honestly be recorded.
+   detail under it. While it is unresolved the architecture is unresolved, so it
+   belongs in `openQuestions` and `flow-migrate` will report `BLOCKED` on it.
+   Do not describe it as something a later phase can settle in passing.
    Capture observable visual parity (including layout insets, spacing, input
    containment and a reference screenshot when available). Mark every
-   unapproved choice as proposed or open.
+   unresolved choice as an open question.
    Check whether the product already has a component-rendering harness, such as
    Storybook or an existing end-to-end runner, and name it in
    `validationPlan.browserValidation` when it does. An existing harness needs no
-   owner, no tooling decision and no approval, so proposing an unassigned browser
-   runner beside one is a gap this skill created rather than found.
+   owner and no tooling decision, so proposing an unassigned browser runner
+   beside one is a gap this skill created rather than found. Verification is
+   manual, so record what a person walks through rather than a command to
+   automate it.
    A partial Angular mount may replace only inventory items marked `migrate`;
    it must remain inside the existing parent form when siblings are marked
    `retain-react`. Record that shape in the contract as
@@ -216,13 +216,17 @@ the reader's.
    - include the improvement in this Story and revise its acceptance criteria;
    - preserve current behavior and propose a separate follow-up Story.
    Keep the contract pending until the answer is recorded.
-9. Write the draft `flow-contract.json` in the declared run directory at
-   schemaVersion 5 and validate it
+9. Write `flow-contract.json` in the declared run directory at schemaVersion 6
+   and validate it
    with `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<flow-contract.json>"`. Write no analysis report, and no other file in
    the product repository or the notes vault.
-10. Set contract `status` and `approval.status` to `draft` and `pending`.
-   Only a human may approve the scope and write allowlist for `flow-migrate`.
+10. The contract is final when you write it. schemaVersion 6 has no `status`,
+   no `approval` and no `targetArchitecture.status`, and the validator rejects
+   them; there is no draft state and no approval gate to wait for. What bounds
+   the next phase is `scope.allowedWritePaths`, so that list carries the weight
+   the gate used to: every path in it has been checked for consumers outside
+   this flow, and nothing is in it that the slice does not need.
    Before recording `scope.allowedWritePaths`, check each existing file for
    consumers outside this flow. A component that other forms import is shared
    infrastructure, and putting it in the allowlist authorizes changes whose
@@ -230,15 +234,12 @@ the reader's.
    leave it out, or record a `decisions` entry saying which consumers were
    considered and why the risk is accepted. Apply this to every path, not only
    to the one control that prompted the question.
-   Record checkpoint mode as `disabled` until the human explicitly approves
-   `auto-local`, its expected branch, external reference and push policy.
-   An approved contract requires concrete test, typecheck, build, manual-host
-   and rollback values; a draft records missing values as open questions.
-   The draft contract and work-item baseline are immutable historical
-   evidence: never remove their pending or open wording after approval.
-   A later approved contract and matching baseline handoff must be separate
-   artifacts, include the human's `approvedDecisions`, and replace resolved
-   pending items only in that successor artifact.
+   Record checkpoint mode as `disabled` unless the user asks for `auto-local`,
+   which then needs its expected branch and external reference. The contract
+   carries concrete test, typecheck and build commands and a rollback; those are
+   what `flow-migrate` runs, so an absent one is a missing input rather than an
+   open question. An unresolved decision stays in `openQuestions`, and
+   `flow-migrate` reports `BLOCKED` when one of them prevents implementing.
 11. Write `work-item-baseline.json` after the Flow Contract. Populate the
    Epic, Feature and User Story templates from cited baseline evidence, use
    `create`, `update` or `no-change` honestly, and keep
@@ -270,18 +271,14 @@ the reader's.
    stays `no-change`. Rewriting them anyway forces `update` and re-emits the
    whole item, which is the same waste by another route. The Story, its Tasks
    and the standup carry this run's news.
-12. Create or update stakeholder-readable User Story Tasks for target
-   architecture/contract approval, bounded implementation and
-   independent/browser/host verification. Assign
+12. Create or update stakeholder-readable User Story Tasks for the behavior
+   baseline, bounded implementation and independent manual verification. Assign
    explicit contribution percentages totaling 100 and derive User Story
    progress from Task progress. Link checkpoint milestone IDs to the
    implementation Task; do not create one Task per commit.
-   The baseline Task covers analysis *and* human approval of the contract, and
-   its `doneWhen` says so. Narrowing it to "the draft validates" makes it
-   complete while the gate it exists for is still open, and no other Task covers
-   approval, so the Story reports progress for work nobody has accepted. Its
-   proposed progress therefore stays below 100 while `approval.status` is
-   `pending`; the validator rejects the combination. The three Task kinds and
+   The baseline Task is complete when the contract validates and its scenarios
+   and decisions are visible; there is no approval gate left for it to hold
+   open. The three Task kinds and
    the requirement that their weights total 100 are fixed by the handoff
    protocol, so propose the weights rather than asking whether to create the
    Tasks at all.
@@ -307,60 +304,48 @@ the reader's.
    was applied.
 16. Capture the product Git-visible worktree status again. If it changed, stop,
    report the delta and do not revert or attribute it without evidence.
-17. Present one approval checkpoint. This block replaces the analysis report,
-   so it has one job: let the reader judge whether the analysis is right before
-   anything is built on it. Render it from the validated contract, never from
-   remembered prose, and include only what a reader could disagree with:
+17. Present one review summary. This block replaces the analysis report, so it
+   has one job: let the reader see whether the analysis is right. It is not a
+   gate and it authorizes nothing; the contract is already final and the write
+   allowlist is what bounds `flow-migrate`. Render it from the validated
+   contract, never from remembered prose, and include only what a reader could
+   disagree with:
    - the `flowId`, boundary and `scope.partialMount` shape;
    - `renderedSurfaceInventory` as one line per surface with its status, since
      a control classified wrongly is the cheapest error to catch here and the
      most expensive to catch later;
-   - `targetArchitecture` boundary and adapter in a few lines, marked proposed;
+   - `targetArchitecture` boundary and adapter in a few lines;
    - each scenario id with a one-line summary, so the reader sees which
      behaviors are being promised;
    - every `characterizationRequired` hypothesis, because an inference is where
      this analysis is most likely to be wrong;
-   - `allowedWritePaths`, the test, typecheck and build commands, the browser
-     and manual host scenarios, rollback and checkpoint policy;
+   - `allowedWritePaths`, because that list is the only thing that bounds the
+     next phase's writes, plus the test, typecheck and build commands, the
+     manual verification scenarios, rollback and checkpoint policy;
    - every open question and decision.
    Do not restate confirmed behavior or its citations: a reader checks those by
    opening the cited line, and repeating them here only buries the parts that
-   need judgment. Say what approval authorizes and keep the block short enough
-   to read in one screen. Offer exactly four replies: approve the contract as
-   rendered, request specific changes, reject it, or ask a question first. Do
-   not offer approval while an open question that blocks writing is unresolved.
-   On a change request, write a new draft contract and work-item snapshot beside
-   the existing pair with an incremented run suffix, record what changed and
-   why, and present this same checkpoint again. Never edit the earlier draft:
-   it is historical evidence, and a review that found real defects is exactly
-   what the successor artifact exists to record. A rejection instead ends the
-   run with the draft as the only contract.
-   When the host already runs this session in plan mode, request the same
-   decision through its plan-approval mechanism and read approval, feedback and
-   exit-without-acting as those same three replies. That mode forbids
-   repository writes before approval, so run steps 9 to 15 after the approval
-   instead of before it; the artifacts themselves do not change. A skill cannot
-   set the session mode: never enter or leave plan mode on the user's behalf
-   and never describe a checkpoint answer as a plan-mode approval it was not.
-18. On approval, write the approved contract and its matching baseline
-   work-item handoff as new artifacts beside the draft, with `status` and
-   `approval.status` `approved`, the approver role, the approval date and the
-   decisions the user actually stated in `approvedDecisions`. Leave the draft
-   pair and its pending or open wording untouched. Validate the successor pair
-   with `validate-handoff.mjs` before offering any continuation. A rejection,
-   an unresolved blocking question or no answer ends the run with the draft as
-   the only contract.
-19. Ask which continuation the user wants and perform only the chosen one:
+   need judgment. Do not ask the reader to approve anything. Keep the block
+   short enough to read in one screen, and end it by naming what would need a
+   new run to change: the boundary, the write allowlist, or a scenario. Wanting
+   any of those different is a reason to run the baseline again, not a reply to
+   collect here.
+   When the host already runs this session in plan mode, that mode forbids
+   repository writes until it is exited, so the artifacts are written after it
+   is. Their content and validation do not change; only their position in the
+   run does. A skill cannot set the session mode: never enter or leave plan mode
+   on the user's behalf.
+18. Ask which continuation the user wants and perform only the chosen one:
    open a fresh interactive `/flow-migrate` chat now, show the invocation here
    for the user to paste into a chat they open themselves, or save it in the
    run directory for later. All three routes carry the same invocation,
-   built from the approved contract path, the approved work-item handoff path,
+   built from the contract path, the work-item handoff path,
    the migration-skill-lab root, the product root and the run directory; see
    `references/flow-contract.md`. Launch a chat only on that explicit choice,
    and report a refused or failed launch instead of describing the migration as
    started. Never continue the migration in this chat and never delegate it to
-   a background agent, which cannot ask the user for the approvals
-   `flow-migrate` requires.
+   a background agent, which cannot ask the user the questions `flow-migrate`
+   needs answered.
 
 ## Safety boundary
 
@@ -386,10 +371,10 @@ Never:
   under a stakeholder-readable delivery Task;
 - silently convert a possible UX improvement into accepted migration behavior;
 - create an empty or product checkpoint commit during this read-only phase;
-- enter, leave or simulate a host plan mode, or record a plan-mode approval
-  the user did not give;
-- write an approved contract from anything other than the user's explicit
-  answer at the checkpoint;
+- enter, leave or simulate a host plan mode;
+- present the review summary as a gate, or ask the reader to approve anything;
+- put a path in `scope.allowedWritePaths` that the chosen slice does not need:
+  that list is the only thing bounding the next phase's writes;
 - start the migration in this chat, in a background agent, or through any
   route the user did not choose;
 - reword settled Epic, Feature, User Story or Task text that no evidence in
@@ -402,8 +387,8 @@ Never:
 The contract must contain the scope, rendered-surface inventory, target
 architecture, behavior scenarios, visual parity, required characterization,
 evidence pointers, test gaps, decisions, open questions, allowed product write
-paths, Epic/Feature/Story context, checkpoint policy and a human approval
-record. `work-item-baseline.json` contains the copy/paste hierarchy, Tasks and
+paths, Epic/Feature/Story context and checkpoint policy.
+`work-item-baseline.json` contains the copy/paste hierarchy, Tasks and
 daily standup proposal. Both are machine-readable inputs to `flow-migrate`; do
 not rely on prior chat context or on a document a later skill cannot read.
 
@@ -413,12 +398,12 @@ behavior and points at the file and line that proves it. Restating the
 mechanism in the contract creates a copy that is wrong the moment the source
 changes, and `flow-migrate` has to open that source anyway to write the code.
 
-The run ends at one approval checkpoint rather than a summary. Rejection, a
-remaining blocking open question or no answer leaves the draft contract as the
-only artifact. Approval produces the approved successor pair and then exactly
-one continuation the user picks: a fresh `/flow-migrate` chat opened now, the
-invocation shown for pasting, or the invocation saved in the run directory for
-later.
+The run ends at one review summary and then exactly one continuation the user
+picks: a fresh `/flow-migrate` chat opened now, the invocation shown for
+pasting, or the invocation saved in the run directory for later. The summary
+authorizes nothing, because the contract it renders is already final. What
+bounds the next phase is `scope.allowedWritePaths`; wanting the boundary, that
+allowlist or a scenario different is a reason to run the baseline again.
 
 A scenario list alone is not permission to replace a parent component that
 renders retained controls; `renderedSurfaceInventory` is what carries that

@@ -36,9 +36,10 @@ decision carries the conclusion.
 
 ## What the contract carries, and what it cites
 
-There is no separate baseline report. The contract is the only durable
-analysis artifact, and the run's chat summary is the review surface. Two
-categories decide where something belongs.
+There is no separate baseline report and no draft state. The contract is the
+only durable analysis artifact and it is final when written; the run's chat
+summary lets a reader check it, and authorizes nothing. Two categories decide
+where something belongs.
 
 Carry it in the contract when a later reader cannot recover it from the product
 source:
@@ -52,7 +53,7 @@ source:
 - scenarios, as the behavior this migration promises to preserve;
 - hypotheses that took cross-file reasoning and still need characterizing;
 - decisions taken between conflicting sources, and the questions still open;
-- validation commands, rollback, checkpoint policy and the approval record.
+- validation commands, rollback and checkpoint policy.
 
 Cite it instead when the product source already holds it:
 
@@ -85,33 +86,29 @@ Populate:
 - `targetArchitecture` with the mount or embedding mechanism, the ownership
   boundary, the typed adapter
   (`inputs`, `commands`, `events`, `nonSuccessOutcome`, `forbiddenAccess`),
-  lifecycle and styling rules and `dependencyChanges`, at status `proposed`
-  until a human approves the contract;
+  lifecycle and styling rules and `dependencyChanges`;
 - `scenarios` as Given/When/Then observable outcomes with evidence pointers;
 - `characterizationRequired` for each unproven hypothesis, with the behavior it
   blocks;
 - `decisions` for a conflict between sources that has been resolved;
 - `testGaps` only for behavior without adequate evidence;
 - `openQuestions` for unknowns that cannot be inferred safely;
-- `approval` as `pending` until a human has explicitly approved the scope.
-  The approved successor artifact records the approver role, date and concise
-  `approvedDecisions`; it does not rewrite the draft baseline.
 - `workItemContext` with the existing Epic, Feature and selected User Story
   IDs. Omit the ones that do not exist on the board yet; the matching work-item
   entries then use `create` and the standup omits `storyExternalId`. A
   placeholder ID reads like a real Targetprocess reference and is worse than an
   honest proposal;
-- `checkpointPolicy` with `disabled` until a human approves `auto-local`, which
-  the validator refuses unless the contract is already approved. Only `mode` and
-  `pushPolicy` are required in a draft; `expectedBranch` and `externalRef`
-  become required on approval and `milestones` only for `auto-local`. Leave an
-  unassigned value absent rather than filling it with a placeholder.
+- `checkpointPolicy` with `disabled` unless the user asks for `auto-local`,
+  which then requires `expectedBranch`, `externalRef` and `milestones`. Only
+  `mode` and `pushPolicy` are required otherwise, and `pushPolicy` is `never`
+  whenever the mode is `disabled`. Leave an unassigned value absent rather than
+  filling it with a placeholder.
   `authorizedByRole` and `authorizedAt` are present only for `auto-local`, and
   `pushPolicy` is `never` whenever the mode is `disabled`;
-- `validationPlan` with targeted tests that terminate, typecheck, build, an
-  exact browser
-  command and required manual host validation. Drafts may leave owner/command fields absent,
-  but approval may not;
+- `validationPlan` with targeted tests that terminate, typecheck, build, the
+  manual verification scenarios and the required host validation. Verification
+  is manual, so record what a person walks through rather than a runner to
+  automate it;
 - `rollback` with concrete scope-preserving instructions.
 
 `renderedSurfaceInventory` is binding during partial migration. A component may
@@ -142,7 +139,7 @@ the proposed Task-derived values.
 Record the source layout insets, spacing, input bounds and visual test evidence
 as observable behavior. A framework boundary does not inherit React wrapper
 styles; require browser verification that the replacement stays within the
-drawer and preserves the approved padding or margin.
+drawer and preserves the declared padding or margin.
 
 Appearance is a declared acceptance criterion, not a review instruction. From
 schemaVersion 4 the contract carries `visualParity`: one entry per migrated
@@ -175,9 +172,9 @@ baseline.
 
 If a coverage report is not already available, do not create product-repository
 artifacts merely to obtain one. State the unavailable measurement, why it
-matters and the safe command/location the human must approve.
+matters and the safe command and location it would need.
 
-## Approval checkpoint and continuation
+## Review summary and continuation
 
 The run ends at one checkpoint, not at a summary. Build the decision block from
 the validated contract instead of from remembered prose, so the human reviews what
@@ -187,22 +184,22 @@ the validated contract instead of from remembered prose, so the human reviews wh
 - `scope.partialMount`, including a deliberate `nested: false`;
 - every `visualParity` id with the counterpart it must match;
 - `scope.allowedWritePaths` verbatim;
-- the test, typecheck and build commands, the browser and manual host scenarios
-  and the rollback;
+- `scope.allowedWritePaths`, because that list is the only thing bounding the
+  next phase's writes;
+- the test, typecheck and build commands, the manual verification scenarios and
+  the rollback;
 - `checkpointPolicy`, including `disabled`;
-- every open question, marked blocking or non-blocking.
+- every open question and decision.
 
-Offer three replies: approve, reject, or ask a question first. A blocking open
-question must be resolved before the approve option is offered at all.
-Approval writes a separate approved contract and baseline work-item handoff;
-the draft pair stays exactly as it was written.
+The summary is not a gate. It authorizes nothing and asks for no reply: the
+contract it renders is already final. End it by naming what would need a new
+run to change, which is the boundary, the write allowlist or a scenario.
 
 Plan mode is a session mode of the host, not something a skill can switch on.
 `/plan`, `--plan` and `--mode plan` belong to the user. When the session is
-already in plan mode, use its plan-approval mechanism for this checkpoint. That
-mode also forbids repository writes before approval, so write the contract and
-work-item snapshot after the approval instead of before it. Their content and
-validation do not change; only their position in the run does.
+already in plan mode, that mode forbids repository writes until it is exited,
+so write the contract and work-item snapshot after that instead of before it.
+Their content and validation do not change; only their position in the run does.
 
 Then ask which continuation the user wants, and perform only that one:
 
@@ -219,7 +216,7 @@ Then ask which continuation the user wants, and perform only that one:
    `<flowId>-flow-migrate-prompt.md` for a later session.
 
 `<invocation>` is the same string in all three routes: `/flow-migrate` followed
-by the approved contract path, the approved work-item handoff path, the
+by the contract path, the work-item handoff path, the
 migration-skill-lab root, the product root and the run directory.
 `flow-migrate` reads its inputs from those files and never from this chat, so a
 saved invocation stays valid for a session opened days later. Keep the

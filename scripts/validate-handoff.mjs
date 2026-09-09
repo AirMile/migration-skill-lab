@@ -154,7 +154,54 @@ const canonicalSkill = skill => skillAliases[skill] ?? skill;
 
 const validateArtifactRules = (value, errors) => {
   if (value.artifactType === "flow-contract") {
-    const approval = value.approval;
+    const isFinalContract = value.schemaVersion >= 6;
+
+    if (isFinalContract) {
+      for (const field of ["status", "approval"]) {
+        if (Object.hasOwn(value, field)) {
+          errors.push(
+            `$.${field} is not used from schemaVersion 6; a contract is final when it is written.`,
+          );
+        }
+      }
+      if (value.targetArchitecture &&
+        Object.hasOwn(value.targetArchitecture, "status")) {
+        errors.push(
+          "$.targetArchitecture.status is not used from schemaVersion 6; the architecture it records is the one being implemented.",
+        );
+      }
+      if (value.validationPlan.testCommands.length === 0 ||
+        !value.validationPlan.typecheckCommand ||
+        !value.validationPlan.buildCommand) {
+        errors.push(
+          "$.validationPlan requires test, typecheck and build commands; a final contract carries the commands flow-migrate will run.",
+        );
+      }
+      for (const [name, plan] of [
+        ["browserValidation", value.validationPlan.browserValidation],
+        ["manualValidation", value.validationPlan.manualValidation],
+      ]) {
+        if (plan?.required && !plan.scenarios?.length && !plan.scenario) {
+          errors.push(
+            `$.validationPlan.${name} requires a scenario when it is required.`,
+          );
+        }
+      }
+    } else {
+      for (const field of ["status", "approval"]) {
+        if (!Object.hasOwn(value, field)) {
+          errors.push(`$.${field} is required below schemaVersion 6.`);
+        }
+      }
+      if (value.targetArchitecture &&
+        !Object.hasOwn(value.targetArchitecture, "status")) {
+        errors.push(
+          "$.targetArchitecture.status is required below schemaVersion 6.",
+        );
+      }
+    }
+
+    const approval = value.approval ?? {};
     const hasApprovalEvidence =
       Object.hasOwn(approval, "approvedByRole") ||
       Object.hasOwn(approval, "approvedAt") ||
@@ -184,9 +231,16 @@ const validateArtifactRules = (value, errors) => {
           "$.checkpointPolicy authorization is required for auto-local mode.",
         );
       }
-      if (approval.status !== "approved" || value.status !== "approved") {
+      if (!isFinalContract &&
+        (approval.status !== "approved" || value.status !== "approved")) {
         errors.push(
           "$.checkpointPolicy auto-local mode requires an approved Flow Contract.",
+        );
+      }
+      if (isFinalContract &&
+        (!checkpointPolicy.expectedBranch || !checkpointPolicy.externalRef)) {
+        errors.push(
+          "$.checkpointPolicy auto-local mode requires expectedBranch and externalRef.",
         );
       }
     } else if (hasCheckpointAuthorization) {
@@ -211,7 +265,7 @@ const validateArtifactRules = (value, errors) => {
       );
     }
 
-    if (value.status === "approved") {
+    if (!isFinalContract && value.status === "approved") {
       if (!checkpointPolicy.expectedBranch) {
         errors.push(
           "$.checkpointPolicy.expectedBranch is required for an approved contract.",
@@ -224,7 +278,8 @@ const validateArtifactRules = (value, errors) => {
       }
     }
 
-    if (value.status === "approved" || approval.status === "approved") {
+    if (!isFinalContract &&
+      (value.status === "approved" || approval.status === "approved")) {
       if (value.status !== "approved" || approval.status !== "approved") {
         errors.push("$.status and $.approval.status must both be approved.");
       }
@@ -301,6 +356,7 @@ const validateArtifactRules = (value, errors) => {
     }
 
     if (value.targetArchitecture &&
+      !isFinalContract &&
       value.status === "approved" &&
       value.targetArchitecture.status !== "approved") {
       errors.push(
@@ -987,8 +1043,9 @@ const validateArtifactLinks = artifacts => {
   }
 
   if (migration && contract) {
-    if (contract.value.status !== "approved" ||
-      contract.value.approval.status !== "approved") {
+    if (contract.value.approval &&
+      (contract.value.status !== "approved" ||
+        contract.value.approval.status !== "approved")) {
       throw new Error("flow-migrate requires a human-approved flow contract.");
     }
 
@@ -1501,12 +1558,14 @@ const validateArtifactLinks = artifacts => {
           }
         };
 
-        // The baseline Task carries the approval gate. Calling it complete while
-        // the contract is still pending puts progress on the board for a gate
-        // nobody has passed, and no other Task covers approval.
+        // While a contract still carried an approval gate, the baseline Task
+        // held it: calling that Task complete put progress on the board for a
+        // gate nobody had passed. A schemaVersion 6 contract has no gate, so a
+        // finished baseline really is finished.
         for (const story of handoff.value.stories) {
           const baselineTask = story.tasks.find(task => task.kind === "baseline");
           if (baselineTask && baselineTask.proposedProgress === 100 &&
+            primary.value.approval &&
             primary.value.approval.status !== "approved") {
             throw new Error(
               `baseline work-item Task ${baselineTask.localId} proposes 100% while the flow-contract approval is ${primary.value.approval.status}; the approval gate belongs to that Task.`,
@@ -2447,6 +2506,97 @@ const runSelfTest = async () => {
       );
     }
   }
+
+  const contractV6 = mutate => {
+    const contract = structuredClone(
+      artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
+        .value,
+    );
+    contract.schemaVersion = 6;
+    delete contract.status;
+    delete contract.approval;
+    delete contract.baselineReport;
+    contract.renderedSurfaceInventory = contract.visualParity.map(entry => ({
+      id: entry.id,
+      surface: entry.surface,
+      status: "migrate",
+    }));
+    contract.targetArchitecture = {
+      boundary: {
+        angularOwns: ["The migrated selected-line controls only."],
+        reactRetains: ["Selection, drawlib, history and host integration."],
+      },
+      adapter: {
+        inputs: ["Line identity and current values."],
+        commands: ["Request a value change."],
+        events: ["Accepted snapshot."],
+        nonSuccessOutcome: "The adapter reports an explicit rejection.",
+      },
+      lifecycle: ["Unmount cancels pending timers."],
+      styling: ["Use existing design tokens rather than literal values."],
+    };
+    mutate(contract);
+    return contract;
+  };
+
+  const cleanV6Errors = [];
+  validateArtifactRules(contractV6(() => {}), cleanV6Errors);
+  if (cleanV6Errors.length > 0) {
+    throw new Error(
+      `Handoff validator self-test rejected a valid schemaVersion 6 contract: ${cleanV6Errors.join(", ")}`,
+    );
+  }
+
+  const expectV6Rejection = (mutate, expected, description) => {
+    const contractErrors = [];
+    validateArtifactRules(contractV6(mutate), contractErrors);
+    if (!contractErrors.some(error => error.includes(expected))) {
+      throw new Error(
+        `Handoff validator self-test did not reject ${description}.`,
+      );
+    }
+  };
+
+  expectV6Rejection(
+    contract => {
+      contract.approval = { status: "pending" };
+    },
+    "$.approval is not used from schemaVersion 6",
+    "a schemaVersion 6 contract still carrying an approval block",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.status = "draft";
+    },
+    "$.status is not used from schemaVersion 6",
+    "a schemaVersion 6 contract still carrying a draft status",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.targetArchitecture.status = "proposed";
+    },
+    "$.targetArchitecture.status is not used from schemaVersion 6",
+    "a schemaVersion 6 architecture still carrying a proposed status",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.validationPlan.typecheckCommand = "";
+    },
+    "a final contract carries the commands flow-migrate will run",
+    "a schemaVersion 6 contract without a typecheck command",
+  );
+
+  expectV6Rejection(
+    contract => {
+      delete contract.approval;
+      contract.schemaVersion = 5;
+    },
+    "$.approval is required below schemaVersion 6",
+    "a schemaVersion 5 contract without an approval block",
+  );
 
   const contractV5 = () => {
     const contract = structuredClone(

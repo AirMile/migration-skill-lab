@@ -1,6 +1,6 @@
 ---
 name: flow-migrate
-description: Migrate one explicitly approved React-to-Angular flow within a declared product write scope, using a versioned Flow Contract. Use only with /flow-migrate.
+description: Migrate one React-to-Angular flow within the write scope its Flow Contract declares. Use only with /flow-migrate.
 ---
 
 # Flow Migrate
@@ -14,43 +14,43 @@ Skill version: `0.9.0`.
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
 
-Implement one bounded Angular migration only after a human has approved the
-Flow Contract, available convention evidence, allowed paths, validation
-commands and rollback. Write no code outside that agreement.
+Implement one bounded Angular migration inside the paths its Flow Contract
+allows. That allowlist is the boundary: write no file outside it, and stop
+rather than widening it.
 
 ## Required inputs
 
 Confirm all inputs before any product write:
 
 - path to a valid `flow-contract.json`;
-- explicit human implementation approval for its `flowId`;
-- contract `status: approved` and `approval.status: approved`;
+- a validating `flow-contract.json` for the `flowId` you were asked to migrate;
 - migration-skill-lab root containing the validator and schemas;
 - product root and declared branch/worktree;
-- the contract's `targetArchitecture`, which carries the approved boundary,
+- the contract's `targetArchitecture`, which carries the boundary,
   typed adapter, lifecycle and styling rules; ask the user only for what the
   contract leaves open, and never re-invent a design it already states;
 - any Angular convention evidence the contract does not cover;
 - exact allowed product write paths, matching the contract;
-- exact approved dependency, lockfile, TypeScript and Vite changes required by
+- the exact dependency, lockfile, TypeScript and Vite changes required by
   the bounded target architecture, or explicit evidence that none are needed;
 - test, typecheck and build commands. Check that each one terminates before
   relying on it; a watch-mode script recorded as a test command stalls this
-  run indefinitely. Report `BLOCKED` rather than editing the approved
-  contract to fix it;
+  run indefinitely. Report `BLOCKED` rather than editing the contract to fix
+  it;
 - rollback instructions;
 - declared run-artifact directory.
 - path to the corresponding `work-item-baseline.json`;
 - the actual manual-application outcome of the previous Targetprocess proposal;
-- approved checkpoint policy, expected branch and external reference from the
+- the checkpoint policy, expected branch and external reference from the
   Flow Contract.
 
 Run `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
 "<flow-contract.json>" "<work-item-baseline.json>"` before using the
 artifacts. Stop and report `BLOCKED`
-when an input, approval, validation command or rollback plan is absent or
-ambiguous. Record missing convention approval as a limitation; do not present a
-provisional convention as an approved Lely standard.
+when an input, validation command or rollback plan is absent or ambiguous, or
+when an open question in the contract prevents implementing. Record a missing
+convention as a limitation; do not present a provisional convention as an
+established Lely standard.
 
 ## Workflow
 
@@ -118,7 +118,7 @@ provisional convention as an approved Lely standard.
    path set and diff match the expected scoped delta. Create the local commit
    with its deterministic repository-style subject and run
    `verify-checkpoint.mjs --verify-commit` against the new SHA. Do not ask
-   again: Flow Contract approval is the batch authorization. Do not bypass
+   again: the contract's checkpoint policy is the authorization. Do not bypass
    hooks, amend or create an empty commit.
 11. Record coverage only through a command and output location explicitly
    approved for this run. Remove only generated artifacts that the approval
@@ -167,7 +167,8 @@ provisional convention as an approved Lely standard.
 
 Never:
 
-- infer approval from a prior chat or a draft contract;
+- widen `scope.allowedWritePaths`, or infer permission for a path from a prior
+  chat;
 - change a path outside the contract allowlist;
 - add a dependency, change a lockfile or alter build/configuration unless the
   exact files and changes are part of the approved target architecture,

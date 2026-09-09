@@ -8,7 +8,7 @@
     content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"
   >
   <meta name="backlog-schema-version" content="1">
-  <meta name="backlog-sha256" content="3b22ec28b6547717b137473f944a75b6e1e045494f804abb0615c975d699349e">
+  <meta name="backlog-sha256" content="c83f0bd8e794c13126cc415cd9d5a5497c48e0934bd1bf76f37853c949f2c288">
   <title>migration-skill-lab backlog</title>
   <style>
     :root {
@@ -98,8 +98,8 @@
       <div class="summary">
         <div class="metric"><strong>30</strong><span>Total items</span></div>
         <div class="metric"><strong>17</strong><span>Done</span></div>
-        <div class="metric"><strong>0</strong><span>Ready or active</span></div>
-        <div class="metric"><strong>10</strong><span>Blocked</span></div>
+        <div class="metric"><strong>1</strong><span>Ready or active</span></div>
+        <div class="metric"><strong>9</strong><span>Blocked</span></div>
         <div class="metric"><strong>3</strong><span>Deferred</span></div>
       </div>
     </section>
@@ -623,25 +623,25 @@
           <p class="eyebrow">run-line-drawer-poc-workflow</p>
           <h3>Run selected-line drawer POC workflow</h3>
         </div>
-        <span class="badge status-blocked">blocked</span>
+        <span class="badge status-ready">ready</span>
       </div>
-      <p>Run the migration skill chain for the selected floor-plan line detail-drawer POC after scope, target architecture, product-write authorization, browser automation, host validation and available convention evidence are confirmed.</p>
+      <p>Run the migration skill chain for the selected floor-plan line detail-drawer POC. The Flow Contract is final when written and its scope.allowedWritePaths bounds what flow-migrate may touch; verification is manual. The remaining unknown is the Angular embedding technique and the packages it needs.</p>
       <dl class="metadata">
         <div><dt>Type</dt><dd>benchmark</dd></div>
         <div><dt>Risk</dt><dd>high</dd></div>
         <div><dt>Evidence value</dt><dd>high</dd></div>
       </dl>
       <details>
-        <summary>Dependencies (4)</summary>
-        <ul><li>collect-angular-conventions: Collect approved Angular target conventions</li><li>validate-three-skill-workflow-v0: Validate three-skill workflow v0.1</li><li>build-work-item-checkpoint-flow: Build work-item and checkpoint flow</li><li>build-debug-flow: Build bounded debug and re-verify flow</li></ul>
+        <summary>Dependencies (3)</summary>
+        <ul><li>validate-three-skill-workflow-v0: Validate three-skill workflow v0.1</li><li>build-work-item-checkpoint-flow: Build work-item and checkpoint flow</li><li>build-debug-flow: Build bounded debug and re-verify flow</li></ul>
       </details>
       <details>
         <summary>Acceptance criteria (3)</summary>
         <ul><li>A human approves the POC Flow Contract and write allowlist.</li><li>The migration and verification artifacts provide evidence for every POC criterion.</li><li>The representative flow is validated in the agreed Maui host environment.</li></ul>
       </details>
       <details open>
-        <summary>Open questions (3)</summary>
-        <ul><li>Who approves the POC scope, product writes and rollback?</li><li>Which available Angular conventions and POC-specific design choices apply to the embedded detail drawer?</li><li>Which Maui environment and owner provide the required manual validation?</li></ul>
+        <summary>Open questions (2)</summary>
+        <ul><li>Which Angular embedding technique mounts the migrated fields inside the retained React parent?</li><li>Which Angular package set and build integration does that technique need?</li></ul>
       </details>
       <details>
         <summary>Sources (3)</summary>
@@ -1321,11 +1321,10 @@
       &quot;id&quot;: &quot;run-line-drawer-poc-workflow&quot;,
       &quot;title&quot;: &quot;Run selected-line drawer POC workflow&quot;,
       &quot;type&quot;: &quot;benchmark&quot;,
-      &quot;status&quot;: &quot;blocked&quot;,
+      &quot;status&quot;: &quot;ready&quot;,
       &quot;phase&quot;: &quot;P2&quot;,
-      &quot;description&quot;: &quot;Run the migration skill chain for the selected floor-plan line detail-drawer POC after scope, target architecture, product-write authorization, browser automation, host validation and available convention evidence are confirmed.&quot;,
+      &quot;description&quot;: &quot;Run the migration skill chain for the selected floor-plan line detail-drawer POC. The Flow Contract is final when written and its scope.allowedWritePaths bounds what flow-migrate may touch; verification is manual. The remaining unknown is the Angular embedding technique and the packages it needs.&quot;,
       &quot;dependencies&quot;: [
-        &quot;collect-angular-conventions&quot;,
         &quot;validate-three-skill-workflow-v0&quot;,
         &quot;build-work-item-checkpoint-flow&quot;,
         &quot;build-debug-flow&quot;
@@ -1343,9 +1342,8 @@
         &quot;product-frontend&quot;
       ],
       &quot;openQuestions&quot;: [
-        &quot;Who approves the POC scope, product writes and rollback?&quot;,
-        &quot;Which available Angular conventions and POC-specific design choices apply to the embedded detail drawer?&quot;,
-        &quot;Which Maui environment and owner provide the required manual validation?&quot;
+        &quot;Which Angular embedding technique mounts the migrated fields inside the retained React parent?&quot;,
+        &quot;Which Angular package set and build integration does that technique need?&quot;
       ]
     },
     {
@@ -1920,7 +1918,7 @@
       Updated 2026-09-07 |
       schemaVersion 1 |
       source backlog/backlog.json |
-      sha256 3b22ec28b6547717b137473f944a75b6e1e045494f804abb0615c975d699349e
+      sha256 c83f0bd8e794c13126cc415cd9d5a5497c48e0934bd1bf76f37853c949f2c288
     </footer>
   </main>
 </body>
