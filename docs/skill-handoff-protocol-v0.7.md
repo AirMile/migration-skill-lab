@@ -57,6 +57,14 @@ Targetprocess was changed.
 
 ## Human gate
 
+`flow-baseline` runs in two parts. It first surveys the route's rendered
+surfaces and the importers each one has outside the flow, then puts two or three
+candidate boundaries to the user and records the chosen one, with the rejected
+ones, as a `decisions` entry. Only then does the deep baseline run. The boundary
+is a human decision, but it is taken with the evidence rather than before it;
+asking for it up front is what let two runs over the same route produce
+different cuts.
+
 `flow-baseline` produces a draft contract. A human must explicitly approve the
 scope, acceptance criteria and `allowedWritePaths` before `flow-migrate` can
 write product code. `flow-migrate` must stop if the contract or the user input

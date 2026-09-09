@@ -8,6 +8,32 @@ Create a compact behavioral handoff, not an Angular design. The handoff must
 give a later migration run enough evidence to know what may change, what must
 remain observable and which unknowns block writing.
 
+## Choosing the slice
+
+The boundary is chosen during the run, not supplied before it. The survey in
+step 3 produces the rendered-surface inventory and, for each surface with its
+own component, the importers outside this flow's directory. Only then can two or
+three candidate boundaries be put side by side, each judged against:
+
+1. **one owner** — every migrated surface belongs to this flow, not to several
+   object types;
+2. **no shared infrastructure in the write allowlist** — a component other forms
+   import stays outside the cut;
+3. **a measurable neighbour** — a nested mount needs a `retain-react` sibling to
+   compare visual parity against;
+4. **bounded branches** — capability gates and mode branches are counted,
+   because each one doubles what a later verification must cover.
+
+Asking for the boundary up front makes the human decide before the evidence
+exists, and it is why two runs over the same route produced different cuts for
+line creation, Delete and the selected-line label. `scope.startState` and
+`scope.endState` follow from the chosen candidate; they describe that slice, not
+the whole route.
+
+The chosen candidate and the rejected ones are recorded as a `decisions` entry.
+The importer counts are not: they are reproducible from the source, and the
+decision carries the conclusion.
+
 ## What the contract carries, and what it cites
 
 There is no separate baseline report. The contract is the only durable

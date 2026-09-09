@@ -136,11 +136,12 @@ reasoning, and the mechanical steps are already scripts.
 
 ## Migration workflow
 
-1. `flow-baseline` is read-only for the product repository. It creates one
-   draft `flow-contract.json` for one human-selected flow, carrying the scope,
-   surface inventory, target architecture, scenarios and open questions. It
-   writes no report: a prose copy of a validated artifact drifts, and no later
-   skill reads it.
+1. `flow-baseline` is read-only for the product repository. It surveys the
+   selected flow's rendered surfaces, puts two or three candidate boundaries to
+   the user with what each one costs, and then creates one draft
+   `flow-contract.json` carrying the chosen scope, surface inventory, target
+   architecture, scenarios and open questions. It writes no report: a prose copy
+   of a validated artifact drifts, and no later skill reads it.
 2. `flow-baseline` ends at one approval checkpoint, which is the review
    surface in place of a report. It renders scope, the surface inventory, the
    proposed architecture, scenario summaries, required characterization, write

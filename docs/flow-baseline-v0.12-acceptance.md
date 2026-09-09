@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.11.0
+targetVersion: 0.12.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.11.0 acceptance criteria
+# `flow-baseline` v0.12.0 acceptance criteria
 
 ## Hard gates
 
@@ -17,7 +17,11 @@ an implementation run the user did not choose, or stores sensitive content.
 
 ## Required output
 
-- A feature boundary with explicit exclusions and confidence.
+- Two or three candidate boundaries put to the user after the survey, each with
+  its migrate set, retained neighbours, external importers, conditional branches
+  and existing test evidence, judged against the four slice criteria.
+- The chosen boundary with explicit exclusions and confidence, recorded as a
+  `decisions` entry naming the rejected candidates.
 - A behavior baseline covering applicable success, error, state, side-effect
   and cleanup behavior.
 - A cited evidence ledger with `Confirmed`, `Inference` and `Open question`.
@@ -149,3 +153,9 @@ The source is acceptable when:
     lockfile, build-config and TypeScript paths;
 44. an existing component-rendering harness is named in the validation plan
     rather than an unassigned browser runner proposed beside it.
+45. the boundary is chosen during the run from surveyed evidence, never taken
+    as an input before the survey can show what each candidate costs;
+46. every surface rendered by its own component has its importers outside this
+    flow searched and cited, because that is what makes a boundary judgeable;
+47. the chosen and rejected candidates are recorded in `decisions`, so a later
+    reader can see which cuts were considered and why one won.
