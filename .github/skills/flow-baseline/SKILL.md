@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.12.0`.
+Skill version: `0.13.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -51,9 +51,12 @@ Confirm before deep analysis:
 - the proposed product branch, external work-item reference and push policy for
   the later migration. Do not offer to enable `auto-local` here: the validator
   refuses it unless the contract is already approved, so a draft can only record
-  `disabled` and the proposed values. Leave the branch, reference and milestones
-  absent when they are not yet assigned rather than inventing a placeholder that
-  reads like a real value.
+  `disabled` and the proposed values. `pushPolicy` is `never` whenever the mode
+  is `disabled`: without checkpoints the pipeline creates no commit it could
+  push, and `confirm-after-pass` beside a disabled mode reads like a standing
+  authorization. Leave the branch, reference and milestones absent when they are
+  not yet assigned rather than inventing a placeholder that reads like a real
+  value.
 - the required manual host scenario and rollback; leave unresolved draft fields
   absent rather than inventing them.
 
@@ -165,6 +168,13 @@ the reader's.
    does not have. Never write `required: false` on the assumption that earlier
    slices already added it: that is a claim about the codebase, and an unchecked
    claim here hides the largest approval the migration needs.
+   The mount or embedding mechanism is part of `targetArchitecture`, not a
+   detail under it. While it is unresolved the architecture is unresolved, so
+   the question blocks approval and the checkpoint may not offer approval on the
+   grounds that only the behavior baseline is being approved. An approved
+   contract requires `targetArchitecture.status: approved`, and the validator
+   enforces that, so describing such a question as non-blocking sets up an
+   approval that cannot honestly be recorded.
    Capture observable visual parity (including layout insets, spacing, input
    containment and a reference screenshot when available). Mark every
    unapproved choice as proposed or open.
@@ -266,6 +276,15 @@ the reader's.
    explicit contribution percentages totaling 100 and derive User Story
    progress from Task progress. Link checkpoint milestone IDs to the
    implementation Task; do not create one Task per commit.
+   The baseline Task covers analysis *and* human approval of the contract, and
+   its `doneWhen` says so. Narrowing it to "the draft validates" makes it
+   complete while the gate it exists for is still open, and no other Task covers
+   approval, so the Story reports progress for work nobody has accepted. Its
+   proposed progress therefore stays below 100 while `approval.status` is
+   `pending`; the validator rejects the combination. The three Task kinds and
+   the requirement that their weights total 100 are fixed by the handoff
+   protocol, so propose the weights rather than asking whether to create the
+   Tasks at all.
 13. Keep confirmed current board values separate from proposed calculated
     values. A copy-ready proposal does not change current progress.
 14. Add a daily standup block with completed work, next steps, blockers and

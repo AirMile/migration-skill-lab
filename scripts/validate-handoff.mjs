@@ -204,6 +204,13 @@ const validateArtifactRules = (value, errors) => {
         "$.checkpointPolicy.milestones is required for auto-local mode.",
       );
     }
+    if (checkpointPolicy.mode === "disabled" &&
+      checkpointPolicy.pushPolicy !== "never") {
+      errors.push(
+        "$.checkpointPolicy.pushPolicy must be never while mode is disabled; without checkpoints the pipeline creates no commit it could push.",
+      );
+    }
+
     if (value.status === "approved") {
       if (!checkpointPolicy.expectedBranch) {
         errors.push(
@@ -1494,6 +1501,19 @@ const validateArtifactLinks = artifacts => {
           }
         };
 
+        // The baseline Task carries the approval gate. Calling it complete while
+        // the contract is still pending puts progress on the board for a gate
+        // nobody has passed, and no other Task covers approval.
+        for (const story of handoff.value.stories) {
+          const baselineTask = story.tasks.find(task => task.kind === "baseline");
+          if (baselineTask && baselineTask.proposedProgress === 100 &&
+            primary.value.approval.status !== "approved") {
+            throw new Error(
+              `baseline work-item Task ${baselineTask.localId} proposes 100% while the flow-contract approval is ${primary.value.approval.status}; the approval gate belongs to that Task.`,
+            );
+          }
+        }
+
         requireIdentity(handoff.value.epic, context.epicExternalId, "Epic");
         requireIdentity(
           handoff.value.feature,
@@ -2359,6 +2379,25 @@ const runSelfTest = async () => {
     "has no ID in flow-contract workItemContext, so it must use action create",
     "an update for an Epic the contract does not identify",
   );
+
+  let approvalGateRejected = false;
+  try {
+    const pair = [
+      structuredClone(contractArtifact),
+      structuredClone(baselineArtifact),
+    ];
+    pair[0].value.approval.status = "pending";
+    validateArtifactLinks(pair);
+  } catch (error) {
+    approvalGateRejected = error.message.includes(
+      "the approval gate belongs to that Task",
+    );
+  }
+  if (!approvalGateRejected) {
+    throw new Error(
+      "Handoff validator self-test did not reject a complete baseline Task under a pending contract.",
+    );
+  }
 
   const structuralRerun = buildRerun(() => {})[2].value;
   const expectRerunStructuralRejection = (mutate, expected, description) => {

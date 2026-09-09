@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.12.0
+targetVersion: 0.13.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.12.0 acceptance criteria
+# `flow-baseline` v0.13.0 acceptance criteria
 
 ## Hard gates
 
@@ -159,3 +159,9 @@ The source is acceptable when:
     flow searched and cited, because that is what makes a boundary judgeable;
 47. the chosen and rejected candidates are recorded in `decisions`, so a later
     reader can see which cuts were considered and why one won.
+48. an unresolved mount or embedding mechanism blocks approval, and no open
+    question is described as approvable on the grounds that it covers only the
+    behavior baseline;
+49. the baseline Task keeps the contract-approval gate in its `doneWhen` and
+    stays below 100% while approval is pending;
+50. `pushPolicy` is `never` whenever the checkpoint mode is `disabled`.

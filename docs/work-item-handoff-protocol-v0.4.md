@@ -89,6 +89,11 @@ For the migration flow, prefer:
 Checkpoint commits are evidence on the implementation Task. Do not create one
 Task per commit.
 
+The baseline Task covers the analysis and the human approval of the Flow
+Contract. It cannot be complete while that approval is pending: no other Task
+carries the gate, so a complete baseline Task would put Story progress on the
+board for work nobody has accepted. The validator rejects that combination.
+
 Each Task has a `contributionPercent`; all Tasks under one Story must total
 100. User Story progress is the rounded weighted average of Task progress.
 The validator rejects a hand-entered Story percentage that does not match.

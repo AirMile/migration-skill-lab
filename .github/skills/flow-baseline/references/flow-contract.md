@@ -82,7 +82,8 @@ Populate:
 - `renderedSurfaceInventory` with one entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded` and cited;
-- `targetArchitecture` with the ownership boundary, the typed adapter
+- `targetArchitecture` with the mount or embedding mechanism, the ownership
+  boundary, the typed adapter
   (`inputs`, `commands`, `events`, `nonSuccessOutcome`, `forbiddenAccess`),
   lifecycle and styling rules and `dependencyChanges`, at status `proposed`
   until a human approves the contract;
@@ -105,7 +106,8 @@ Populate:
   `pushPolicy` are required in a draft; `expectedBranch` and `externalRef`
   become required on approval and `milestones` only for `auto-local`. Leave an
   unassigned value absent rather than filling it with a placeholder.
-  `authorizedByRole` and `authorizedAt` are present only for `auto-local`;
+  `authorizedByRole` and `authorizedAt` are present only for `auto-local`, and
+  `pushPolicy` is `never` whenever the mode is `disabled`;
 - `validationPlan` with targeted tests that terminate, typecheck, build, an
   exact browser
   command and required manual host validation. Drafts may leave owner/command fields absent,
