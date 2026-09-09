@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.14.0
+targetVersion: 0.15.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.14.0 acceptance criteria
+# `flow-baseline` v0.15.0 acceptance criteria
 
 ## Hard gates
 
@@ -159,11 +159,11 @@ The source is acceptable when:
     flow searched and cited, because that is what makes a boundary judgeable;
 47. the chosen and rejected candidates are recorded in `decisions`, so a later
     reader can see which cuts were considered and why one won.
-48. an unresolved mount or embedding mechanism blocks approval, and no open
-    question is described as approvable on the grounds that it covers only the
-    behavior baseline;
-49. the baseline Task keeps the contract-approval gate in its `doneWhen` and
-    stays below 100% while approval is pending;
+48. an unresolved mount or embedding mechanism is recorded as an open question
+    that `flow-migrate` reports `BLOCKED` on, and is never described away as
+    covering only the behavior baseline;
+49. the baseline Task is complete when the analysis is, because no gate is left
+    for it to hold open;
 50. `pushPolicy` is `never` whenever the checkpoint mode is `disabled`.
 51. the contract is final when written: no `status`, no `approval`, no
     `targetArchitecture.status`, and no successor pair;
@@ -172,3 +172,13 @@ The source is acceptable when:
     automation command or an owner to assign one to;
 54. `scope.allowedWritePaths` carries the weight the gate used to: it contains
     nothing the chosen slice does not need.
+55. `scope` carries the start state, the end state and that write allowlist and
+    nothing else; a schemaVersion 6 contract carrying `includedPaths`,
+    `excludedPaths` or `baselineReport` is rejected;
+56. a surface the slice leaves alone is a cited `retain-react` or `excluded`
+    inventory entry, never a bare path in a separate exclusion list;
+57. `decisions` records only choices that shape what this contract says; why an
+    earlier run was discarded goes to `skill-run-observations.json`;
+58. `rollback` names which files return to which state and what a revert must
+    not disturb, instead of restating that `migration-result.json` records the
+    checkpoint SHAs.

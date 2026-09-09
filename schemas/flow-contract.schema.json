@@ -71,8 +71,6 @@
       "required": [
         "startState",
         "endState",
-        "includedPaths",
-        "excludedPaths",
         "allowedWritePaths"
       ],
       "properties": {

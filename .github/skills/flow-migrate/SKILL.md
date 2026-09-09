@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.9.0`.
+Skill version: `0.10.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -29,6 +29,14 @@ Confirm all inputs before any product write:
 - the contract's `targetArchitecture`, which carries the boundary,
   typed adapter, lifecycle and styling rules; ask the user only for what the
   contract leaves open, and never re-invent a design it already states;
+- the contract's `openQuestions`. Each one names something the baseline could
+  not settle. Check every one against the slice you are about to write, and
+  report `BLOCKED` on any that prevents implementing instead of deciding it
+  here; the baseline is where a resolved question gets recorded;
+- the contract's `testGaps`. They say which evidence does not exist yet and how
+  to measure safely. A command named there as unsafe for the product worktree
+  is one not to run, and a gap that stays unmeasurable is a limitation to
+  record rather than to leave silent;
 - any Angular convention evidence the contract does not cover;
 - exact allowed product write paths, matching the contract;
 - the exact dependency, lockfile, TypeScript and Vite changes required by
@@ -122,7 +130,8 @@ established Lely standard.
    hooks, amend or create an empty commit.
 11. Record coverage only through a command and output location explicitly
    approved for this run. Remove only generated artifacts that the approval
-   identifies.
+   identifies. Use the safe measurement the contract's `testGaps` names; the
+   baseline already established which script would dirty the product worktree.
 12. Write `migration-result.json` in the declared run directory, including
     every committed, skipped or blocked checkpoint. When the contract sets
    `scope.partialMount.nested`, record the step 4 comparison in

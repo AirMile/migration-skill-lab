@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.14.0`.
+Skill version: `0.15.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -104,6 +104,11 @@ the reader's.
    renders is in the cited source, and a prose copy of it goes stale as soon as
    that source changes. `flow-migrate` compares this list against the real
    render tree, so a surface missing here is a surface nobody checks.
+   This list is also the only place an exclusion is recorded. A surface this
+   slice deliberately leaves alone is a `retain-react` or `excluded` entry with
+   its citation, not a path in a separate exclusion list: a bare path says a
+   file was thought about, an inventory entry says which surface it renders and
+   what happens to it.
    For every surface rendered by its own component, search the product for
    importers outside this flow's directory and cite them. One search per
    component, and it is the single fact that makes a boundary judgeable: a
@@ -234,12 +239,22 @@ the reader's.
    leave it out, or record a `decisions` entry saying which consumers were
    considered and why the risk is accepted. Apply this to every path, not only
    to the one control that prompted the question.
+   `scope` carries the start state, the end state and that allowlist, and
+   nothing else. schemaVersion 6 has no `includedPaths` and no `excludedPaths`,
+   and the validator rejects them: three path lists said the same thing, the
+   inventory already names every surface with a citation, and no later skill
+   ever read the other two.
    Record checkpoint mode as `disabled` unless the user asks for `auto-local`,
    which then needs its expected branch and external reference. The contract
    carries concrete test, typecheck and build commands and a rollback; those are
    what `flow-migrate` runs, so an absent one is a missing input rather than an
    open question. An unresolved decision stays in `openQuestions`, and
    `flow-migrate` reports `BLOCKED` when one of them prevents implementing.
+   Write `rollback` as the concrete undo for this slice: which files return to
+   which state, and what a revert must not disturb. "Revert the checkpoints
+   `migration-result.json` records" is not a rollback plan; it restates how the
+   pipeline works to a skill that already knows, and leaves the one question a
+   rollback exists to answer unanswered.
 11. Write `work-item-baseline.json` after the Flow Contract. Populate the
    Epic, Feature and User Story templates from cited baseline evidence, use
    `create`, `update` or `no-change` honestly, and keep
@@ -393,6 +408,12 @@ daily standup proposal. Both are machine-readable inputs to `flow-migrate`; do
 not rely on prior chat context or on a document a later skill cannot read.
 
 Carry decisions, agreements and unproven hypotheses; cite everything else.
+A `decisions` entry records a choice that shapes what this contract says: a
+boundary, an accepted shared-path risk, a resolved conflict between sources.
+`flow-migrate` reads none of it; it is the record that explains the contract to
+a later reader, so what does not explain this contract does not belong there.
+Why an earlier run was discarded is one of those: that is evidence about a
+skill, and it goes in `skill-run-observations.json`.
 Confirmed current behavior lives in the product source, so a scenario names the
 behavior and points at the file and line that proves it. Restating the
 mechanism in the contract creates a copy that is wrong the moment the source

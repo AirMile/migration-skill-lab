@@ -170,6 +170,22 @@ const validateArtifactRules = (value, errors) => {
           "$.targetArchitecture.status is not used from schemaVersion 6; the architecture it records is the one being implemented.",
         );
       }
+      // Three path lists said the same thing. The allowlist is the boundary and
+      // the inventory says, with a citation, which surfaces this slice owns and
+      // which it leaves alone; a separate included/excluded list restated both,
+      // and no downstream skill ever read it.
+      for (const field of ["includedPaths", "excludedPaths"]) {
+        if (Object.hasOwn(value.scope, field)) {
+          errors.push(
+            `$.scope.${field} is not used from schemaVersion 6; $.renderedSurfaceInventory records what this slice owns and leaves alone, and $.scope.allowedWritePaths is the boundary.`,
+          );
+        }
+      }
+      if (Object.hasOwn(value, "baselineReport")) {
+        errors.push(
+          "$.baselineReport is not used from schemaVersion 6; the contract is the only durable baseline artifact.",
+        );
+      }
       if (value.validationPlan.testCommands.length === 0 ||
         !value.validationPlan.typecheckCommand ||
         !value.validationPlan.buildCommand) {
@@ -198,6 +214,11 @@ const validateArtifactRules = (value, errors) => {
         errors.push(
           "$.targetArchitecture.status is required below schemaVersion 6.",
         );
+      }
+      for (const field of ["includedPaths", "excludedPaths"]) {
+        if (!Object.hasOwn(value.scope, field)) {
+          errors.push(`$.scope.${field} is required below schemaVersion 6.`);
+        }
       }
     }
 
@@ -2516,6 +2537,8 @@ const runSelfTest = async () => {
     delete contract.status;
     delete contract.approval;
     delete contract.baselineReport;
+    delete contract.scope.includedPaths;
+    delete contract.scope.excludedPaths;
     contract.renderedSurfaceInventory = contract.visualParity.map(entry => ({
       id: entry.id,
       surface: entry.surface,
@@ -2596,6 +2619,44 @@ const runSelfTest = async () => {
     },
     "$.approval is required below schemaVersion 6",
     "a schemaVersion 5 contract without an approval block",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.scope.includedPaths = ["src/features/example/Example.tsx"];
+    },
+    "$.scope.includedPaths is not used from schemaVersion 6",
+    "a schemaVersion 6 contract restating its paths as an included list",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.scope.excludedPaths = ["src/modules/drawlib"];
+    },
+    "$.scope.excludedPaths is not used from schemaVersion 6",
+    "a schemaVersion 6 contract restating its exclusions as a path list",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.baselineReport = {
+        path: "baseline-report.md",
+        sha256: "a".repeat(64),
+      };
+    },
+    "$.baselineReport is not used from schemaVersion 6",
+    "a schemaVersion 6 contract pointing at a separate prose report",
+  );
+
+  expectV6Rejection(
+    contract => {
+      contract.schemaVersion = 5;
+      contract.status = "draft";
+      contract.approval = { status: "pending" };
+      contract.targetArchitecture.status = "proposed";
+    },
+    "$.scope.includedPaths is required below schemaVersion 6",
+    "a schemaVersion 5 contract without its included path list",
   );
 
   const contractV5 = () => {

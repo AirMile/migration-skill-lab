@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.9.0
+targetVersion: 0.10.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-migrate` v0.9.0 acceptance criteria
+# `flow-migrate` v0.10.0 acceptance criteria
 
 ## Hard gates
 
@@ -89,3 +89,9 @@ The source is acceptable when:
 27. observation capture evaluates the countable checks against this run's own
     tool history, and an empty list means every check was evaluated and none
     fired rather than that none was looked for.
+28. every entry in the contract's `openQuestions` is checked against the slice
+    before any product write, and one that prevents implementing produces
+    `BLOCKED` rather than a decision taken in this phase.
+29. coverage uses the safe measurement the contract's `testGaps` names, and a
+    gap that stays unmeasurable is recorded as a limitation rather than left
+    silent.

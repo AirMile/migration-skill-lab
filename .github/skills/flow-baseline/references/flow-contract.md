@@ -44,7 +44,7 @@ where something belongs.
 Carry it in the contract when a later reader cannot recover it from the product
 source:
 
-- scope decisions: what is in, what is out, what may be written;
+- the write allowlist, and the start and end state that bound the slice;
 - the rendered-surface classification, which is a choice about this slice and
   not a fact about the code;
 - the target architecture, because the Angular side does not exist yet;
@@ -76,10 +76,13 @@ descriptions only. Do not copy application source into JSON.
 Populate:
 
 - `repository` with the inspected root and revision;
-- `scope` with non-empty included paths and an explicit write allowlist. Every
-  path in that allowlist has been checked for consumers outside this flow, and
-  it contains a location for the new Angular code; a design with nowhere to land
-  cannot be implemented;
+- `scope` with the start state, the end state and an explicit write allowlist,
+  and nothing else. Every path in that allowlist has been checked for consumers
+  outside this flow, and it contains a location for the new Angular code; a
+  design with nowhere to land cannot be implemented. From schemaVersion 6 there
+  is no `includedPaths` and no `excludedPaths`: the inventory below names every
+  surface with a citation, the allowlist is the boundary, and the validator
+  rejects a contract that restates either as a third path list;
 - `renderedSurfaceInventory` with one entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded` and cited;
@@ -90,7 +93,10 @@ Populate:
 - `scenarios` as Given/When/Then observable outcomes with evidence pointers;
 - `characterizationRequired` for each unproven hypothesis, with the behavior it
   blocks;
-- `decisions` for a conflict between sources that has been resolved;
+- `decisions` for a choice that shapes what this contract says: the chosen
+  boundary, an accepted shared-path risk, a conflict between sources that has
+  been resolved. Not why an earlier run was discarded; that is evidence about a
+  skill and belongs in `skill-run-observations.json`;
 - `testGaps` only for behavior without adequate evidence;
 - `openQuestions` for unknowns that cannot be inferred safely;
 - `workItemContext` with the existing Epic, Feature and selected User Story
@@ -109,7 +115,10 @@ Populate:
   manual verification scenarios and the required host validation. Verification
   is manual, so record what a person walks through rather than a runner to
   automate it;
-- `rollback` with concrete scope-preserving instructions.
+- `rollback` with concrete scope-preserving instructions: which files return to
+  which state, and what a revert must not disturb. Restating that
+  `migration-result.json` records the checkpoint SHAs tells `flow-migrate`
+  something it already knows and answers nothing.
 
 `renderedSurfaceInventory` is binding during partial migration. A component may
 not replace a parent React form when that would hide an item marked
