@@ -76,6 +76,30 @@ path in it for consumers outside the flow and records the trade-off when a
 shared one is included anyway. `flow-migrate` refuses every write outside the
 list and stops rather than widening it.
 
+Because that list is the only control, it also has to cover every kind of write
+the contract asks for: the directory the new framework code lands in, the test
+directory the `characterizationRequired` entries need, and every path
+`targetArchitecture.dependencyChanges.paths` names. A contract that requires a
+change to a file its own allowlist forbids has asked for work it made
+impossible, and the validator rejects it.
+
+Settled per-project decisions live in `docs\project-constants.md`, not in a
+contract and not in a question. The framework version and the reason for it, the
+exact packages, how the framework is compiled and mounted, the change-detection
+strategy, the install command, where tests live, how coverage is measured and
+the environment a person verifies in are the same for every flow. A skill reads
+that page and states that it did. Re-deriving those per run produced the one
+failure that kept the pipeline from reaching product code: the mount mechanism
+came back as an open question in every contract, and `flow-migrate` reported
+`BLOCKED` on it every time.
+
+A dependency change is carried as exact `packages` at pinned versions and
+repository-relative `paths`, with `validationPlan.installCommand` saying how it
+is applied. `flow-migrate` applies it, runs that install command, and only then
+runs the test, typecheck and build commands: a slice that adds packages and
+typechecks without installing them fails on missing modules and reports a defect
+that does not exist.
+
 `checkpointPolicy` records only what is assigned: `mode` and `pushPolicy`, with
 `pushPolicy` `never` whenever the mode is `disabled`. `auto-local` additionally
 requires its expected branch, external reference and milestones. It does not
@@ -145,8 +169,12 @@ daily standup block with the same percentage.
 
 ## Diagnostic observation sidecars
 
-Each skill writes `skill-run-observations.json` only after its primary artifact
-is complete. This sidecar:
+Each skill writes `skill-run-observations-<skill>.json` only after its primary
+artifact is complete. The filename carries the skill because the phases of one
+flow share a run directory; a bare `skill-run-observations.json` means the
+second skill to finish overwrites the first one's evidence. Runs recorded before
+this convention use the bare name, and `migration-skill-audit` reads both.
+This sidecar:
 
 - is validated independently against
   `schemas\skill-run-observations.schema.json`;

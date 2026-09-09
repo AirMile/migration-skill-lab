@@ -208,12 +208,19 @@ produced:
    tool call this skill's own wording caused is never executor noise.
 3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
-   `observations` list is a claim that every check in step 1 was evaluated and
-   none fired; write it only when that is true.
+4. Write `<run-artifact-directory>\skill-run-observations-flow-debug.json`. The
+   filename carries the skill because phases of one flow share a run directory,
+   and a bare `skill-run-observations.json` means the second skill to finish
+   silently overwrites the first one's evidence.
+   Copy the shape from `examples\handoff\` rather than writing it from this
+   description: an entry needs `id`, `category`, `observation`, `effect`,
+   `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
+   `primaryOutcome.status` is `repaired`, `blocked` or `parked` for this skill.
+   An empty `observations` list is a claim that every check in step 1 was
+   evaluated and none fired; write it only when that is true.
 5. Validate it with
    `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
-   "<skill-run-observations.json>"`.
+   "<skill-run-observations-flow-debug.json>"`.
 6. Report a capture or validation failure separately without changing the
    primary debug status.
 

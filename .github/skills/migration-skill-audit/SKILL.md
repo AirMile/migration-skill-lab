@@ -18,8 +18,12 @@ Confirm before analysis:
 
 - one target migration skill;
 - migration-skill-lab root;
-- one or more `skill-run-observations.json` paths, unless the user explicitly
-  requests a static-only audit;
+- one or more observation-sidecar paths, unless the user explicitly requests a
+  static-only audit. A run directory holds one per skill, named
+  `skill-run-observations-<skill>.json`; runs written before that convention use
+  a bare `skill-run-observations.json`, and both are valid input. Take every
+  sidecar in the directory rather than the first one found, because a flow's
+  phases share it;
 - an approved audit-report destination;
 - confirmation that no run of the target skill is still active.
 

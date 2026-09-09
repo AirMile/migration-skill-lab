@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.16.0
+targetVersion: 0.17.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-baseline` v0.16.0 acceptance criteria
+# `flow-baseline` v0.17.0 acceptance criteria
 
 ## Hard gates
 
@@ -197,5 +197,26 @@ The source is acceptable when:
 64. every `openQuestions` entry is something this run could not determine; a
     choice it could have made is decided or put to the user, never parked for
     `flow-migrate` to report `BLOCKED` on;
-65. a launch route names `copilot.cmd`, because `wt.exe nt` resolves its
-    command through `CreateProcess` and no `copilot.exe` exists.
+65. the continuation route for a fresh chat is `/new` in this session
+    followed by the invocation, never a second terminal window;
+66. `docs\project-constants.md` is read before the survey and the run states
+    that it did; nothing on that page reaches the user as a question or lands
+    in `openQuestions`;
+67. `targetArchitecture` transcribes the framework version, package set,
+    compilation and mount mechanism from that page rather than deciding them,
+    so a contract carries no blocking open question about how the framework is
+    embedded;
+68. `dependencyChanges` carries exact `name@version` packages and
+    repository-relative `paths`, and `validationPlan.installCommand` says how
+    they are applied;
+69. `scope.allowedWritePaths` covers all three kinds of write the contract
+    asks for: the new framework code, the test directory the
+    `characterizationRequired` entries need, and every path
+    `dependencyChanges.paths` names;
+70. every candidate boundary carries its external importer counts as numbers,
+    all four criteria answered in writing, its measurable neighbour and its
+    existing test evidence, in plain text with no escaped newlines;
+71. the boundary question shows the chosen candidate's write allowlist and asks
+    in the same breath whether anything in it is off limits;
+72. the observation sidecar is named `skill-run-observations-flow-baseline.json`
+    so a later phase in the same run directory cannot overwrite it.

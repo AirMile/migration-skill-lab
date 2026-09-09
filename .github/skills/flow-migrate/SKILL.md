@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.10.0`.
+Skill version: `0.11.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -37,10 +37,17 @@ Confirm all inputs before any product write:
   to measure safely. A command named there as unsafe for the product worktree
   is one not to run, and a gap that stays unmeasurable is a limitation to
   record rather than to leave silent;
-- any Angular convention evidence the contract does not cover;
+- `<migration-skill-lab-root>\docs\project-constants.md`. It carries the
+  project's settled decisions: framework version and why, the exact packages,
+  how the framework is compiled and mounted, the change-detection strategy, the
+  install command, where tests live and how coverage is measured. Read it, and
+  treat anything on it as decided rather than as a convention to invent;
+- any convention evidence neither the contract nor that page covers;
 - exact allowed product write paths, matching the contract;
-- the exact dependency, lockfile, TypeScript and Vite changes required by
-  the bounded target architecture, or explicit evidence that none are needed;
+- `targetArchitecture.dependencyChanges`. When `required` is true it names the
+  exact `packages` and the `paths` they change, and `validationPlan` carries the
+  `installCommand` that applies them. A general note about needing the framework
+  is not that: report `BLOCKED` rather than choosing versions here;
 - test, typecheck and build commands. Check that each one terminates before
   relying on it; a watch-mode script recorded as a test command stalls this
   run indefinitely. Report `BLOCKED` rather than editing the contract to fix
@@ -90,8 +97,19 @@ established Lely standard.
    Include one rendered test that proves every retained control remains visible
    across the relevant conditional capability branches.
 6. Implement the smallest Angular change that meets the same scenarios.
-7. Add Angular tests for the same behavior and run the declared targeted test,
-   typecheck and build commands.
+   When `targetArchitecture.dependencyChanges.required` is true, apply that
+   change first and exactly as the contract states it: the packages in
+   `packages` at their pinned versions, and no file outside `paths`. The
+   contract carries an exact set because a version chosen here is an
+   unapproved convention.
+7. Run `validationPlan.installCommand` after any manifest or configuration
+   change, before the checks below. A slice that adds packages and then
+   typechecks without installing them fails on missing modules and reports a
+   defect that does not exist. Record the install like any other command, with
+   what ran and whether it passed; the validator permits it in `validation`
+   when the contract declares it, and requires nothing when it does not.
+   Then add Angular tests for the same behavior and run the declared targeted
+   test, typecheck and build commands.
    Do not execute, solicit or record the contract's manual browser flow or
    Maui-WebView smoke as migration verification; `flow-verify` owns that
    independent evidence. The validator enforces this: `migration-result`
@@ -133,6 +151,9 @@ established Lely standard.
    identifies. Use the safe measurement the contract's `testGaps` names; the
    baseline already established which script would dirty the product worktree.
 12. Write `migration-result.json` in the declared run directory, including
+    it in the same validator invocation as the Flow Contract every time: a
+    `migration-result` never validates alone, and neither does a work-item
+    handoff without its primary artifact. Include
     every committed, skipped or blocked checkpoint. When the contract sets
    `scope.partialMount.nested`, record the step 4 comparison in
    `renderedSurfaceComparison`: the `evidenceSource` you actually used, the
@@ -153,6 +174,12 @@ established Lely standard.
     `previousApplication`, including the external IDs Targetprocess assigned to
     any created item in `createdExternalIds`; never modify the baseline
     snapshot.
+    `no-change` and `update` both require the item's `externalId`, so an item
+    that is not on the board yet cannot use either. When
+    `previousApplication.status` is `not-applied`, every item the baseline
+    proposed to `create` stays `create` here, whatever this phase learned about
+    it; only a confirmed application, with the external IDs it assigned, moves
+    an item off `create`.
     Copy each unchanged `fields` value from the baseline handoff byte for byte
     and mark that item `no-change`. Rewording settled text forces `update`,
     re-emits the whole item and asks a reader to re-review something this phase
@@ -180,8 +207,9 @@ Never:
   chat;
 - change a path outside the contract allowlist;
 - add a dependency, change a lockfile or alter build/configuration unless the
-  exact files and changes are part of the approved target architecture,
-  allowlist and rollback;
+  exact files and changes are part of the target architecture, allowlist and
+  rollback. When they are, applying them and running the contract's
+  `installCommand` is the work, not a boundary to ask about;
 - create branches, stashes, remotes, pull requests or external writes;
 - commit when checkpoint mode is disabled, validation is not green, the
   branch differs, a candidate path is denylisted/outside the allowlist, or a
@@ -271,12 +299,19 @@ failed response when that artifact cannot be produced:
    skill's own wording caused is never executor noise.
 3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
+4. Write `<run-artifact-directory>\skill-run-observations-flow-migrate.json`. The
+   filename carries the skill because phases of one flow share a run directory,
+   and a bare `skill-run-observations.json` means the second skill to finish
+   silently overwrites the first one's evidence.
+   Copy the shape from `examples\handoff\` rather than writing it from this
+   description: an entry needs `id`, `category`, `observation`, `effect`,
+   `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
+   `primaryOutcome.status` is `completed`, `failed` or `blocked` for this skill. An empty
    `observations` list is a claim that every check in step 1 was evaluated and
    none fired; write it only when that is true.
 5. Validate it with
    `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
-   "<skill-run-observations.json>"`.
+   "<skill-run-observations-flow-migrate.json>"`.
 6. Report a capture or validation failure separately without changing the
    primary migration result.
 

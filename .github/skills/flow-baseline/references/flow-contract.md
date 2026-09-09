@@ -86,10 +86,16 @@ Populate:
 - `renderedSurfaceInventory` with one entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded` and cited;
-- `targetArchitecture` with the mount or embedding mechanism, the ownership
-  boundary, the typed adapter
+- `targetArchitecture` with the ownership boundary, the typed adapter
   (`inputs`, `commands`, `events`, `nonSuccessOutcome`, `forbiddenAccess`),
-  lifecycle and styling rules and `dependencyChanges`;
+  lifecycle and styling rules, and `dependencyChanges`. The mount mechanism,
+  compilation strategy, change-detection strategy, framework version and
+  package set are transcribed from `docs\project-constants.md`, not decided
+  here. When `dependencyChanges.required` is true it carries `packages` as
+  exact `name@version` strings and `paths` as repository-relative paths that
+  `scope.allowedWritePaths` covers, and `validationPlan.installCommand` says
+  how they are applied; the validator rejects a contract that requires a change
+  to a file its own allowlist forbids;
 - `scenarios` as Given/When/Then observable outcomes with evidence pointers;
 - `characterizationRequired` for each unproven hypothesis, with the behavior it
   blocks;
@@ -219,19 +225,16 @@ Their content and validation do not change; only their position in the run does.
 
 Then ask which continuation the user wants, and perform only that one:
 
-1. Open a fresh interactive chat now, with the same working directory and
-   `--add-dir` arguments this session uses:
+1. A fresh chat in this same session. Tell the user to run `/new`, then show
+   `<invocation>` for them to paste into it.
 
-   ```powershell
-   wt.exe -w 0 nt -d "<working-directory>" copilot.cmd -i "<invocation>"
-   ```
-
-   The `.cmd` is required. npm installs the CLI as `copilot.cmd` and
-   `copilot.ps1` with no `copilot.exe`, and `wt.exe nt` starts its command
-   through `CreateProcess`, which does not apply `PATHEXT`. A bare `copilot`
-   therefore fails with `0x80070002`, "the system cannot find the file
-   specified", which names the executable and not the artifact paths in the
-   invocation.
+   `/new` is the CLI's own command for starting a chat, and a skill cannot type
+   it any more than it can enter plan mode; the route is an instruction, not a
+   launch this skill performs. Do not open a second terminal window for it.
+   `wt.exe nt` starts its command through `CreateProcess`, which does not apply
+   `PATHEXT`, and npm installs the CLI as `copilot.cmd` with no `copilot.exe`,
+   so that route fails with `0x80070002` naming the executable while looking
+   like a missing artifact path.
 
 2. Show `<invocation>` in this chat for the user to paste into a chat they open
    themselves.

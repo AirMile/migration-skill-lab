@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.10.0
+targetVersion: 0.11.0
 status: experimental
 date: 2026-09-08
 ---
 
-# `flow-migrate` v0.10.0 acceptance criteria
+# `flow-migrate` v0.11.0 acceptance criteria
 
 ## Hard gates
 
@@ -94,4 +94,17 @@ The source is acceptable when:
     `BLOCKED` rather than a decision taken in this phase.
 29. coverage uses the safe measurement the contract's `testGaps` names, and a
     gap that stays unmeasurable is recorded as a limitation rather than left
-    silent.
+    silent;
+30. a required dependency change is applied exactly as the contract states it,
+    at the pinned versions in `packages` and within `paths`, and a version is
+    never chosen during this phase;
+31. `validationPlan.installCommand` runs after any manifest or configuration
+    change and before the test, typecheck and build commands, and is recorded
+    in `validation` like any other command;
+32. an item stays action `create` while `previousApplication.status` is
+    `not-applied`, because `no-change` and `update` both require an
+    `externalId`;
+33. `migration-result.json` and the work-item handoff are validated in the same
+    invocation as the Flow Contract, never alone;
+34. the observation sidecar is named `skill-run-observations-flow-migrate.json`
+    so it cannot overwrite the baseline's in a shared run directory.

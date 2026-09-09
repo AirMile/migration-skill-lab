@@ -186,6 +186,34 @@ const validateArtifactRules = (value, errors) => {
           "$.baselineReport is not used from schemaVersion 6; the contract is the only durable baseline artifact.",
         );
       }
+      const dependencyChanges = value.targetArchitecture?.dependencyChanges;
+      if (dependencyChanges?.required) {
+        if (!dependencyChanges.packages?.length) {
+          errors.push(
+            "$.targetArchitecture.dependencyChanges.packages is required when a dependency change is required; a prose note does not tell flow-migrate what to install.",
+          );
+        }
+        if (!dependencyChanges.paths?.length) {
+          errors.push(
+            "$.targetArchitecture.dependencyChanges.paths is required when a dependency change is required.",
+          );
+        }
+        if (!value.validationPlan.installCommand) {
+          errors.push(
+            "$.validationPlan.installCommand is required when a dependency change is required; without it flow-migrate edits a manifest and then typechecks against packages it never installed.",
+          );
+        }
+        // A contract that requires a change to a file its own allowlist
+        // forbids has asked for work it made impossible.
+        for (const dependencyPath of dependencyChanges.paths ?? []) {
+          if (!value.scope.allowedWritePaths.some(allowedPath =>
+            pathCovers(allowedPath, dependencyPath))) {
+            errors.push(
+              `$.targetArchitecture.dependencyChanges.paths entry ${dependencyPath} is outside $.scope.allowedWritePaths. Record it repository-relative, the way $.scope.allowedWritePaths does, and put it in that allowlist.`,
+            );
+          }
+        }
+      }
       if (value.validationPlan.testCommands.length === 0 ||
         !value.validationPlan.typecheckCommand ||
         !value.validationPlan.buildCommand) {
@@ -1109,6 +1137,10 @@ const validateArtifactLinks = artifacts => {
     }
 
     const automatedCommands = new Set(expectedValidationCommands);
+    // Permitted, never required: only a slice that changes dependencies runs it.
+    if (contract.value.validationPlan.installCommand) {
+      automatedCommands.add(contract.value.validationPlan.installCommand);
+    }
     const unownedMigrationCommands = [...migrationCommands].filter(
       command =>
         !automatedCommands.has(command) &&
@@ -2652,6 +2684,55 @@ const runSelfTest = async () => {
     },
     "$.scope.excludedPaths is not used from schemaVersion 6",
     "a schemaVersion 6 contract restating its exclusions as a path list",
+  );
+
+  const withDependencyChanges = contract => {
+    contract.scope.allowedWritePaths = [
+      ...contract.scope.allowedWritePaths,
+      "package.json",
+      "tsconfig.json",
+    ];
+    contract.validationPlan.installCommand = "npm install";
+    contract.targetArchitecture.dependencyChanges = {
+      required: true,
+      packages: ["@angular/core@19.2.25"],
+      paths: ["package.json", "tsconfig.json"],
+    };
+  };
+
+  const cleanDependencyErrors = [];
+  validateArtifactRules(contractV6(withDependencyChanges), cleanDependencyErrors);
+  if (cleanDependencyErrors.length > 0) {
+    throw new Error(
+      `Handoff validator self-test rejected a valid dependency-changing contract: ${cleanDependencyErrors.join(", ")}`,
+    );
+  }
+
+  expectV6Rejection(
+    contract => {
+      withDependencyChanges(contract);
+      delete contract.targetArchitecture.dependencyChanges.packages;
+    },
+    "$.targetArchitecture.dependencyChanges.packages is required",
+    "a contract requiring dependency changes without naming the packages",
+  );
+
+  expectV6Rejection(
+    contract => {
+      withDependencyChanges(contract);
+      delete contract.validationPlan.installCommand;
+    },
+    "$.validationPlan.installCommand is required",
+    "a contract requiring dependency changes without an install command",
+  );
+
+  expectV6Rejection(
+    contract => {
+      withDependencyChanges(contract);
+      contract.targetArchitecture.dependencyChanges.paths.push("vite.config.ts");
+    },
+    "vite.config.ts is outside $.scope.allowedWritePaths",
+    "a contract requiring a dependency change to a path its allowlist forbids",
   );
 
   expectV6Rejection(

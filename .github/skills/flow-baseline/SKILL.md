@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.16.0`.
+Skill version: `0.17.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -32,20 +32,6 @@ Confirm before deep analysis:
 - one human-selected flow and its user-visible goal;
 - migration-skill-lab root containing the validator and schemas;
 - product repository root;
-- any hard constraint the user already knows, such as a component that must
-  not be touched. The boundary itself is not an input: step 4 puts candidate
-  boundaries to the user once the survey can show what each one costs;
-- whether existing coverage evidence is available. Read the product's CI
-  configuration before asking, and name what you found: a pipeline that runs a
-  coverage script, the artifact it keeps and any analysis service it uploads to
-  are repository facts, so ask whether the user can retrieve those figures
-  rather than whether coverage exists at all. Never offer the product's own
-  coverage script: `test:ci` writes a `coverage\` tree and `junit.xml` into the
-  product repository, and neither is gitignored, so the run would dirty the
-  worktree it is required to leave untouched. Either record the gap, or offer
-  one command you have constructed to write outside the product root, naming
-  that location. A gap that CI already measures is recorded as not retrieved
-  for this run, never as a measurement that does not exist.
 - the most recent validated work-item handoff for this `flowId`, when one
   exists; it supplies the Epic, Feature and User Story identity, parent
   relations and field text, so ask for those only when no such snapshot exists;
@@ -59,11 +45,29 @@ Confirm before deep analysis:
   without those two, `confirm-after-pass` beside a disabled mode reads like a
   standing authorization, and offering a mode whose inputs do not exist yet
   invites a placeholder that reads like a real value.
-- the manual verification scenarios, their environment, and the rollback.
-  Verification is manual: do not propose browser automation, a runner, or an
-  owner to assign it to. The environment is required, so propose the one the
-  product's own scripts and configuration point at and ask the user to correct
-  or name it, rather than asking where a tester works from nothing.
+- the manual verification scenarios and the rollback. Verification is manual:
+  do not propose browser automation, a runner, or an owner to assign it to.
+  The environment is not an input; it is a project constant, read below.
+
+Read `<migration-skill-lab-root>\docs\project-constants.md` before the survey. It
+carries the facts that do not change per flow, and every one of them was once a
+question a run asked or an open question that blocked a later phase: the Angular
+version and why that version, the exact packages, how Angular is compiled and
+mounted, the change-detection strategy, the install command, where tests live,
+how coverage is measured, and the environment a person verifies in. State in one
+line that you read it. Never ask the user for anything on that page, and never
+put one of its answers in `openQuestions`.
+
+The file is the reason a contract can be complete. Without it the mount
+mechanism and the dependency set are open questions, `flow-migrate` reports
+`BLOCKED` on them, and the pipeline never reaches product code. If the file is
+absent, say so and record that single gap as the open question; do not
+reconstruct its content per run.
+
+Coverage is on that page too, so do not ask about it. CI measures it; a run
+records per-flow figures as not retrieved rather than as unavailable, and never
+runs the product's own coverage script, which writes an ungitignored
+`coverage\` tree and `junit.xml` into the worktree this run must leave untouched.
 
 Derive the test, typecheck and build commands from the product's own
 `package.json` rather than asking for them, and verify each one terminates. A
@@ -80,8 +84,9 @@ exists or the flow maps to more than one plausible id.
 
 These are the questions this run does not ask, because it has already answered
 them: where to write either artifact, which run directory to use, what the
-`flowId` is, which test, typecheck and build commands to run, and which
-checkpoint mode to record. State each derived value in one line and continue.
+`flowId` is, which test, typecheck and build commands to run, which checkpoint
+mode to record, anything on the project-constants page, and whether some
+component is off limits, which step 4 asks against a concrete allowlist instead. State each derived value in one line and continue.
 A question whose answer is in the product repository, in this skill or in the
 run directory pattern costs the user a turn to tell you something you knew, and
 it is the failure this skill is asked about most.
@@ -131,10 +136,12 @@ the reader's.
    choose. Scope is not an input to this run: the evidence that decides where to
    cut only exists once step 3 is done, so asking for it up front makes the
    human decide blind and forces this skill to reopen the question halfway.
-   Give each candidate its `migrate` set, its `retain-react` neighbours, how
-   many external importers its write allowlist would touch, the conditional
-   branches it takes on, and what existing test evidence covers it. Judge each
-   one against four criteria and say plainly where it fails:
+   Give each candidate its `migrate` set, its `retain-react` neighbours, the
+   external importer count for every component its write allowlist would touch,
+   the conditional branches it takes on, and what existing test evidence covers
+   it. Cite the counts as numbers, not as "widely used": the number is what
+   separates two candidates, and step 3 has already searched for it. Judge each
+   one against four criteria, in writing, and say plainly where it fails:
    - one owner: every migrated surface belongs to this flow rather than to
      several object types;
    - no shared infrastructure in the write allowlist: a component with external
@@ -143,10 +150,20 @@ the reader's.
      compare visual parity against;
    - bounded branches: count capability gates and mode branches, because each
      one doubles the surface a later verification has to cover.
+   Answer every one of the four for every candidate. A candidate presented
+   without its measurable neighbour named, or without the test evidence that
+   covers it, is not a candidate the user can weigh.
+   Show the chosen candidate's write allowlist with the question, and ask in the
+   same breath whether anything in it is off limits. That is the only form in
+   which the question is answerable: asked before the survey it means "is
+   anything anywhere sacred", which has never once produced an entry in a
+   contract. Honour a constraint the user gives and never widen a boundary they
+   ruled out.
+   Write the question as plain text. Escaped newline sequences reach the user
+   literally and make a three-candidate comparison unreadable.
    This is the one question this skill may ask that it could partly answer
    itself. It is a real trade-off, and it arrives with the evidence rather than
-   before it. Honour any hard constraint the user already stated, and never
-   widen a boundary they ruled out.
+   before it.
    Record the outcome as a `decisions` entry: `topic` the slice boundary,
    `decision` the chosen candidate, `rationale` why, and `followUp` naming what
    a later slice picks up. The rejected candidates then live in the record
@@ -166,7 +183,14 @@ the reader's.
    `adapter.inputs`, `adapter.commands`, `adapter.events`,
    `adapter.forbiddenAccess`, `lifecycle` and `styling` are each an array of
    strings; `adapter.nonSuccessOutcome` is one string; `dependencyChanges` is an
-   object with a boolean `required` and an optional `paths` array and `note`.
+   object with a boolean `required`, a `packages` array of exact
+   `name@version` strings, a `paths` array of repository-relative paths, and an
+   optional `note`.
+   The mount mechanism, the compilation strategy, the change-detection
+   strategy, the framework version and the package set come from the
+   project-constants page, not from this run's judgement. Transcribe them and
+   cite the page. What this run decides is the boundary, the adapter, the
+   lifecycle and the styling for this slice.
    Preserve current boundaries where they are sound; do not mirror React
    mechanically or redesign the whole app.
    Name where the new Angular code lands, and put that path in
@@ -180,15 +204,23 @@ the reader's.
    second time.
    Read the product's dependency manifest before filling in
    `dependencyChanges`, and cite it. When the target framework is absent there,
-   `required` is `true` and the manifest, lockfile, build-config and TypeScript
-   paths belong in `paths`; a first slice cannot mount a framework the product
-   does not have. Never write `required: false` on the assumption that earlier
-   slices already added it: that is a claim about the codebase, and an unchecked
-   claim here hides the largest decision the migration needs.
+   `required` is `true`, `packages` carries the exact `name@version` set from
+   the project constants, and every file that set changes belongs in `paths`;
+   a first slice cannot mount a framework the product does not have. Never write
+   `required: false` on the assumption that earlier slices already added it:
+   that is a claim about the codebase, and an unchecked claim here hides the
+   largest decision the migration needs.
+   Write `paths` repository-relative, the way `scope.allowedWritePaths` is
+   written, and put every one of them in that allowlist. The validator rejects a
+   contract that requires a change to a file its own allowlist forbids, because
+   that contract asks for work it has already made impossible. Record
+   `validationPlan.installCommand` from the constants page in the same breath:
+   without it `flow-migrate` edits a manifest and then typechecks against
+   packages it never installed.
    The mount or embedding mechanism is part of `targetArchitecture`, not a
-   detail under it. While it is unresolved the architecture is unresolved, so it
-   belongs in `openQuestions` and `flow-migrate` will report `BLOCKED` on it.
-   Do not describe it as something a later phase can settle in passing.
+   detail under it, and it is settled on the project-constants page. It is an
+   open question only when that page is missing, and then the missing page is
+   the question. Do not reopen a decision that page already records.
    Capture observable visual parity (including layout insets, spacing, input
    containment and a reference screenshot when available). Mark every
    unresolved choice as an open question.
@@ -219,8 +251,8 @@ the reader's.
    entry with the same id, and no other id may appear there; the validator
    enforces both directions.
    Record a reasoned-but-unproven risk as a `characterizationRequired` entry
-   with its `hypothesis`, the `proveBefore` behavior it blocks and its
-   `evidence`. A hypothesis that took cross-file reasoning to reach is not
+   with its `id`, its `hypothesis`, the `proveBefore` behavior it blocks and its
+   `evidence`, which is an array of citations even when there is one. A hypothesis that took cross-file reasoning to reach is not
    something a later skill re-derives by reading one file, so it belongs in the
    contract rather than in a sentence buried among test gaps.
    Record a resolved conflict between sources as a `decisions` entry with its
@@ -237,12 +269,21 @@ the reader's.
    with `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
    "<flow-contract.json>"`. Write no analysis report, and no other file in
    the product repository or the notes vault.
+   Copy each block's shape from `examples\handoff\` before writing it. Every field
+   this skill names in prose has an exact shape there, and the last two runs
+   each spent a repair pass discovering one of them from a validator error.
 10. The contract is final when you write it. schemaVersion 6 has no `status`,
    no `approval` and no `targetArchitecture.status`, and the validator rejects
    them; there is no draft state and no approval gate to wait for. What bounds
    the next phase is `scope.allowedWritePaths`, so that list carries the weight
    the gate used to: every path in it has been checked for consumers outside
    this flow, and nothing is in it that the slice does not need.
+   The allowlist covers three kinds of write, and a contract missing any one of
+   them describes work it has forbidden: the directory the new Angular code
+   lands in, the test directory the `characterizationRequired` entries need
+   (the project constants name where tests live), and every path
+   `targetArchitecture.dependencyChanges.paths` names. Check the list against
+   all three before writing the contract; the validator enforces the third.
    Before recording `scope.allowedWritePaths`, check each existing file for
    consumers outside this flow. A component that other forms import is shared
    infrastructure, and putting it in the allowlist authorizes changes whose
@@ -321,6 +362,8 @@ the reader's.
     aloud.
 15. Validate the Flow Contract and work-item snapshot together, passing the
    superseded baseline handoff as well when this run declares `supersedes`.
+   A work-item handoff never validates alone: it needs its primary artifact in
+   the same invocation, so pass the Flow Contract with it every time.
    Run
    `node "<migration-skill-lab-root>\scripts\render-work-item-handoff.mjs" --inline "<snapshot.json>"`,
    appending `--since "<previous-handoff.json>"` when a predecessor exists. The
@@ -373,10 +416,14 @@ the reader's.
    run directory for later. All three routes carry the same invocation,
    built from the contract path, the work-item handoff path,
    the migration-skill-lab root, the product root and the run directory; see
-   `references/flow-contract.md`. Launch a chat only on that explicit choice,
-   and report a refused or failed launch instead of describing the migration as
-   started. Never continue the migration in this chat and never delegate it to
-   a background agent, which cannot ask the user the questions `flow-migrate`
+   `references/flow-contract.md`.
+   A fresh chat is `/new` in this same CLI, followed by the invocation. A skill
+   cannot type a slash command on the user's behalf any more than it can enter
+   plan mode, so the first route is "run `/new`, then paste this" and not a
+   launch that promises what it cannot perform. Do not open a second terminal
+   window for it.
+   Never continue the migration in this chat and never delegate it to a
+   background agent, which cannot ask the user the questions `flow-migrate`
    needs answered.
 
 ## Safety boundary
@@ -430,7 +477,7 @@ boundary, an accepted shared-path risk, a resolved conflict between sources.
 `flow-migrate` reads none of it; it is the record that explains the contract to
 a later reader, so what does not explain this contract does not belong there.
 Why an earlier run was discarded is one of those: that is evidence about a
-skill, and it goes in `skill-run-observations.json`.
+skill, and it goes in this run's observation sidecar.
 Confirmed current behavior lives in the product source, so a scenario names the
 behavior and points at the file and line that proves it. Restating the
 mechanism in the contract creates a copy that is wrong the moment the source
@@ -503,12 +550,19 @@ final `BLOCKED` or failed response when those artifacts cannot be produced:
    skill's own wording caused is never executor noise.
 3. Deduplicate semantically equivalent signals from this run and preserve their
    occurrence count. Do not cap the number of material observations.
-4. Write `<run-artifact-directory>\skill-run-observations.json`. An empty
+4. Write `<run-artifact-directory>\skill-run-observations-flow-baseline.json`. The
+   filename carries the skill because phases of one flow share a run directory,
+   and a bare `skill-run-observations.json` means the second skill to finish
+   silently overwrites the first one's evidence.
+   Copy the shape from `examples\handoff\` rather than writing it from this
+   description: an entry needs `id`, `category`, `observation`, `effect`,
+   `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
+   `primaryOutcome.status` is `draft`, `failed` or `blocked` for this skill and never `completed`. An empty
    `observations` list is a claim that every check in step 1 was evaluated and
    none fired; write it only when that is true.
 5. Validate it with
    `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
-   "<skill-run-observations.json>"`.
+   "<skill-run-observations-flow-baseline.json>"`.
 6. Report a capture or validation failure separately without changing the
    primary Flow Contract status.
 
