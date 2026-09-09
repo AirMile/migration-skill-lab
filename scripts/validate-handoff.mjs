@@ -203,6 +203,15 @@ const validateArtifactRules = (value, errors) => {
           );
         }
       }
+      // Verification is a person walking through the flow. Nobody is assigned
+      // to it, so the scenario and the place to run it are the whole
+      // instruction; an environment left blank makes the scenario unrunnable.
+      if (value.validationPlan.manualValidation?.required &&
+        !value.validationPlan.manualValidation.environment) {
+        errors.push(
+          "$.validationPlan.manualValidation requires an environment when it is required; a scenario with nowhere to run it cannot be walked through.",
+        );
+      }
     } else {
       for (const field of ["status", "approval"]) {
         if (!Object.hasOwn(value, field)) {
@@ -2619,6 +2628,14 @@ const runSelfTest = async () => {
     },
     "$.approval is required below schemaVersion 6",
     "a schemaVersion 5 contract without an approval block",
+  );
+
+  expectV6Rejection(
+    contract => {
+      delete contract.validationPlan.manualValidation.environment;
+    },
+    "$.validationPlan.manualValidation requires an environment",
+    "a schemaVersion 6 contract requiring manual validation with no environment",
   );
 
   expectV6Rejection(

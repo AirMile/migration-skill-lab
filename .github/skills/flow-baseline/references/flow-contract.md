@@ -113,8 +113,9 @@ Populate:
   `pushPolicy` is `never` whenever the mode is `disabled`;
 - `validationPlan` with targeted tests that terminate, typecheck, build, the
   manual verification scenarios and the required host validation. Verification
-  is manual, so record what a person walks through rather than a runner to
-  automate it;
+  is manual, so record what a person walks through and the environment they
+  walk it through in, rather than a runner to automate it; nobody is assigned
+  to it, so those two are the whole instruction;
 - `rollback` with concrete scope-preserving instructions: which files return to
   which state, and what a revert must not disturb. Restating that
   `migration-result.json` records the checkpoint SHAs tells `flow-migrate`

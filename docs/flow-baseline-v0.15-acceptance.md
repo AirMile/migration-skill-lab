@@ -181,4 +181,6 @@ The source is acceptable when:
     earlier run was discarded goes to `skill-run-observations.json`;
 58. `rollback` names which files return to which state and what a revert must
     not disturb, instead of restating that `migration-result.json` records the
-    checkpoint SHAs.
+    checkpoint SHAs;
+59. required manual validation names both the scenario and the environment it
+    is walked through in, because no owner is assigned to work it out.
