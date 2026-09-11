@@ -18,6 +18,8 @@ Options:
   --flow-id <id>         the next baseline run directory and runId, and this
                          flow's earlier runs, work-item handoffs and saved
                          continuation prompts
+  --map                  the latest earlier migration-map.json and the next
+                         map run directory and runId; needs --lab-root
   --run-dir <dir>        the files and saved prompts in one run directory
   --commands             classify the product's package.json scripts and
                          suggest terminating test, typecheck and build commands
@@ -238,8 +240,8 @@ const exists = async filePath => {
 
 const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const readFlow = async (labRoot, flowId) => {
-  const runsDirectory = path.resolve(labRoot, "runs");
+// The run directories named <date>-<stem>-<N>, oldest first, and the next N.
+const listNumberedRuns = async (runsDirectory, stem) => {
   let directories = [];
   try {
     directories = (await readdir(runsDirectory, { withFileTypes: true }))
@@ -247,13 +249,36 @@ const readFlow = async (labRoot, flowId) => {
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
-
-  const pattern = new RegExp(`^\\d{4}-\\d{2}-\\d{2}-${escapeRegex(flowId)}-baseline-(\\d+)$`);
+  const pattern = new RegExp(`^\\d{4}-\\d{2}-\\d{2}-${escapeRegex(stem)}-(\\d+)$`);
   const runs = directories
     .filter(entry => pattern.test(entry.name))
     .map(entry => ({ name: entry.name, number: Number(pattern.exec(entry.name)[1]) }))
     .sort((left, right) => left.number - right.number);
-  const next = (runs.at(-1)?.number ?? 0) + 1;
+  return { runs, next: (runs.at(-1)?.number ?? 0) + 1 };
+};
+
+const readMap = async labRoot => {
+  const runsDirectory = path.resolve(labRoot, "runs");
+  const { runs, next } = await listNumberedRuns(runsDirectory, "migration-map");
+  let previousMap = null;
+  for (const run of [...runs].reverse()) {
+    const candidate = path.join(runsDirectory, run.name, "migration-map.json");
+    if (await exists(candidate)) {
+      previousMap = candidate;
+      break;
+    }
+  }
+  return {
+    runs: runs.map(run => path.join(runsDirectory, run.name)),
+    previousMap,
+    nextRunDirectory: path.join(runsDirectory, `${localDate()}-migration-map-${next}`),
+    nextRunId: `migration-map-${next}`,
+  };
+};
+
+const readFlow = async (labRoot, flowId) => {
+  const runsDirectory = path.resolve(labRoot, "runs");
+  const { runs, next } = await listNumberedRuns(runsDirectory, `${flowId}-baseline`);
 
   const handoffs = [];
   const promptFiles = [];
@@ -313,8 +338,10 @@ const defaultStatusPath = productRoot =>
 
 const collectContext = async options => {
   if (!options["product-root"]) throw new Error(`--product-root is required.\n\n${usage}`);
-  if (options["flow-id"] && !options["lab-root"]) {
-    throw new Error("--flow-id needs --lab-root, where the runs directory lives.");
+  for (const name of ["flow-id", "map"]) {
+    if (options[name] && !options["lab-root"]) {
+      throw new Error(`--${name} needs --lab-root, where the runs directory lives.`);
+    }
   }
 
   const state = readProductState(options["product-root"]);
@@ -322,6 +349,7 @@ const collectContext = async options => {
   const context = { product };
 
   if (options["flow-id"]) context.flow = await readFlow(options["lab-root"], options["flow-id"]);
+  if (options.map) context.map = await readMap(options["lab-root"]);
   if (options["run-dir"]) context.runDirectory = await readRunDirectory(options["run-dir"]);
   if (options.commands) context.commands = await readCommands(state.root);
   const allowed = options.contract ? await readAllowlist(options.contract) : null;
@@ -365,7 +393,7 @@ const parseArguments = argumentsList => {
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
     const name = argument.slice(2);
-    if (["--self-test", "--help", "--commands"].includes(argument)) {
+    if (["--self-test", "--help", "--commands", "--map"].includes(argument)) {
       options[name] = true;
       continue;
     }
@@ -449,6 +477,16 @@ const runSelfTest = async () => {
     assert(context.flow.handoffs.length === 1 && context.flow.promptFiles.length === 2,
       "the flow's earlier handoff or a saved prompt, attempt-numbered ones included, was not found");
     assert(context.runDirectory.promptFiles.length === 2, "the run directory's prompts were not listed");
+
+    // A map run that stopped before writing its map does not hide the one before it.
+    const firstMapRun = path.join(lab, "runs", "2026-01-01-migration-map-1");
+    await mkdir(firstMapRun);
+    await writeFile(path.join(firstMapRun, "migration-map.json"), "{}\n");
+    await mkdir(path.join(lab, "runs", "2026-01-02-migration-map-2"));
+    const mapContext = await collectContext({ "product-root": product, "lab-root": lab, map: true });
+    assert(mapContext.map.previousMap === path.join(firstMapRun, "migration-map.json") &&
+      mapContext.map.nextRunId === "migration-map-3",
+      `the map context is ${JSON.stringify(mapContext.map)}`);
     const { scripts, suggested } = context.commands;
     assert(!scripts.test.terminates && !scripts.dev.terminates && scripts.build.terminates,
       "watch and server scripts are not told apart from terminating ones");

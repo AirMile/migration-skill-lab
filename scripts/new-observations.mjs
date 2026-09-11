@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,7 +30,8 @@ every file they write. The sidecar takes N from a primary artifact named
 verification-result-<N>.json or debug-result-<N>.json, or from --attempt.
 
 Statuses: flow-baseline draft|failed|blocked; flow-migrate completed|failed|blocked;
-flow-verify PASS|FAIL|BLOCKED; flow-debug repaired|blocked|parked.
+flow-verify PASS|FAIL|BLOCKED; flow-debug repaired|blocked|parked;
+flow-plan mapped|blocked|failed.
 `;
 
 const statusesBySkill = {
@@ -38,6 +39,7 @@ const statusesBySkill = {
   "flow-migrate": ["completed", "failed", "blocked"],
   "flow-verify": ["PASS", "FAIL", "BLOCKED"],
   "flow-debug": ["repaired", "blocked", "parked"],
+  "flow-plan": ["mapped", "blocked", "failed"],
 };
 const skillAliases = {
   "migrate-flow": "flow-migrate",
@@ -83,7 +85,8 @@ const createSidecar = async options => {
       skill: skillAliases[primary.skill] ?? primary.skill,
       skillVersion: primary.skillVersion,
       runId: primary.runId,
-      flowId: primary.flowId,
+      // A migration map spans every flow; its runs are named migration-map-<N>.
+      flowId: primary.artifactType === "migration-map" ? "migration-map" : primary.flowId,
     };
     pointer = {
       artifactPath: path.relative(process.cwd(), absolute) || path.basename(absolute),
@@ -264,6 +267,26 @@ const runSelfTest = async () => {
     });
     assert(path.basename(secondBlockedPath) === "skill-run-observations-flow-debug-2.json",
       "--attempt does not carry the attempt suffix");
+
+    const mapDirectory = path.join(temporary, "map");
+    await mkdir(mapDirectory);
+    const mapPath = path.join(mapDirectory, "migration-map.json");
+    await copyFile(
+      path.join(rootDirectory, "examples", "migration-map", "demo", "migration-map.json"),
+      mapPath,
+    );
+    const mapSidecarPath = await createSidecar({
+      primary: mapPath,
+      status: "mapped",
+      summary: "The next slice is chosen.",
+    });
+    const mapSidecar = JSON.parse(await readFile(mapSidecarPath, "utf8"));
+    assert(path.basename(mapSidecarPath) === "skill-run-observations-flow-plan.json" &&
+      mapSidecar.flowId === "migration-map",
+      "a migration map's sidecar is not named for flow-plan or lacks the migration-map flowId");
+    const mapValidation = spawnSync(process.execPath, [validatorPath, mapSidecarPath], { encoding: "utf8" });
+    assert(mapValidation.status === 0,
+      `a migration map's sidecar does not validate:\n${mapValidation.stderr || mapValidation.stdout}`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

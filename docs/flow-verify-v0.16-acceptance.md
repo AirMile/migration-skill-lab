@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.15.0
+targetVersion: 0.16.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-verify` v0.15.0 acceptance criteria
+# `flow-verify` v0.16.0 acceptance criteria
 
 ## Hard gates
 
@@ -137,3 +137,6 @@ The source is acceptable when:
     on attempt 1 and `-prompt-<N>.md` on attempt N, is treated as this run's
     continuation; an earlier attempt's prompt names no debug-result and is
     never resumed from.
+46. a `PASS` continues into a fresh `/flow-plan` that carries the
+    verification result, through the same three routes, instead of waiting
+    for the user to name a next flow.

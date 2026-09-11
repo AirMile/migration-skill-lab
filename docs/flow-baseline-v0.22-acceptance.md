@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.21.0
+targetVersion: 0.22.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-baseline` v0.21.0 acceptance criteria
+# `flow-baseline` v0.22.0 acceptance criteria
 
 ## Hard gates
 
@@ -252,3 +252,12 @@ The source is acceptable when:
     the run directory;
 83. every `characterizationRequired` entry names the scenarios it blocks as a
     `proveBefore` array of declared scenario ids.
+84. an invocation that names a `migration-map.json` takes the `flowId` from it
+    and reads only that slice's entry and the prerequisites it requires; the
+    map's cut is one of the boundary candidates, never the boundary itself,
+    and choosing another is recorded in `decisions`;
+85. a prerequisite the map marks `built` is reused unchanged, and one this
+    slice builds lands in the `angular\` folder beside its React original,
+    which the allowlist then contains;
+86. importer searches leave tests and stories out, as `migration-map.mjs`
+    does, so the contract and the map count the same way.

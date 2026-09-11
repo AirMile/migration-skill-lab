@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://internal.invalid/migration-skill-lab/migration-map.schema.json",
+  "title": "Migration Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "skill",
+    "skillVersion",
+    "runId",
+    "repository",
+    "metrics",
+    "features",
+    "slices",
+    "prerequisites",
+    "recommendation",
+    "decisions",
+    "openQuestions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "migration-map" },
+    "skill": { "const": "flow-plan" },
+    "skillVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "revision"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      }
+    },
+    "supersedes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "runId"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "paths"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "externalId": {
+            "type": "string",
+            "pattern": "^[0-9]+$"
+          }
+        }
+      }
+    },
+    "slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "flowId",
+          "featureId",
+          "title",
+          "paths",
+          "dependsOn",
+          "requires",
+          "criteria",
+          "status"
+        ],
+        "properties": {
+          "flowId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "featureId": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "title": { "type": "string", "minLength": 1 },
+          "paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "dependsOn": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "requires": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          },
+          "criteria": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "oneOwner",
+              "noSharedInfrastructure",
+              "measurableNeighbour",
+              "boundedBranches"
+            ],
+            "properties": {
+              "oneOwner": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["verdict", "note"],
+                "properties": {
+                  "verdict": { "enum": ["pass", "fail", "unknown"] },
+                  "note": { "type": "string", "minLength": 1 }
+                }
+              },
+              "noSharedInfrastructure": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["verdict", "note"],
+                "properties": {
+                  "verdict": { "enum": ["pass", "fail", "unknown"] },
+                  "note": { "type": "string", "minLength": 1 }
+                }
+              },
+              "measurableNeighbour": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["verdict", "note"],
+                "properties": {
+                  "verdict": { "enum": ["pass", "fail", "unknown"] },
+                  "note": { "type": "string", "minLength": 1 }
+                }
+              },
+              "boundedBranches": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["verdict", "note"],
+                "properties": {
+                  "verdict": { "enum": ["pass", "fail", "unknown"] },
+                  "note": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["candidate", "in-progress", "landed", "blocked"]
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "externalId": {
+            "type": "string",
+            "pattern": "^[0-9]+$"
+          }
+        }
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "reactSource", "angular", "copies"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["shared-component", "adapter"]
+          },
+          "reactSource": { "type": "string", "minLength": 1 },
+          "angular": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["status"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["none", "built"]
+              },
+              "path": { "type": "string", "minLength": 1 },
+              "builtBy": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              }
+            }
+          },
+          "copies": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "builtBy"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "builtBy": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["options"],
+      "properties": {
+        "options": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["flowId", "reason"],
+            "properties": {
+              "flowId": {
+                "type": "string",
+                "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "chosen": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["topic", "decision", "rationale"],
+        "properties": {
+          "topic": { "type": "string", "minLength": 1 },
+          "decision": { "type": "string", "minLength": 1 },
+          "rationale": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -8,8 +8,11 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.21.0, `flow-migrate` v0.16.0 and
-  `flow-verify` v0.15.0 source skills;
+- experimental `flow-plan` v0.1.0 source skill, which keeps the migration map
+  of features, candidate slices and shared prerequisites and proposes the next
+  slice;
+- experimental `flow-baseline` v0.22.0, `flow-migrate` v0.16.0 and
+  `flow-verify` v0.16.0 source skills;
 - experimental `flow-debug` v0.7.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
@@ -26,8 +29,9 @@ This lab contains:
   whole file), `seed-work-item.mjs` (the next work-item snapshot from the
   previous one, and `--finalize` for progress and actions),
   `continuation.mjs` (the next phase's invocation, refused when its artifacts
-  are not the set that phase validates) and `new-observations.mjs`
-  (the observation sidecar);
+  are not the set that phase validates), `new-observations.mjs`
+  (the observation sidecar) and `migration-map.mjs` (a first or seeded
+  migration map, and the product's value-import graph measured against it);
 - `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`, the
   steps the flow skills share and read only when they reach them;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
@@ -37,8 +41,8 @@ This lab contains:
 - a versioned JSON backlog;
 - `docs\project-constants.md`, the settled per-project decisions every
   skill reads instead of asking: framework version, package set, compilation
-  and mount mechanism, install command, test location, coverage and the manual
-  verification environment;
+  and mount mechanism, where an Angular counterpart lives, install command,
+  test location, coverage and the manual verification environment;
 - a dependency-free renderer for a standalone, read-only HTML backlog;
 - an approved report contract for confidential analyses outside the product
   repository.
@@ -144,6 +148,7 @@ that chat.
 
 | Skill | Model | Why |
 |---|---|---|
+| `flow-plan` | Claude Opus 5 | Cuts candidate slices from a component tree and weighs them against each other; every later chain inherits the cut. The counting is a script. |
 | `flow-baseline` | Claude Opus 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
 | `flow-migrate` | Claude Sonnet 5; Opus 5 for a risky slice | Code generation inside a tight allowlist plus test authoring. Use Opus 5 when the slice touches drawlib, history or the host boundary. |
 | `flow-verify` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `flow-migrate` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
@@ -156,6 +161,13 @@ reasoning, and the mechanical steps are already scripts.
 
 ## Migration workflow
 
+0. `flow-plan` is read-only for the product repository. Each run writes a new
+   `migration-map.json`, seeded from the previous one, holding the features,
+   the candidate slices in each with their dependencies, and the shared
+   components and state adapters those slices import with whether an Angular
+   counterpart exists. A slice lands only from a `PASS` verification-result.
+   It offers two or three next slices, and the chosen one continues into a
+   fresh `flow-baseline` chat carrying the map.
 1. `flow-baseline` is read-only for the product repository. It surveys the
    selected flow's rendered surfaces, puts two or three candidate boundaries to
    the user with what each one costs, and then creates one final
@@ -178,7 +190,8 @@ reasoning, and the mechanical steps are already scripts.
    creates scoped local checkpoints and writes `migration-result.json`.
 4. `flow-verify` is read-only for product code. It independently evaluates the
    same contract and writes `verification-result.json` with `PASS`, `FAIL` or
-   `BLOCKED`. After full PASS it may offer one confirmed featurebranch push.
+   `BLOCKED`. After full PASS it may offer one confirmed featurebranch push,
+   and it continues into a fresh `flow-plan` chat for the next slice.
 5. On local repairable FAIL/BLOCKED, `flow-verify` writes a debug handoff and
    asks the user before opening a fresh `flow-debug` chat. It selects one
    `immediate`, `light` or `heavy` attempt at a time, parks after a failed
@@ -189,8 +202,9 @@ reasoning, and the mechanical steps are already scripts.
    `scripts\new-observations.mjs`. An empty observation list proves that
    capture ran without inventing feedback.
 
-Each phase also writes an immutable work-item snapshot and deterministic
-copy/paste content for manual Targetprocess updates. The work tracker is
+Each phase of a slice's chain also writes an immutable work-item snapshot and
+deterministic copy/paste content for manual Targetprocess updates; `flow-plan`
+moves no board item and writes none. The work tracker is
 Targetprocess at `lely.tpondemand.com`; run artifacts created before
 2026-09-08 still name it "TopDesk" and are left unchanged as historical
 evidence. A snapshot covers Epic, Feature, User Story, stakeholder-readable

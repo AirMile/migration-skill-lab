@@ -117,9 +117,9 @@ Every skill version declares:
 ## Current implementation status
 
 `migration-analyze` v0.1.0 remains preserved as a reviewed read-only benchmark
-reference. The source repository also contains experimental `flow-baseline`
-v0.19.0, `flow-migrate` v0.13.0, `flow-verify` v0.10.0, `flow-debug` v0.3.0
-and `migration-skill-audit` v0.1.0, with versioned functional and work-item
+reference. The source repository also contains experimental `flow-plan`
+v0.1.0, `flow-baseline` v0.22.0, `flow-migrate` v0.16.0, `flow-verify` v0.16.0,
+`flow-debug` v0.7.0 and `migration-skill-audit` v0.1.0, with versioned functional and work-item
 handoff schemas, scoped checkpoint preflight, examples and the scripts that
 perform the deterministic steps of a run. The flow skills are installed as
 personal runtime snapshots under `~\.copilot\skills`.
@@ -234,6 +234,15 @@ A static viewer:
 - can be replaced later without changing the canonical JSON.
 
 ## Experimental skill sequence
+
+### 0. `flow-plan`
+
+Read-only for the product repository. It keeps the migration map: features,
+candidate slices with their dependencies, and the shared components and state
+adapters those slices import, measured by a script rather than counted by
+hand. It proposes the next slice for the user to choose and hands it to
+`flow-baseline`; a `PASS` from `flow-verify` comes back to it. It moves no
+board item.
 
 ### 1. `flow-baseline`
 

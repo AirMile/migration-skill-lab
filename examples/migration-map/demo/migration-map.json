@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "migration-map",
+  "skill": "flow-plan",
+  "skillVersion": "0.1.0",
+  "runId": "demo-migration-map-1",
+  "repository": {
+    "root": "C:\\Project\\demo-product",
+    "revision": "2fbe81e8a46ab6bda43fea8735dc3457737601ad"
+  },
+  "metrics": {
+    "path": "examples\\migration-map\\demo\\migration-metrics.json",
+    "sha256": "9003fb380c554b13161ea9e545020d69ea927e894067fd062ceba5347ac7a277"
+  },
+  "features": [
+    {
+      "id": "line-drawer",
+      "title": "Line drawer",
+      "paths": [
+        "src/features/lineDrawer"
+      ],
+      "externalId": "100200"
+    },
+    {
+      "id": "route-list",
+      "title": "Route list",
+      "paths": [
+        "src/features/routeList"
+      ]
+    }
+  ],
+  "slices": [
+    {
+      "flowId": "demo-line-drawer",
+      "featureId": "line-drawer",
+      "title": "Line form fields in the line drawer",
+      "paths": [
+        "src/features/lineDrawer/lineForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "radio-button-group",
+        "line-store"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Every migrated field belongs to the line form."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "RadioButtonGroup was rebuilt locally instead of edited."
+        },
+        "measurableNeighbour": {
+          "verdict": "pass",
+          "note": "The charger form stays React beside it."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One capability gate."
+        }
+      },
+      "status": "landed",
+      "evidence": {
+        "path": "examples\\handoff\\demo-line-drawer\\verification-result.json",
+        "sha256": "7aeaf5b413aca5ddce5c83bf311d6481dfc17b79ff4877741b4f57e2b57e532c"
+      },
+      "externalId": "100201"
+    },
+    {
+      "flowId": "demo-charger-form",
+      "featureId": "line-drawer",
+      "title": "Charger form in the line drawer",
+      "paths": [
+        "src/features/lineDrawer/chargerForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "radio-button-group",
+        "line-store"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Every control belongs to the charger form."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Reuses the Angular RadioButtonGroup once it is built beside its React original."
+        },
+        "measurableNeighbour": {
+          "verdict": "pass",
+          "note": "The line form is a landed Angular sibling; its React parent stays."
+        },
+        "boundedBranches": {
+          "verdict": "unknown",
+          "note": "The charger type branches are not counted yet."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "demo-line-drawer-parent",
+      "featureId": "line-drawer",
+      "title": "Line drawer host once both forms are Angular",
+      "paths": [
+        "src/features/lineDrawer/LineDrawer.tsx"
+      ],
+      "dependsOn": [
+        "demo-line-drawer",
+        "demo-charger-form"
+      ],
+      "requires": [],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "The drawer host owns only its two forms."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "No shared file in its paths."
+        },
+        "measurableNeighbour": {
+          "verdict": "fail",
+          "note": "No React sibling remains once both forms are Angular; compared against the landed forms instead."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "A switch between two forms."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "demo-route-list-item",
+      "featureId": "route-list",
+      "title": "One row of the route list",
+      "paths": [
+        "src/features/routeList/RouteListItem.tsx"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "text"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "One row component."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Text is used through its Angular counterpart."
+        },
+        "measurableNeighbour": {
+          "verdict": "pass",
+          "note": "The list around it stays React."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "No capability gates."
+        }
+      },
+      "status": "candidate"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "radio-button-group",
+      "kind": "shared-component",
+      "reactSource": "src/components/radioButton/RadioButtonGroup.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": [
+        {
+          "path": "src/features/lineDrawer/lineForm/angular/radio-button-group.component.ts",
+          "builtBy": "demo-line-drawer"
+        }
+      ]
+    },
+    {
+      "id": "text",
+      "kind": "shared-component",
+      "reactSource": "src/components/Text.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "line-store",
+      "kind": "adapter",
+      "reactSource": "src/state/LineStore.ts",
+      "angular": {
+        "status": "built",
+        "path": "src/state/angular/line-store.adapter.ts",
+        "builtBy": "demo-line-drawer"
+      },
+      "copies": []
+    }
+  ],
+  "recommendation": {
+    "options": [
+      {
+        "flowId": "demo-charger-form",
+        "reason": "Its sibling has landed, the line-store adapter exists, and it builds the shared RadioButtonGroup that replaces the line form's local copy."
+      },
+      {
+        "flowId": "demo-route-list-item",
+        "reason": "The smallest candidate: one row, no state, only Text still to build."
+      }
+    ],
+    "chosen": "demo-charger-form"
+  },
+  "decisions": [
+    {
+      "topic": "Shared RadioButtonGroup",
+      "decision": "The charger form builds the Angular RadioButtonGroup beside its React original; the line form's local copy is consolidated later.",
+      "rationale": "Two landed or candidate slices use it; consolidating inside the charger form would touch a landed slice."
+    }
+  ],
+  "openQuestions": [
+    "Which Targetprocess Feature holds the route list?"
+  ]
+}

@@ -1,8 +1,8 @@
 ---
 document: project-constants
-version: 0.1.0
+version: 0.2.0
 status: decided
-date: 2026-09-09
+date: 2026-09-11
 ---
 
 # Project constants
@@ -104,6 +104,18 @@ destroys the application on unmount.
 Not Angular Elements: registering custom elements adds a layer of plumbing
 between React and the component for no gain when React already owns the host
 node.
+
+## Angular counterpart location
+
+An Angular file lives in an `angular\` folder beside the React file it
+replaces or mirrors. A slice's own components sit beside the React component
+they mount in, as `lineForm\angular\` does. A shared component or state
+adapter sits beside its React original, such as
+`src\components\radioButton\angular\`, where every later slice that needs it
+finds the one counterpart instead of building its own.
+
+Provisional until the Frontend Chapter chooses the Angular target structure.
+Moving the `angular\` folders there is then a relocation, not a rewrite.
 
 ## Change detection
 

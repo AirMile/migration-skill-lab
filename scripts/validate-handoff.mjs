@@ -16,6 +16,7 @@ const schemaByArtifactType = {
   "debug-result": "debug-result.schema.json",
   "work-item-handoff": "work-item-handoff.schema.json",
   "skill-run-observations": "skill-run-observations.schema.json",
+  "migration-map": "migration-map.schema.json",
 };
 const handoffArtifactTypes = new Set([
   "flow-contract",
@@ -154,6 +155,169 @@ const skillAliases = {
 };
 
 const canonicalSkill = skill => skillAliases[skill] ?? skill;
+
+const normalizeProductPath = value =>
+  value.replaceAll("\\", "/").replace(/^(\.\/)+/, "").replace(/\/+$/, "");
+
+// The map is read by flow-baseline and by the next flow-plan run, so a
+// reference that points nowhere fails here instead of in a later chat.
+const validateMigrationMapRules = (value, errors) => {
+  const productPaths = [
+    ...value.features.flatMap((feature, index) =>
+      feature.paths.map(entry => [`$.features[${index}].paths`, entry])),
+    ...value.slices.flatMap((slice, index) =>
+      slice.paths.map(entry => [`$.slices[${index}].paths`, entry])),
+    ...value.prerequisites.flatMap((prerequisite, index) => [
+      [`$.prerequisites[${index}].reactSource`, prerequisite.reactSource],
+      ...(prerequisite.angular.path ?
+        [[`$.prerequisites[${index}].angular.path`, prerequisite.angular.path]] :
+        []),
+      ...prerequisite.copies.map(copy => [`$.prerequisites[${index}].copies`, copy.path]),
+    ]),
+  ];
+  for (const [location, entry] of productPaths) {
+    if (/^([A-Za-z]:|[\\/])/.test(entry)) {
+      errors.push(`${location} must be relative to the product root: ${entry}.`);
+    }
+  }
+
+  const requireUnique = (location, ids) => {
+    const seen = new Set();
+    for (const id of ids) {
+      if (seen.has(id)) errors.push(`${location} repeats ${id}.`);
+      seen.add(id);
+    }
+    return seen;
+  };
+  const featureIds = requireUnique("$.features", value.features.map(feature => feature.id));
+  const slicesById = new Map(value.slices.map(slice => [slice.flowId, slice]));
+  requireUnique("$.slices", value.slices.map(slice => slice.flowId));
+  const prerequisiteIds = requireUnique(
+    "$.prerequisites",
+    value.prerequisites.map(prerequisite => prerequisite.id),
+  );
+
+  value.slices.forEach((slice, index) => {
+    const location = `$.slices[${index}]`;
+    if (!featureIds.has(slice.featureId)) {
+      errors.push(`${location}.featureId ${slice.featureId} is not in $.features.`);
+    }
+    for (const dependency of slice.dependsOn) {
+      if (dependency === slice.flowId) {
+        errors.push(`${location}.dependsOn names the slice itself.`);
+      } else if (!slicesById.has(dependency)) {
+        errors.push(`${location}.dependsOn ${dependency} is not in $.slices.`);
+      }
+    }
+    for (const requirement of slice.requires) {
+      if (!prerequisiteIds.has(requirement)) {
+        errors.push(`${location}.requires ${requirement} is not in $.prerequisites.`);
+      }
+    }
+    // Only a PASS verification lands a slice; anything else is still open.
+    if (slice.status === "landed" && !slice.evidence) {
+      errors.push(`${location} is landed without an evidence pointer to its PASS verification-result.`);
+    }
+    if (slice.status !== "landed" && slice.evidence) {
+      errors.push(`${location}.evidence is only for a landed slice.`);
+    }
+  });
+
+  // A dependency cycle would leave every slice in it waiting on another.
+  const visiting = new Set();
+  const finished = new Set();
+  const visit = flowId => {
+    if (finished.has(flowId) || !slicesById.has(flowId)) return;
+    if (visiting.has(flowId)) {
+      errors.push(`$.slices dependsOn forms a cycle through ${flowId}.`);
+      return;
+    }
+    visiting.add(flowId);
+    for (const dependency of slicesById.get(flowId).dependsOn) visit(dependency);
+    visiting.delete(flowId);
+    finished.add(flowId);
+  };
+  for (const flowId of slicesById.keys()) visit(flowId);
+
+  value.prerequisites.forEach((prerequisite, index) => {
+    const location = `$.prerequisites[${index}]`;
+    const { angular } = prerequisite;
+    if (angular.status === "built" && (!angular.path || !angular.builtBy)) {
+      errors.push(`${location}.angular is built and needs path and builtBy.`);
+    }
+    if (angular.status === "none" && (angular.path || angular.builtBy)) {
+      errors.push(`${location}.angular has no Angular counterpart yet, so it has no path or builtBy.`);
+    }
+    // project-constants.md: the counterpart lives in angular\ beside its React original.
+    const home = `${path.posix.dirname(normalizeProductPath(prerequisite.reactSource))}/angular`;
+    if (angular.path && !pathCovers(home, normalizeProductPath(angular.path))) {
+      errors.push(`${location}.angular.path must lie under ${home}, beside its React original.`);
+    }
+    for (const builder of [angular.builtBy, ...prerequisite.copies.map(copy => copy.builtBy)]) {
+      if (builder && !slicesById.has(builder)) {
+        errors.push(`${location} names builder ${builder}, which is not in $.slices.`);
+      }
+    }
+  });
+
+  const optionIds = value.recommendation.options.map(option => option.flowId);
+  requireUnique("$.recommendation.options", optionIds);
+  for (const flowId of optionIds) {
+    const slice = slicesById.get(flowId);
+    if (!slice) errors.push(`$.recommendation.options names ${flowId}, which is not in $.slices.`);
+    else if (slice.status === "landed") {
+      errors.push(`$.recommendation.options names ${flowId}, which has already landed.`);
+    }
+  }
+  if (value.recommendation.chosen && !optionIds.includes(value.recommendation.chosen)) {
+    errors.push("$.recommendation.chosen must be one of $.recommendation.options.");
+  }
+};
+
+// Pointers in a map are lab-relative, the form hash-artifact.mjs prints from
+// the lab root. Each is checked against the file it names.
+const validateMigrationMapPointers = async (absolutePath, value) => {
+  const readPointer = async (label, pointer) => {
+    const target = path.isAbsolute(pointer.path) ?
+      pointer.path :
+      path.resolve(rootDirectory, pointer.path);
+    let raw;
+    try {
+      raw = await readFile(target);
+    } catch (error) {
+      throw new Error(`${absolutePath} ${label} cannot be read at ${target}: ${error.message}`, {
+        cause: error,
+      });
+    }
+    if (createHash("sha256").update(raw).digest("hex") !== pointer.sha256) {
+      throw new Error(`${absolutePath} ${label} hash does not match ${target}.`);
+    }
+    return JSON.parse(raw.toString("utf8").replace(/^﻿/, ""));
+  };
+
+  await readPointer("metrics", value.metrics);
+
+  if (value.supersedes) {
+    const previous = await readPointer("supersedes", value.supersedes);
+    if (previous.artifactType !== "migration-map" || previous.runId !== value.supersedes.runId) {
+      throw new Error(`${absolutePath} supersedes is not the migration-map of run ${value.supersedes.runId}.`);
+    }
+    if (value.supersedes.runId === value.runId) {
+      throw new Error(`${absolutePath} supersedes its own run.`);
+    }
+  }
+
+  for (const slice of value.slices.filter(entry => entry.evidence)) {
+    const verification = await readPointer(`${slice.flowId} evidence`, slice.evidence);
+    if (verification.artifactType !== "verification-result" ||
+      verification.status !== "PASS" ||
+      verification.flowId !== slice.flowId) {
+      throw new Error(
+        `${absolutePath} ${slice.flowId} evidence is not a PASS verification-result for that flow.`,
+      );
+    }
+  }
+};
 
 const validateArtifactRules = (value, errors) => {
   if (value.artifactType === "flow-contract") {
@@ -977,6 +1141,11 @@ const validateArtifactRules = (value, errors) => {
     return;
   }
 
+  if (value.artifactType === "migration-map") {
+    validateMigrationMapRules(value, errors);
+    return;
+  }
+
   if (value.artifactType !== "skill-run-observations") return;
 
   const primaryOutcome = value.primaryOutcome;
@@ -995,6 +1164,7 @@ const validateArtifactRules = (value, errors) => {
     "flow-migrate": new Set(["completed", "failed", "blocked"]),
     "flow-verify": new Set(["PASS", "FAIL", "BLOCKED"]),
     "flow-debug": new Set(["repaired", "blocked", "parked"]),
+    "flow-plan": new Set(["mapped", "blocked", "failed"]),
   };
   const allowedStatuses = allowedStatusBySkill[canonicalSkill(value.skill)];
 
@@ -1027,6 +1197,10 @@ const loadArtifact = async filePath => {
 
   if (errors.length > 0) {
     throw new Error(`${absolutePath} failed schema validation:\n- ${errors.join("\n- ")}`);
+  }
+
+  if (value.artifactType === "migration-map") {
+    await validateMigrationMapPointers(absolutePath, value);
   }
 
   // A baseline report is optional from schemaVersion 5: the contract itself is
@@ -3279,9 +3453,91 @@ const runSelfTest = async () => {
     );
   }
 
+  const mapExamplePath = path.join(
+    rootDirectory, "examples", "migration-map", "demo", "migration-map.json",
+  );
+  const mapArtifact = await loadArtifact(mapExamplePath);
+  const expectMapRejection = (mutate, expectedMessage, label) => {
+    const candidate = structuredClone(mapArtifact.value);
+    mutate(candidate);
+    const errors = [];
+    validateArtifactRules(candidate, errors);
+    if (!errors.some(error => error.includes(expectedMessage))) {
+      throw new Error(`Handoff validator self-test did not reject ${label}.`);
+    }
+  };
+  expectMapRejection(
+    map => { map.slices[1].featureId = "unknown-feature"; },
+    "is not in $.features",
+    "a slice in a feature the map does not list",
+  );
+  expectMapRejection(
+    map => { map.slices[0].dependsOn = ["demo-line-drawer-parent"]; },
+    "dependsOn forms a cycle",
+    "slices that wait on each other",
+  );
+  expectMapRejection(
+    map => { delete map.slices[0].evidence; },
+    "is landed without an evidence pointer",
+    "a landed slice without its PASS verification",
+  );
+  expectMapRejection(
+    map => { map.slices[1].evidence = structuredClone(map.slices[0].evidence); },
+    "evidence is only for a landed slice",
+    "evidence on a slice that has not landed",
+  );
+  expectMapRejection(
+    map => { map.prerequisites[2].angular.path = "src/features/lineDrawer/angular/line-store.adapter.ts"; },
+    "beside its React original",
+    "an Angular counterpart away from its React original",
+  );
+  expectMapRejection(
+    map => { map.recommendation.options.push({ flowId: "demo-line-drawer", reason: "Again." }); },
+    "has already landed",
+    "a recommendation of a landed slice",
+  );
+  expectMapRejection(
+    map => { map.recommendation.chosen = "demo-line-drawer-parent"; },
+    "$.recommendation.chosen must be one of",
+    "a chosen slice that was never offered",
+  );
+  expectMapRejection(
+    map => { map.slices[1].paths = ["C:\\Project\\demo-product\\src"]; },
+    "must be relative to the product root",
+    "an absolute product path",
+  );
+
+  const expectMapPointerRejection = async (mutate, expectedMessage, label) => {
+    const candidate = structuredClone(mapArtifact.value);
+    await mutate(candidate);
+    try {
+      await validateMigrationMapPointers(mapExamplePath, candidate);
+    } catch (error) {
+      if (error.message.includes(expectedMessage)) return;
+      throw error;
+    }
+    throw new Error(`Handoff validator self-test did not reject ${label}.`);
+  };
+  await expectMapPointerRejection(
+    map => { map.metrics.sha256 = "0".repeat(64); },
+    "metrics hash does not match",
+    "a metrics pointer whose hash does not match",
+  );
+  await expectMapPointerRejection(
+    async map => {
+      const failedPath = path.join(debugExampleDirectory, "failed-verification-result.json");
+      map.slices[0].evidence = {
+        path: path.relative(rootDirectory, failedPath),
+        sha256: createHash("sha256").update(await readFile(failedPath)).digest("hex"),
+      };
+    },
+    "is not a PASS verification-result",
+    "a landed slice whose evidence is a failed verification",
+  );
+
   console.log(
     "Handoff validator self-test passed " +
-      "(handoff chain and observation edge cases).",
+      "(handoff chain, observation and migration-map edge cases).",
   );
 };
 

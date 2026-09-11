@@ -5,7 +5,7 @@
     "objective": "Build and validate an evidence-first Copilot workflow for React-to-Angular migration research.",
     "confidentiality": "internal"
   },
-  "updatedAt": "2026-09-07",
+  "updatedAt": "2026-09-11",
   "sources": [
     {
       "id": "skill-architecture",
@@ -802,6 +802,31 @@
       "openQuestions": [
         "Does the POC runtime load project, personal or repository skill snapshots?",
         "Who owns review of repository-wide Copilot instructions in the frontend project?"
+      ]
+    },
+    {
+      "id": "author-flow-plan-v0",
+      "title": "Author flow-plan v0.1",
+      "type": "skill",
+      "status": "in-progress",
+      "phase": "P2",
+      "description": "Create the read-only skill that keeps the migration map of features, candidate slices and shared prerequisites, measured by migration-map.mjs, and proposes the next slice for flow-baseline. It takes over the planning role design-migration-plan-skill left deferred, on the evidence of the decomposition research of 2026-09-11.",
+      "dependencies": [
+        "validate-three-skill-workflow-v0"
+      ],
+      "evidenceValue": "high",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "migration-map.mjs reproduces the follow-up research's per-candidate shared-component counts on the product.",
+        "A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.",
+        "A PASS from flow-verify lands its slice in the next map without a hand edit."
+      ],
+      "sourceIds": [
+        "skill-architecture",
+        "product-frontend"
+      ],
+      "openQuestions": [
+        "Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?"
       ]
     }
   ]

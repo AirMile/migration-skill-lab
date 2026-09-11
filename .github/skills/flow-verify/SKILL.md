@@ -5,11 +5,12 @@ description: Independently verify one migrated React-to-Angular flow against its
 
 # Flow Verify
 
-Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
-`/flow-debug` as the repair loop back into a fresh `/flow-verify`.
+Pipeline: `/flow-plan` -> `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`,
+with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
+`PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.15.0`.
+Skill version: `0.16.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -158,10 +159,10 @@ outcome, a diagnosis and the next action.
     `node "<lab>\scripts\continuation.mjs" --next flow-debug --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json> <work-item-baseline.json> <work-item-migration.json>`.
     The work-item snapshots travel along so `flow-debug` can hand the repaired
     chain back here complete.
-    A `PASS` leads to a fresh `/flow-baseline` for a next flow, offered only
-    once the user has named that flow, with `--next flow-baseline --flow "<flow>"`;
-    without one, report the `PASS` and stop. Offer exactly three routes and
-    perform only the chosen one:
+    A `PASS` leads to a fresh `/flow-plan`, which lands this slice on the
+    migration map and proposes the next:
+    `node "<lab>\scripts\continuation.mjs" --next flow-plan --lab-root <lab> --product-root <product> --run-dir <run-dir> <verification-result.json>`.
+    Offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
        the invocation. Never start a second terminal window;
     2. the invocation shown here, to paste into a chat the user opens;

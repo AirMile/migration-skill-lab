@@ -22,15 +22,25 @@ The artifacts must be the set the next phase validates first, or nothing is
 printed: flow-migrate takes the contract and the baseline work-item snapshot;
 flow-verify the contract, the migration result and both earlier snapshots,
 plus debug-result after a repair; flow-debug the contract, the migration and
-verification results, the debug handoff and both earlier snapshots.
+verification results, the debug handoff and both earlier snapshots;
+flow-baseline nothing, or the migration-map that proposed its slice, with
+--flow-id to save; flow-plan nothing, or the verification-result that passed.
 
-Skills: flow-baseline, flow-migrate, flow-verify, flow-debug.
+Skills: flow-plan, flow-baseline, flow-migrate, flow-verify, flow-debug.
 `;
 
-const nextSkills = ["flow-baseline", "flow-migrate", "flow-verify", "flow-debug"];
+const nextSkills = ["flow-plan", "flow-baseline", "flow-migrate", "flow-verify", "flow-debug"];
 
 // An invocation missing one of these reaches a chat that can only stop.
 const artifactSets = {
+  "flow-plan": {
+    required: [],
+    optional: ["verification-result"],
+  },
+  "flow-baseline": {
+    required: [],
+    optional: ["migration-map"],
+  },
   "flow-migrate": {
     required: ["flow-contract", "work-item-handoff:baseline"],
     optional: [],
@@ -357,6 +367,33 @@ const runSelfTest = async () => {
       }),
       "does not name the verification attempt",
       "a prompt was saved for a debug-result whose attempt is unknown");
+
+    // flow-plan hands flow-baseline the map and the flowId the user chose.
+    const migrationMap = path.join(runDirectory, "migration-map.json");
+    await writeFile(migrationMap, JSON.stringify({ artifactType: "migration-map" }));
+    const baselineFromMap = await buildContinuation({
+      ...options,
+      next: "flow-baseline",
+      flow: "Charger form",
+      "flow-id": "charger-form",
+      positional: [migrationMap],
+    });
+    assert(baselineFromMap.invocation.startsWith(`/flow-baseline "Charger form" ${migrationMap} `),
+      "the flow-baseline invocation does not carry the flow text and the map");
+    assert(path.basename(baselineFromMap.savedPath) === "charger-form-flow-baseline-prompt.md",
+      "the flow-baseline prompt is not named for the chosen flowId");
+    await expectFailure(
+      () => buildContinuation({ ...options, save: false, next: "flow-baseline", positional: [contract] }),
+      "unexpected flow-contract",
+      "flow-baseline accepted an artifact other than the map");
+    const planAfterPass = await buildContinuation({
+      ...options,
+      save: false,
+      next: "flow-plan",
+      positional: [verificationResult],
+    });
+    assert(planAfterPass.invocation.startsWith(`/flow-plan ${verificationResult} `),
+      "a PASS does not continue into flow-plan with its verification-result");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

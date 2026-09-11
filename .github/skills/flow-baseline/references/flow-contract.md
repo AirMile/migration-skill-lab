@@ -29,14 +29,18 @@ the contract.
   schemaVersion 6 rejects `includedPaths` and `excludedPaths`. The start and
   end state describe the chosen slice, not the whole route.
   The allowlist is the only thing bounding `flow-migrate`'s writes, and it
-  holds exactly three kinds of path: the directory the new Angular code lands
-  in, since a design with nowhere to land cannot be implemented; the test
-  directory the `characterizationRequired` entries need, which the project
-  constants name; and every `dependencyChanges.paths` entry, which the
-  validator enforces. Check every existing file in it for consumers outside
-  this flow: shared infrastructure stays out, or a `decisions` entry names the
-  consumers considered and why the risk is accepted. Nothing goes in that the
-  slice does not need.
+  holds exactly four kinds of path: the directory the new Angular code lands
+  in, since a design with nowhere to land cannot be implemented; the `angular\`
+  folder beside the React original of each prerequisite this slice builds,
+  per the project constants; the test directory the
+  `characterizationRequired` entries need, which the project constants name;
+  and every `dependencyChanges.paths` entry, which the validator enforces.
+  Check every existing file in it for consumers outside this flow: shared
+  infrastructure stays out, or a `decisions` entry names the consumers
+  considered and why the risk is accepted. That holds for an Angular
+  counterpart another slice built as much as for React code: reuse it
+  unchanged, and when it must change, the migration map names its consumers.
+  Nothing goes in that the slice does not need.
 - `scope.partialMount`: required. `nested: true` with `retainedParent` and
   `siblingSections` when the slice mounts inside a retained React parent;
   `nested: false` is a deliberate statement, not an omission. Both downstream

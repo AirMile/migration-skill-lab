@@ -8,7 +8,7 @@
     content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"
   >
   <meta name="backlog-schema-version" content="1">
-  <meta name="backlog-sha256" content="c83f0bd8e794c13126cc415cd9d5a5497c48e0934bd1bf76f37853c949f2c288">
+  <meta name="backlog-sha256" content="38a9481b89b6ff8fa9d14e9bd6c87258dfcdf8fae086d02a4868c3ccb3dd5dee">
   <title>migration-skill-lab backlog</title>
   <style>
     :root {
@@ -96,9 +96,9 @@
         <code>backlog/backlog.json</code> and run the renderer instead of editing this HTML.
       </div>
       <div class="summary">
-        <div class="metric"><strong>30</strong><span>Total items</span></div>
+        <div class="metric"><strong>31</strong><span>Total items</span></div>
         <div class="metric"><strong>17</strong><span>Done</span></div>
-        <div class="metric"><strong>1</strong><span>Ready or active</span></div>
+        <div class="metric"><strong>2</strong><span>Ready or active</span></div>
         <div class="metric"><strong>9</strong><span>Blocked</span></div>
         <div class="metric"><strong>3</strong><span>Deferred</span></div>
       </div>
@@ -521,7 +521,7 @@
       </div>
     </section>
     <section>
-      <h2>P2 <span class="muted">(14)</span></h2>
+      <h2>P2 <span class="muted">(15)</span></h2>
       <div class="phase-grid">
         
     <article class="card">
@@ -958,6 +958,37 @@
         <ul><li>skill-architecture: Angular migration skill architecture</li><li>stage-approach: Angular migration stage approach and feasibility</li><li>airmile-core-audit: AirMile core-audit design reference</li></ul>
       </details>
     </article>
+    <article class="card">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">author-flow-plan-v0</p>
+          <h3>Author flow-plan v0.1</h3>
+        </div>
+        <span class="badge status-in-progress">in-progress</span>
+      </div>
+      <p>Create the read-only skill that keeps the migration map of features, candidate slices and shared prerequisites, measured by migration-map.mjs, and proposes the next slice for flow-baseline. It takes over the planning role design-migration-plan-skill left deferred, on the evidence of the decomposition research of 2026-09-11.</p>
+      <dl class="metadata">
+        <div><dt>Type</dt><dd>skill</dd></div>
+        <div><dt>Risk</dt><dd>medium</dd></div>
+        <div><dt>Evidence value</dt><dd>high</dd></div>
+      </dl>
+      <details>
+        <summary>Dependencies (1)</summary>
+        <ul><li>validate-three-skill-workflow-v0: Validate three-skill workflow v0.1</li></ul>
+      </details>
+      <details>
+        <summary>Acceptance criteria (3)</summary>
+        <ul><li>migration-map.mjs reproduces the follow-up research&#039;s per-candidate shared-component counts on the product.</li><li>A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.</li><li>A PASS from flow-verify lands its slice in the next map without a hand edit.</li></ul>
+      </details>
+      <details open>
+        <summary>Open questions (1)</summary>
+        <ul><li>Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?</li></ul>
+      </details>
+      <details>
+        <summary>Sources (2)</summary>
+        <ul><li>skill-architecture: Angular migration skill architecture</li><li>product-frontend: Route Assistant frontend</li></ul>
+      </details>
+    </article>
       </div>
     </section>
     <section>
@@ -1110,7 +1141,7 @@
     &quot;objective&quot;: &quot;Build and validate an evidence-first Copilot workflow for React-to-Angular migration research.&quot;,
     &quot;confidentiality&quot;: &quot;internal&quot;
   },
-  &quot;updatedAt&quot;: &quot;2026-09-07&quot;,
+  &quot;updatedAt&quot;: &quot;2026-09-11&quot;,
   &quot;sources&quot;: [
     {
       &quot;id&quot;: &quot;skill-architecture&quot;,
@@ -1908,6 +1939,31 @@
         &quot;Does the POC runtime load project, personal or repository skill snapshots?&quot;,
         &quot;Who owns review of repository-wide Copilot instructions in the frontend project?&quot;
       ]
+    },
+    {
+      &quot;id&quot;: &quot;author-flow-plan-v0&quot;,
+      &quot;title&quot;: &quot;Author flow-plan v0.1&quot;,
+      &quot;type&quot;: &quot;skill&quot;,
+      &quot;status&quot;: &quot;in-progress&quot;,
+      &quot;phase&quot;: &quot;P2&quot;,
+      &quot;description&quot;: &quot;Create the read-only skill that keeps the migration map of features, candidate slices and shared prerequisites, measured by migration-map.mjs, and proposes the next slice for flow-baseline. It takes over the planning role design-migration-plan-skill left deferred, on the evidence of the decomposition research of 2026-09-11.&quot;,
+      &quot;dependencies&quot;: [
+        &quot;validate-three-skill-workflow-v0&quot;
+      ],
+      &quot;evidenceValue&quot;: &quot;high&quot;,
+      &quot;risk&quot;: &quot;medium&quot;,
+      &quot;acceptanceCriteria&quot;: [
+        &quot;migration-map.mjs reproduces the follow-up research&#039;s per-candidate shared-component counts on the product.&quot;,
+        &quot;A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.&quot;,
+        &quot;A PASS from flow-verify lands its slice in the next map without a hand edit.&quot;
+      ],
+      &quot;sourceIds&quot;: [
+        &quot;skill-architecture&quot;,
+        &quot;product-frontend&quot;
+      ],
+      &quot;openQuestions&quot;: [
+        &quot;Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?&quot;
+      ]
     }
   ]
 }
@@ -1915,10 +1971,10 @@
     </details>
 
     <footer>
-      Updated 2026-09-07 |
+      Updated 2026-09-11 |
       schemaVersion 1 |
       source backlog/backlog.json |
-      sha256 c83f0bd8e794c13126cc415cd9d5a5497c48e0934bd1bf76f37853c949f2c288
+      sha256 38a9481b89b6ff8fa9d14e9bd6c87258dfcdf8fae086d02a4868c3ccb3dd5dee
     </footer>
   </main>
 </body>

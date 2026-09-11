@@ -5,11 +5,12 @@ description: Establish a reviewable behavior and test-evidence baseline for one 
 
 # Flow Baseline
 
-Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
-`/flow-debug` as the repair loop back into a fresh `/flow-verify`.
-This skill is the first stage: it produces the contract every later stage reads.
+Pipeline: `/flow-plan` -> `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`,
+with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
+This skill is the first stage of a slice's chain: it produces the contract
+every later stage reads.
 
-Skill version: `0.21.0`.
+Skill version: `0.22.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -51,6 +52,14 @@ about most.
   product revision and status, `flow.nextRunDirectory` and `flow.nextRunId`,
   this flow's earlier work-item handoffs and saved prompts, and the package
   scripts. Ask only when the flow maps to more than one plausible id.
+- An invocation that names a `migration-map.json` comes from `flow-plan`,
+  where the user chose this slice: take its `flowId` and read only that
+  slice's entry and the prerequisites in its `requires`. Its `paths` and
+  criteria verdicts are the planning view, not the boundary: the map's cut is
+  one of the step-3 candidates, and choosing another is a `decisions` entry
+  the next `flow-plan` run reads. A prerequisite marked `built` is reused
+  unchanged; one this slice builds lands in the `angular\` folder beside its
+  React original, which joins the allowlist.
 - A saved `<flowId>-<skill>-prompt.md` means an earlier phase chose to continue
   later: say so in one line and resume from the artifacts it names, exactly as
   if the phases had run back to back.
@@ -91,9 +100,9 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    condition under which a control renders is in the cited source. An
    exclusion is recorded here and nowhere else, as a cited entry.
    For every surface rendered by its own component, run one search for
-   importers outside this flow's directory and cite them: a control with a
-   dozen external importers is shared infrastructure wherever it sits on
-   screen. The counts stay out of the contract; the boundary decision carries
+   importers outside this flow's directory, tests and stories left out as
+   `migration-map.mjs` leaves them out, and cite them: a control with a dozen
+   external importers is shared infrastructure wherever it sits on screen. The counts stay out of the contract; the boundary decision carries
    the conclusion.
 3. **Boundary.** Only now, with the evidence in hand, put two or three
    materially different candidates to the user. For each, give its `migrate`
