@@ -1,6 +1,6 @@
 ---
 name: flow-verify
-description: Independently verify one approved React-to-Angular migration flow against its Flow Contract and report PASS, FAIL or BLOCKED. Use only with /flow-verify.
+description: Independently verify one migrated React-to-Angular flow against its Flow Contract and report PASS, FAIL or BLOCKED. Use only with /flow-verify.
 ---
 
 # Flow Verify
@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.10.0`.
+Skill version: `0.11.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -38,9 +38,11 @@ every attempt after a repair also `debug-result.json`.
   continue later: say so in one line and resume from the artifacts it names.
 - From the contract: `scenarios`, `visualParity`, `renderedSurfaceInventory`,
   `scope`, the test, typecheck and build commands, `checkpointPolicy` and
-  `validationPlan.manualValidation`, whose scenario and environment are the
-  whole manual instruction. There is no owner to look for: the person in this
-  chat is the tester, and this skill leads them.
+  `validationPlan.manualValidation`. The walkthrough's items are the
+  `scenarios` and `visualParity` entries themselves; `manualValidation` gives
+  the environment it runs in and the route through them, with the concrete
+  test data. There is no owner to look for: the person in this chat is the
+  tester, and this skill leads them.
 - The previous proposal's outcome is already in `work-item-migration.json`:
   quote it and ask whether it still holds, as a confirmation.
 
@@ -66,15 +68,18 @@ outcome, a diagnosis and the next action.
 2. **Automated evidence.** Run the declared targeted test, typecheck and build;
    expand only with a reason recorded in the result. Check that the changed
    paths stay within the allowlist and that the migration result reports
-   failed or blocked validation honestly. Check coverage only for this flow and
-   only where measurement is approved; a percentage supports, never proves.
+   failed or blocked validation honestly. Check coverage only for this flow,
+   only through the safe measurement the contract's `testGaps` names, and
+   record a figure CI measures as not retrieved; a percentage supports, never
+   proves.
 3. **Map every scenario** to direct evidence from tests, the migration result
    or the manual walkthrough. Compare the rendered drawer with
    `renderedSurfaceInventory`: an omitted retained control, action or
    conditional branch is `FAIL`, even when the migrated fields pass.
-4. **Lead the manual walkthrough** in the environment the contract names. Do
-   not ask whether someone did it already; conducting it is this skill's work.
-   Build it from `scenarios` and `visualParity`, and treat the entries in
+4. **Lead the manual walkthrough** in `manualValidation.environment`, along
+   its route. Do not ask whether someone did it already; conducting it is this
+   skill's work. Build each item from its `scenarios` or `visualParity` entry,
+   never from a retelling of it, and treat the entries in
    `migration-result.limitations` as places a difference is already expected.
    Present one item at a time:
    - name each item by its contract `visualParityId` and `surface` text, never
@@ -136,7 +141,9 @@ outcome, a diagnosis and the next action.
     and report any delta.
 11. **Continuation.** A `FAIL` or repairable `BLOCKED` goes to a fresh
     `/flow-debug`:
-    `node "<lab>\scripts\continuation.mjs" --next flow-debug --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
+    `node "<lab>\scripts\continuation.mjs" --next flow-debug --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json> <work-item-baseline.json> <work-item-migration.json>`.
+    The work-item snapshots travel along so `flow-debug` can hand the repaired
+    chain back here complete.
     A `PASS` leads to a fresh `/flow-baseline` for a next flow, offered only
     once the user has named that flow, with `--next flow-baseline --flow "<flow>"`;
     without one, report the `PASS` and stop. Offer exactly three routes and
@@ -163,7 +170,7 @@ Never:
 - replace a required manual or Maui validation with an unrecorded assumption,
   or mark a criterion `PASS` without direct evidence;
 - publish, merge, create a pull request, force-push, push tags, push any branch
-  but the approved one, or push without every condition in
+  but the contract's `expectedBranch`, or push without every condition in
   `references/push.md`;
 - update Targetprocess or mark a proposal applied without the user's
   confirmation, mark a Story `Done` while a Task is incomplete, or derive

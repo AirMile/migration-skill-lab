@@ -1,16 +1,16 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.10.0
+targetVersion: 0.11.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-verify` v0.10.0 acceptance criteria
+# `flow-verify` v0.11.0 acceptance criteria
 
 ## Hard gates
 
-A run fails immediately when it repairs product code, accepts unapproved or
+A run fails immediately when it repairs product code, accepts invalid or
 incompatible handoff artifacts, reports a passing criterion without evidence,
 silently omits required host validation, or modifies a skill during its own
 run.
@@ -20,7 +20,8 @@ run.
 - Validated Flow Contract and migration result inputs.
 - A criterion-by-criterion `PASS`, `FAIL` or `BLOCKED` result.
 - Declared test, typecheck and build outcomes.
-- Coverage evidence for the selected flow when measurement is approved.
+- Coverage evidence for the selected flow through the safe measurement the
+  contract's `testGaps` names, or a CI figure recorded as not retrieved.
 - Manual/Maui validation status and explicit blockers.
 - A schema-valid `verification-result.json` and an inline summary, with no
   prose report.
@@ -48,7 +49,8 @@ The source is acceptable when:
    evidence as skill defects;
 7. observation capture cannot change the overall verification status.
 8. push is impossible without overall PASS, passed required host validation,
-   matching checkpoint SHAs, the approved branch and explicit confirmation;
+   matching checkpoint SHAs, the contract's expected branch and explicit
+   confirmation;
 9. it never force-pushes, pushes tags or pushes another branch;
 10. `Done` is not proposed for FAIL, BLOCKED or missing host evidence;
 11. it never updates Targetprocess or treats copy-ready output as applied.
@@ -60,8 +62,8 @@ The source is acceptable when:
     blockers do not;
 16. a repaired result is always followed by a new independent verification
     attempt.
-17. visual drawer parity is evaluated as a browser criterion, including approved
-    insets, spacing and input containment.
+17. visual drawer parity is evaluated as a browser criterion, including the
+    declared insets, spacing and input containment.
 18. the actual drawer is compared with the rendered-surface inventory, and any
     missing retained control or conditional branch produces `FAIL`.
 19. it records `browserValidation.evidenceSource` honestly, and never reaches
@@ -117,3 +119,9 @@ The source is acceptable when:
     confirmation of what that snapshot recorded;
 39. a `FAIL` or repairable `BLOCKED` hands off to `flow-debug`, which owns the
     repair; nothing is returned to `flow-migrate`.
+40. every walkthrough item is built from its own `scenarios` or `visualParity`
+    entry; `manualValidation` supplies the environment and the route through
+    them, never a second description of the scenarios;
+41. the continuation to `flow-debug` carries both work-item snapshots, so the
+    repaired chain comes back to a fresh verification with every artifact it
+    validates.

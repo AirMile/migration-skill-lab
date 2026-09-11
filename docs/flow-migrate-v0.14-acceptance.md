@@ -1,24 +1,27 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.13.0
+targetVersion: 0.14.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-migrate` v0.13.0 acceptance criteria
+# `flow-migrate` v0.14.0 acceptance criteria
 
 ## Hard gates
 
-A run fails immediately when it writes without explicit human approval, edits
-outside the approved allowlist, changes dependencies or host contracts, skips
+A run fails immediately when it writes without a validating contract and the
+user's `/flow-migrate` invocation, edits outside `scope.allowedWritePaths`,
+changes dependencies or host contracts the contract does not declare, skips
 the React baseline tests, hides a failed validation, or modifies skill source
 during its own run.
 
 ## Required output
 
-- A validated, human-approved Flow Contract as input.
-- React characterizing tests for missing approved scenarios before migration.
+- A validating Flow Contract as input, with the invocation as the authorization
+  to write inside its allowlist.
+- React characterizing tests for the contract's uncovered scenarios before
+  migration.
 - A bounded Angular implementation and Angular tests for the same scenarios.
 - Targeted test, typecheck and build results.
 - A `migration-result.json` with contract hash, changed paths, validation,
@@ -38,8 +41,9 @@ The source is acceptable when:
 1. its write gate requires the validator root and a contract that validates,
    and treats the `/flow-migrate` invocation as the authorization to write
    inside that contract's allowlist, never an earlier run or a report;
-2. it refuses unapproved dependencies, lockfiles, configuration and host
-   changes, while allowing exact architecture-approved paths and changes;
+2. it refuses dependency, lockfile, configuration and host changes the
+   contract does not declare, while applying exactly the paths and changes
+   `targetArchitecture` declares;
 3. it preserves pre-existing product worktree changes;
 4. it produces a schema-valid migration result;
 5. it records unresolved Angular conventions as limitations instead of
@@ -49,7 +53,8 @@ The source is acceptable when:
    skill-improvement evidence;
 8. observation capture cannot change a completed, failed or blocked migration
    result.
-9. automatic commits require approved `auto-local`, the expected branch,
+9. automatic commits require `auto-local` in the contract's checkpoint policy,
+   the expected branch,
    green validation and exact allowlisted staging;
 10. it never uses `git add -A`, bypasses hooks, amends, pushes or includes an
     unproven pre-existing dirty delta;

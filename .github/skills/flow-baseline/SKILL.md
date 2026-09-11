@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.19.0`.
+Skill version: `0.20.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -161,8 +161,8 @@ rejects, no command the safety boundary forbids, no value the run can derive.
     - every `characterizationRequired` hypothesis;
     - each `visualParity` id with its counterpart;
     - `allowedWritePaths` verbatim, the test, typecheck and build commands, the
-      manual scenario and its environment, the rollback and the checkpoint
-      policy;
+      manual walkthrough's route and environment, the rollback and the
+      checkpoint policy;
     - every open question and decision.
     Do not restate confirmed behavior or its citations. The summary is not a
     gate and asks for nothing: end it by naming what would need a new run to

@@ -1,22 +1,22 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.3.0
+targetVersion: 0.4.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-debug` v0.3.0 acceptance criteria
+# `flow-debug` v0.4.0 acceptance criteria
 
 ## Hard gates
 
-A run fails immediately when it repairs an external blocker, writes outside the
-approved allowlist, resets or repeats a tier attempt, skips checkpoint
+A run fails immediately when it repairs an external blocker, writes outside
+`scope.allowedWritePaths`, resets or repeats a tier attempt, skips checkpoint
 verification, declares `PASS`, or modifies skill source during its own run.
 
 ## Required output
 
-- A validated artifact chain containing an approved `flow-contract.json`,
+- A validated artifact chain containing a validating `flow-contract.json`,
   matching `migration-result.json`, failed or repairable blocked
   `verification-result.json`, and matching `debug-handoff.json`.
 - Recorded content hashes proving that all consumed artifacts describe the same
@@ -27,7 +27,7 @@ verification, declares `PASS`, or modifies skill source during its own run.
 - For every attempt: reproduction evidence, hypothesis, changed paths,
   validation outcomes and checkpoint status.
 - A `debug-result.json` whose status is only `repaired`, `blocked` or
-  `parked`.
+  `parked`, with no prose report beside it.
 - Changed paths that remain a subset of `allowedWritePaths`.
 - Local checkpoint evidence created through `verify-checkpoint.mjs` for every
   commit-eligible repaired milestone.
@@ -40,7 +40,7 @@ verification, declares `PASS`, or modifies skill source during its own run.
 
 The source is acceptable when:
 
-1. it accepts only an approved Flow Contract and a `verification-result.json`
+1. it accepts only a validating Flow Contract and a `verification-result.json`
    whose overall status is `FAIL` or repairable `BLOCKED`, never `PASS`;
 2. it rejects a `debug-handoff.json` or verification input whose `flowId`,
    contract hash, migration-result hash or failure target does not match;
@@ -53,17 +53,17 @@ The source is acceptable when:
    endless loop after `heavy`;
 7. it records reproduction, hypothesis, changed paths, validation and
    checkpoint evidence for every attempt, including no-change attempts;
-8. it never edits outside `allowedWritePaths` and never broadens the approved
-   migration scope;
+8. it never edits outside `allowedWritePaths` and never widens it;
 9. it uses `verify-checkpoint.mjs --prepare`, `--verify-staged` and
    `--verify-commit` for commit-eligible repairs and never uses `git add -A`,
    `--no-verify`, amend, push or other history-rewriting shortcuts;
 10. `repaired` requires a passing targeted reproduction, honest validation
     evidence and recorded checkpoint outcome;
-11. it ends every `repaired` run by offering a user-confirmed fresh independent
-    `/flow-verify` chat and never self-certifies the migration as `PASS`;
-12. external systems, missing approvals, and dependency, configuration or host
-    changes that are not already approved become `blocked`, not debugged;
+11. it ends every `repaired` run by offering a fresh independent `/flow-verify`
+    chat through the same three continuation routes as the other flow skills,
+    and never self-certifies the migration as `PASS`;
+12. external systems, and dependency, configuration or host changes the
+    contract does not already declare, become `blocked`, not debugged;
 13. a non-repair at `heavy` becomes `parked` for human decision rather than a
     silent retry or scope expansion;
 14. observation capture excludes product defects, expected blockers, external
@@ -85,3 +85,12 @@ The source is acceptable when:
 20. observation capture follows `docs\flow-observation-capture.md`, shared with
     the other flow skills, and the sidecar is created with
     `new-observations.mjs`.
+21. the run freezes its starting status with `run-context.mjs --save-status`
+    and reports its delta with `--compare`, never by hand;
+22. the continuation comes from `continuation.mjs` and carries every artifact
+    re-verification validates: the contract, the migration result, both
+    work-item snapshots and `debug-result.json`;
+23. every script, `verify-checkpoint.mjs` included, is invoked from
+    `<lab>\scripts\`, never relative to the working directory;
+24. artifact pointers in `debug-result.json` come from `hash-artifact.mjs`,
+    never from digests computed by hand.

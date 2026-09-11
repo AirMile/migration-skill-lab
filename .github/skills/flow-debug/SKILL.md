@@ -9,147 +9,148 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.3.0`.
+Skill version: `0.4.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
-Repair one failed or repairable blocked migration only within the already
-contract and artifact chain. Prefer a fresh isolated agent context.
-Reload required state from versioned artifacts, not earlier chat memory.
-`flow-debug` may prepare a repair candidate, but it never declares `PASS`.
+Repair one failed or repairable blocked migration inside the validated
+contract and artifact chain, in a fresh chat opened from `flow-verify`. Reload
+every input from disk, never from an earlier chat. `flow-debug` prepares a
+repair candidate; it never declares `PASS`.
 
-## Required inputs
+`<lab>` is the migration-skill-lab root. Its `scripts\` perform the
+deterministic steps; never do one of them by hand.
 
-Confirm all inputs before any product write:
+## Inputs
 
-- path to the `flow-contract.json`;
-- path to the corresponding `migration-result.json`;
-- path to a `verification-result.json` whose overall status is `FAIL` or a
-  repairable `BLOCKED`;
-- path to the corresponding `debug-handoff.json` produced by `flow-verify`;
-- migration-skill-lab root containing the validator, schemas and
-  `scripts\verify-checkpoint.mjs`;
-- product root, expected branch and current Git-visible worktree status;
-- exact `allowedWritePaths`, targeted validation commands, rollback guidance
-  and checkpoint policy from the same contract;
-- proof that the consumed artifacts share the same `flowId` and recorded
-  content hashes;
-- declared run-artifact directory.
+The invocation names `flow-contract.json`, `migration-result.json`,
+`verification-result.json`, `debug-handoff.json`, both work-item snapshots,
+`<lab>`, the product root and the run directory. Everything else comes from
+those:
 
-Stop and report `BLOCKED` when an artifact is missing, incompatible,
-unapproved, cross-flow, hash-mismatched, outside the approved write scope or
-blocked by an external system.
+- Validate first:
+  `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
+- Run
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status`.
+  That status, HEAD and branch, with the failed criteria, failing commands and
+  manual observations in `verification-result.json`, are the frozen evidence
+  every attempt is measured against. A saved `<flowId>-flow-debug-prompt.md`
+  means an earlier phase chose to continue later: say so in one line and resume
+  from the artifacts it names.
+- From the contract: `scope.allowedWritePaths`, the test, typecheck and build
+  commands, `rollback`, `checkpointPolicy` and `visualParity`.
+- The work-item snapshots travel only so the repaired chain reaches the next
+  `flow-verify` complete; this skill does not change them.
+
+Report `BLOCKED` before any product write when:
+
+- an artifact is missing, fails validation or belongs to another flow, or
+  `debug-handoff.json` names a `flowId`, artifact hash or failure target that
+  does not match the validated artifacts;
+- `verification-result.json` is `PASS`, or `debug-handoff.json` is
+  `external-blocked`;
+- this is not a fresh chat opened from `flow-verify`: debug context never
+  mixes with verification context.
 
 ## Workflow
 
-1. Read `references/debug-contract.md`.
-2. Run only in a fresh isolated chat opened from `flow-verify`. When isolation
-   is unavailable, stop `BLOCKED` rather than reusing verification context.
-   Reload every required artifact from disk and ignore prior chat assumptions.
-3. Validate the approved Flow Contract, migration result and verification
-   result with the handoff validator. Reject a `debug-handoff.json` whose
-   `flowId`, artifact hashes, failure target or approved write scope does not
-   match those validated artifacts.
-4. Freeze the initial evidence: current branch, HEAD, Git-visible worktree
-   status, failed criteria, failing commands, manual observations and artifact
-   hashes.
-5. Refuse external or approval blockers. Do not debug service outages, missing
-   access, dependency approvals, host-contract changes or other issues that are
-   outside the approved local product slice.
-6. Treat a `visual-parity` failure as a first-class repair target: its
-   expected outcome is the contract's declared `appearance` and `layout` for
-   that surface, and its evidence must come from the real host layout. A
-   visual repair confirmed only in an isolated fixture is not repaired.
-7. Select the cheapest starting tier without asking:
-   - `immediate` when the root cause is confirmed, local and already has a
-     targeted reproduction;
-   - `light` when exactly one strong local hypothesis explains the failure but
-     is not yet proven;
-   - `heavy` when the cause is unclear, crosses approved boundaries or the same
-     failure already survived a lower-tier attempt.
-8. Attempt exactly once per tier and escalate automatically in order
-   `immediate -> light -> heavy`. Never reset attempts, repeat a tier or loop
-   after `heavy`.
-9. For each attempt, preserve and record all five evidence blocks even when no
-   product file changes occur:
-   - reproduction evidence;
-   - current hypothesis;
-   - actual file changes or `none`;
-   - validation outcomes;
-   - checkpoint outcome.
-10. In each attempt, rerun or restate the smallest targeted reproduction from
-   `flow-verify`, make only the minimum approved product edits inside
-   `allowedWritePaths`, then rerun the targeted reproduction and declared
-   validations.
-11. When a repaired candidate has the required green evidence and checkpoint
-    mode is `auto-local`, create a checkpoint manifest and run:
-
-    ```powershell
-    node .\scripts\verify-checkpoint.mjs --prepare <manifest.json>
-    node .\scripts\verify-checkpoint.mjs --verify-staged <manifest.json>
-    node .\scripts\verify-checkpoint.mjs --verify-commit `
-      <manifest.json> <commit-sha>
-    ```
-
-    Stage only the verifier's explicit paths. Do not use `git add -A`, bypass
-    hooks, amend or create an empty commit.
-12. Write a concise human-readable debug summary and `debug-result.json` in the
-    declared run directory. Use statuses honestly:
-    - `repaired` when the targeted reproduction and declared validations now
-      pass and the attempt record is complete;
-    - `blocked` when the issue is external, unreproducible, unapproved or
-      requires scope, dependency, configuration or host-contract changes that
-      were not already approved;
-    - `parked` when the `heavy` tier still cannot produce a safe, local repair
-      and a human decision is required.
-13. Every `repaired` result must end with a mandatory handoff to a fresh,
-    independent `flow-verify` run. `flow-debug` never declares `PASS`, never
-    treats a repair as verified and never closes the verification loop itself.
-14. Record the final Git-visible worktree status and report any delta against
-    the frozen baseline without reverting unrelated changes.
-15. For a `repaired` result, end with one focused user question offering a
-    fresh `/flow-verify` chat with only the declared artifacts and product root.
-    Never spawn a verifier subagent or reuse this debug chat as verification.
+1. **Refuse external blockers.** Service outages, missing access, unavailable
+   environments and defects owned by an external system end as `blocked`,
+   never as a repair attempt. So does a fix that would change dependencies,
+   lockfiles, configuration, backend, Maui or Auth0 contracts or another host
+   boundary beyond what the contract's `targetArchitecture` and allowlist
+   already declare.
+2. **Choose the cheapest valid starting tier** without asking:
+   - `immediate`: the root cause is confirmed, local and already has a targeted
+     reproduction. Never for open-ended investigation or cross-boundary
+     uncertainty;
+   - `light`: exactly one strong local hypothesis explains the failure but is
+     not yet proven. Never while competing hypotheses remain;
+   - `heavy`: the cause is unclear, crosses the slice boundary or already
+     survived a lower tier. Never to debug an external blocker or to justify a
+     wider scope.
+   When `immediate` is valid, never start higher.
+3. **Attempt budget.** At most one attempt per tier, escalating
+   `immediate -> light -> heavy`. A cheaper tier that was skipped stays unused
+   and is never inserted later. No reset after a partial fix, a new clue or a
+   manual retry, no repeated tier and no loop after `heavy`.
+4. **Each attempt** reruns or restates the smallest targeted reproduction from
+   `debug-handoff.json`, makes only the minimum product edit inside
+   `allowedWritePaths`, then reruns that reproduction and the declared test,
+   typecheck and build commands. Record all five evidence blocks, also for an
+   attempt that changed nothing: reproduction evidence, current hypothesis,
+   changed paths or `none`, validation outcomes and checkpoint outcome. A
+   failed attempt is evidence; never overwrite it with a later one.
+5. **Visual parity** failures are first-class repair targets. The expected
+   outcome is the contract's declared `appearance` and `layout` for the named
+   surface, not a fresh judgement of the React source, and the evidence comes
+   from the real host layout: a fixture cannot show width, alignment or
+   spacing against the retained siblings, so a visual repair seen only there is
+   not repaired. Record the measured deviation and the value after the repair,
+   as for a behavioral reproduction.
+6. **Checkpoints.** When `checkpointPolicy.mode` is `auto-local` and the
+   reproduction and declared validations are green, write a checkpoint
+   manifest and run, in order,
+   `node "<lab>\scripts\verify-checkpoint.mjs" --prepare <manifest.json>`,
+   stage only the paths it returns, `--verify-staged <manifest.json>`, commit
+   without bypassing hooks, then `--verify-commit <manifest.json> <sha>`. When
+   the mode is `disabled`, commit nothing.
+7. **Write `debug-result.json`** in the run directory, copying the shape from
+   `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\debug\demo-line-drawer\debug-result.json"`
+   and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,
+   and validate it together with the four artifacts it consumed. It carries
+   the starting tier, the attempt ledger, the diagnosis, changed paths,
+   validation and checkpoint evidence, remaining limitations and one status:
+   - `repaired`: the targeted reproduction and declared validations pass,
+     every changed path is allowlisted and the ledger is complete;
+   - `blocked`: the issue is external or unreproducible, or needs a contract
+     change or a wider scope;
+   - `parked`: `heavy` could not produce a safe local repair and a human
+     decision is required.
+   Write no prose report; summarize the result in this chat.
+8. Run `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`
+   and report the delta against the frozen status without reverting unrelated
+   changes.
+9. **Continuation.** A `repaired` result always goes to a fresh, independent
+   `/flow-verify`; this skill never declares `PASS` or closes the loop itself.
+   Build the invocation with
+   `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json> <debug-result.json>`,
+   then offer exactly three routes and perform only the chosen one:
+   1. a fresh chat opened now through the host's own mechanism, carrying only
+      the invocation. Never start a second terminal window;
+   2. the invocation shown here, to paste into a chat the user opens;
+   3. the same command with `--save`, a checkpoint rather than an
+      abandonment, since every phase reads only artifacts.
+   Never verify in this chat, spawn a verifier subagent or delegate to a
+   background agent. A `blocked` or `parked` result goes to a human decision,
+   or to a new `flow-baseline` run when the contract has to change.
+10. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
+    it with `--primary <debug-result.json> --status repaired`, `blocked` or
+    `parked`.
 
 ## Safety boundary
 
 Never:
 
-- rely on earlier chat context instead of the declared artifact chain;
-- repair or investigate an external blocker as if it were a local code defect;
-- edit a product path outside `allowedWritePaths` or broaden the approved
-  scope;
+- rely on earlier chat context instead of the artifact chain;
+- repair an external blocker as if it were a local defect;
+- edit a product path outside `allowedWritePaths`, widen it or rewrite the
+  contract;
 - add a dependency, change a lockfile, alter configuration, or modify backend,
-  Maui, Auth0 or other host contracts unless that exact change is already
-  approved in the consumed contract and handoff;
-- edit this skill, its references, schemas or any installed skill snapshot
-  during a run;
-- skip `verify-checkpoint.mjs`, use `git add -A`, bypass hooks, amend, rewrite
-  history, push, merge, publish or create a pull request;
-- reset the tier ledger, retry the same tier indefinitely or hide a failed
-  attempt behind a later summary;
+  Maui, Auth0 or other host contracts unless the contract already declares
+  that exact change;
+- skip `verify-checkpoint.mjs`, use `git add -A`, bypass hooks, amend, create an
+  empty commit, rewrite history, push, merge, publish or create a pull request;
+- reset the tier ledger, repeat a tier or hide a failed attempt behind a later
+  summary;
 - declare `PASS`, skip the independent re-verification, update Targetprocess
   or make any other external write;
-- turn a product-behavior improvement into a repair; return any requested
-  acceptance change to `flow-baseline` and renewed approval;
+- turn a product-behavior improvement into a repair: an acceptance change
+  needs a new `flow-baseline` run;
+- edit this skill, its references, schemas or an installed snapshot during a
+  run;
 - store source copies, credentials, tokens, private URLs or unnecessary
-  personal data in artifacts.
-
-## Handoff
-
-`debug-result.json` is the canonical repair artifact. It must include the
-consumed artifact paths and hashes, the selected starting tier, the monotonic
-attempt ledger, failed-scenario diagnosis, reproduction evidence, hypothesis
-updates, changed paths, validation outcomes, checkpoint evidence, remaining
-limitations and the final `repaired`, `blocked` or `parked` status.
-
-A `repaired` result is incomplete without a fresh independent `flow-verify`
-handoff that reuses the contract and current product state from disk.
-A contract change, broadened scope or new approval requirement returns to
-`flow-baseline` or a human decision instead of continuing in `flow-debug`.
-
-A repaired candidate is handed to a fresh verifier only after the user confirms
-the new-chat transition.
+  personal data.
 
 ## Reading discipline
 
@@ -157,17 +158,8 @@ Context is spent once; every re-read pays again for nothing.
 
 - Read a file once, at the range you need, and never re-read a range you hold.
 - Widen or narrow a search instead of repeating it in other words.
-- Learn an artifact's shape from
-  `node "<migration-skill-lab-root>\scripts\print-shape.mjs" <example>`, never
-  from `schemas\`, `scripts\` or a whole example file; write the artifact and
-  act on the validator's errors. Read the validator's rule only when an error
-  names no fix and one retry fails, and record that as an observation.
+- Learn an artifact's shape from `print-shape.mjs`, never from `schemas\`,
+  `scripts\` or a whole example file; write the artifact and act on the
+  validator's errors. Read the validator's rule only when an error names no
+  fix and one retry fails, and record that as an observation.
 - Resolve a module path, barrel or single file, before reading it.
-
-## Post-run observation capture
-
-After `debug-result.json` and the re-verification handoff are complete, or
-after the final `blocked` or `parked` response when that artifact cannot be
-produced, read `<migration-skill-lab-root>\docs\flow-observation-capture.md`
-and follow it with `--primary <debug-result.json> --status repaired`,
-`blocked` or `parked`.

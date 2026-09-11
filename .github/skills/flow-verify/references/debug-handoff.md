@@ -13,12 +13,12 @@ smallest recommended next action; and a tier recommendation.
 Classify it:
 
 - `repairable`: a local product failure that a fresh `flow-debug` chat can
-  reproduce and change within the approved allowlist;
-- `external-blocked`: missing access, environment, approval, dependency or
-  host ownership. It never starts debug.
+  reproduce and change within `scope.allowedWritePaths`;
+- `external-blocked`: missing access or environment, a dependency or
+  configuration change the contract does not declare, or host ownership. It
+  never starts debug.
 
 Never repair, choose the final tier or treat a repair candidate as `PASS`.
-`flow-debug` owns the repair; a contract change needs a new `flow-baseline` and
-renewed human approval. For a `repairable` handoff, offer the fresh
-`/flow-debug` chat through the continuation routes, carrying only the artifact
-paths and the product root.
+`flow-debug` owns the repair; a contract change needs a new `flow-baseline`
+run. For a `repairable` handoff, offer the fresh `/flow-debug` chat through the
+continuation routes, carrying only the artifact paths and the product root.

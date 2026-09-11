@@ -101,9 +101,14 @@ the contract.
 - `validationPlan`: test commands that terminate, `typecheckCommand`,
   `buildCommand`, `installCommand` from the constants, `browserValidation`
   naming an existing component-rendering harness such as Storybook when the
-  product has one, and `manualValidation` with the scenario a person walks
-  through and the environment from the constants. Nobody is assigned to it,
-  so those two are the whole instruction.
+  product has one, and `manualValidation` with the `environment` from the
+  constants and a `scenario` that gives the walkthrough's route: the order in
+  which a person takes the scenario and `visualParity` ids, and the concrete
+  data each needs, such as which line to select and which robot type to
+  choose. Name the ids rather than retelling them: `flow-verify` builds every
+  item from the entry itself, and a retold scenario is a second copy that
+  drifts. Nobody is assigned to it, so the route and the environment are the
+  whole instruction.
 - `rollback`: which files return to which state, and what a revert must not
   disturb. Restating that `migration-result.json` records the checkpoint SHAs
   answers nothing.

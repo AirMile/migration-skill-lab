@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.13.0`.
+Skill version: `0.14.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -153,8 +153,9 @@ Never:
 - create branches, stashes, remotes, pull requests or external writes; commit
   while checkpoint mode is disabled; push, amend, rewrite history, bypass hooks
   or use `git add -A`;
-- alter backend, Maui, Auth0 or other host contracts outside the approved
-  scope; a changed contract or wider scope returns to `flow-baseline`;
+- alter backend, Maui, Auth0 or other host contracts beyond what
+  `targetArchitecture` declares; a changed contract or wider scope returns to
+  `flow-baseline`;
 - replace a parent React form unless every one of its rendered children is
   marked `migrate`;
 - make an unapproved Angular convention a target rule;

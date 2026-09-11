@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.19.0
+targetVersion: 0.20.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-baseline` v0.19.0 acceptance criteria
+# `flow-baseline` v0.20.0 acceptance criteria
 
 ## Hard gates
 
@@ -182,8 +182,11 @@ The source is acceptable when:
 58. `rollback` names which files return to which state and what a revert must
     not disturb, instead of restating that `migration-result.json` records the
     checkpoint SHAs;
-59. required manual validation names both the scenario and the environment it
-    is walked through in, because no owner is assigned to work it out;
+59. required manual validation names the environment and the walkthrough's
+    route: the order of scenario and `visualParity` ids and the concrete test
+    data each needs, never a retelling of the scenarios, because `flow-verify`
+    builds every item from the entry itself and no owner is assigned to work
+    it out;
 60. the run asks nothing it has already answered: neither artifact's
     destination, the run directory, the `flowId`, the validation commands nor
     the checkpoint mode reaches the user as a question;
