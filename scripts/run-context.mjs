@@ -34,6 +34,10 @@ Options:
   --self-test            run the built-in checks
 `;
 
+// continuation.mjs --save names a prompt for the attempt it starts, with -<N>
+// from verification attempt 2 on.
+const promptFilePattern = /-prompt(?:-\d+)?\.md$/;
+
 const git = (root, args, input) =>
   spawnSync("git", ["-C", root, ...args], { encoding: "utf8", input });
 
@@ -271,7 +275,7 @@ const readFlow = async (labRoot, flowId) => {
         } catch {
           handoffs.push({ path: filePath, unreadable: true });
         }
-      } else if (file.startsWith(`${flowId}-`) && file.endsWith("-prompt.md")) {
+      } else if (file.startsWith(`${flowId}-`) && promptFilePattern.test(file)) {
         promptFiles.push(filePath);
       }
     }
@@ -297,7 +301,7 @@ const readRunDirectory = async directory => {
   return {
     path: absolute,
     files,
-    promptFiles: files.filter(file => file.endsWith("-prompt.md")),
+    promptFiles: files.filter(file => promptFilePattern.test(file)),
   };
 };
 
@@ -425,6 +429,7 @@ const runSelfTest = async () => {
       flowId: "demo-flow",
     }));
     await writeFile(path.join(firstRun, "demo-flow-flow-migrate-prompt.md"), "/flow-migrate\n");
+    await writeFile(path.join(firstRun, "demo-flow-flow-verify-prompt-2.md"), "/flow-verify\n");
 
     const savedStatus = path.join(temporary, "status.json");
     const context = await collectContext({
@@ -441,9 +446,9 @@ const runSelfTest = async () => {
     assert(!Object.hasOwn(context.product, "blobs"), "content hashes leak into the output");
     assert(context.flow.nextRunId === "demo-flow-baseline-2",
       `the next runId is ${context.flow.nextRunId}; another flow's runs were counted`);
-    assert(context.flow.handoffs.length === 1 && context.flow.promptFiles.length === 1,
-      "the flow's earlier handoff or saved prompt was not found");
-    assert(context.runDirectory.promptFiles.length === 1, "the run directory's prompt was not listed");
+    assert(context.flow.handoffs.length === 1 && context.flow.promptFiles.length === 2,
+      "the flow's earlier handoff or a saved prompt, attempt-numbered ones included, was not found");
+    assert(context.runDirectory.promptFiles.length === 2, "the run directory's prompts were not listed");
     const { scripts, suggested } = context.commands;
     assert(!scripts.test.terminates && !scripts.dev.terminates && scripts.build.terminates,
       "watch and server scripts are not told apart from terminating ones");

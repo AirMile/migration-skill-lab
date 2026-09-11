@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.6.0`.
+Skill version: `0.7.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -34,9 +34,10 @@ those:
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status --contract <flow-contract.json>`.
   That status, HEAD and branch, with the failed criteria, failing commands and
   manual observations in `verification-result.json`, are the frozen evidence
-  every attempt is measured against. A saved `<flowId>-flow-debug-prompt.md`
+  every attempt is measured against. A saved `<flowId>-flow-debug-prompt.md`,
+  or `-prompt-<N>.md` when this repair answers `verification-result-<N>.json`,
   means an earlier phase chose to continue later: say so in one line and resume
-  from the artifacts it names.
+  from the artifacts it names. Another attempt's prompt is spent.
 - From the contract: `scope.allowedWritePaths`, the test, typecheck and build
   commands, `rollback`, `checkpointPolicy` and `visualParity`.
 - The work-item snapshots travel only so the repaired chain reaches the next

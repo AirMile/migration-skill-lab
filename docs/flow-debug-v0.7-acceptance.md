@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.6.0
+targetVersion: 0.7.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-debug` v0.6.0 acceptance criteria
+# `flow-debug` v0.7.0 acceptance criteria
 
 ## Hard gates
 
@@ -101,3 +101,8 @@ The source is acceptable when:
 26. a repair answering `verification-result-<N>.json` writes
     `debug-result-<N>.json`, never overwriting the earlier repair a later
     verification hashes.
+27. only a saved prompt named for the attempt this repair answers,
+    `<flowId>-flow-debug-prompt.md` or `-prompt-<N>.md` for
+    `verification-result-<N>.json`, is treated as this run's continuation, and
+    its own `--save` names the next verification's prompt for attempt N + 1,
+    so it never collides with the prompt that started attempt N.

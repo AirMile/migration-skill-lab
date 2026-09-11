@@ -12,6 +12,11 @@ Prints the one-line invocation that starts the next phase in a fresh chat:
 product root and the run directory, all as absolute paths. Every path must
 exist. --save also writes it to <run-dir>\\<flowId>-<skill>-prompt.md, taking
 flowId from the first artifact unless --flow-id is given; it never overwrites.
+Like the files of the phase it starts, the name adds -<N> from verification
+attempt 2 on, such as <flowId>-flow-verify-prompt-2.md: flow-debug takes N
+from the verification-result's verificationAttempt, and flow-verify is one
+more than the attempt its debug-result answers (debug-result.json answers 1,
+debug-result-<N>.json answers N).
 
 The artifacts must be the set the next phase validates first, or nothing is
 printed: flow-migrate takes the contract and the baseline work-item snapshot;
@@ -46,13 +51,16 @@ const artifactSets = {
   },
 };
 
-const artifactKind = async absolute => {
-  let value;
+const readArtifact = async absolute => {
   try {
-    value = JSON.parse((await readFile(absolute, "utf8")).replace(/^\uFEFF/, ""));
+    return JSON.parse((await readFile(absolute, "utf8")).replace(/^\uFEFF/, ""));
   } catch {
     throw new Error(`${absolute} is not a JSON artifact.`);
   }
+};
+
+const artifactKind = async absolute => {
+  const value = await readArtifact(absolute);
   return value.artifactType === "work-item-handoff"
     ? `work-item-handoff:${value.handoffPhase}`
     : String(value.artifactType);
@@ -79,6 +87,31 @@ const checkArtifactSet = async (next, artifacts) => {
     ...(unexpected.length > 0 ? [`unexpected ${unexpected.join(", ")}`] : []),
   ];
   throw new Error(`/${next} validates ${accepted.join(", ")}: ${problems.join(" and ")}.`);
+};
+
+// A later repair loop would otherwise meet the prompt an earlier attempt
+// saved: refused as already existing, or resumed from as if it were its own.
+const promptAttempt = async (next, artifacts) => {
+  for (const absolute of artifacts) {
+    const value = await readArtifact(absolute);
+    if (next === "flow-debug" && value.artifactType === "verification-result") {
+      const attempt = value.verificationAttempt;
+      if (!Number.isInteger(attempt) || attempt < 1) {
+        throw new Error(`${absolute} records no verificationAttempt to name the prompt by.`);
+      }
+      return attempt;
+    }
+    if (next === "flow-verify" && value.artifactType === "debug-result") {
+      const answered = /^debug-result(?:-([1-9]\d*))?\.json$/.exec(path.basename(absolute));
+      if (!answered) {
+        throw new Error(
+          `${absolute} does not name the verification attempt it answers: call it debug-result.json or debug-result-<N>.json.`,
+        );
+      }
+      return Number(answered[1] ?? 1) + 1;
+    }
+  }
+  return 1;
 };
 
 const quote = value => (/\s/.test(value) ? `"${value}"` : value);
@@ -135,14 +168,16 @@ const buildContinuation = async options => {
   if (options.save) {
     let flowId = options["flow-id"];
     if (!flowId && artifacts.length > 0) {
-      flowId = JSON.parse(
-        (await readFile(artifacts[0], "utf8")).replace(/^\uFEFF/, ""),
-      ).flowId;
+      flowId = (await readArtifact(artifacts[0])).flowId;
     }
     if (!flowId) {
       throw new Error("--save needs a flowId: pass --flow-id or an artifact that carries one.");
     }
-    savedPath = path.join(runDirectory, `${flowId}-${options.next}-prompt.md`);
+    const attempt = await promptAttempt(options.next, artifacts);
+    savedPath = path.join(
+      runDirectory,
+      `${flowId}-${options.next}-prompt${attempt > 1 ? `-${attempt}` : ""}.md`,
+    );
     const content = [
       `# Resume ${flowId} with /${options.next}`,
       "",
@@ -230,6 +265,20 @@ const runSelfTest = async () => {
       artifactType: "migration-result",
     });
     const debugResult = await writeArtifact("debug-result.json", { artifactType: "debug-result" });
+    const verificationResult = await writeArtifact("verification-result.json", {
+      artifactType: "verification-result",
+      verificationAttempt: 1,
+    });
+    const debugHandoff = await writeArtifact("debug-handoff.json", { artifactType: "debug-handoff" });
+    const secondVerification = await writeArtifact("verification-result-2.json", {
+      artifactType: "verification-result",
+      verificationAttempt: 2,
+    });
+    const secondHandoff = await writeArtifact("debug-handoff-2.json", { artifactType: "debug-handoff" });
+    const secondDebugResult = await writeArtifact("debug-result-2.json", {
+      artifactType: "debug-result",
+    });
+    const unnamedDebugResult = await writeArtifact("repair.json", { artifactType: "debug-result" });
 
     const options = {
       next: "flow-migrate",
@@ -281,14 +330,33 @@ const runSelfTest = async () => {
       }),
       "unexpected migration-result",
       "an artifact the next phase does not validate was accepted");
-    const reverification = await buildContinuation({
-      ...options,
-      save: false,
-      next: "flow-verify",
-      positional: [contract, migrationResult, baselineSnapshot, migrationSnapshot, debugResult],
-    });
-    assert(reverification.invocation.startsWith("/flow-verify "),
-      "a re-verification after a repair was refused");
+
+    // Two repair loops save a prompt at every hand-over into one run directory,
+    // each named for the attempt of the phase it starts.
+    const verifyInputs = [contract, migrationResult, baselineSnapshot, migrationSnapshot];
+    const debugInputs = (verification, handoff) =>
+      [contract, migrationResult, verification, handoff, baselineSnapshot, migrationSnapshot];
+    const loops = [
+      ["flow-verify", verifyInputs, "demo-flow-flow-verify-prompt.md"],
+      ["flow-debug", debugInputs(verificationResult, debugHandoff), "demo-flow-flow-debug-prompt.md"],
+      ["flow-verify", [...verifyInputs, debugResult], "demo-flow-flow-verify-prompt-2.md"],
+      ["flow-debug", debugInputs(secondVerification, secondHandoff), "demo-flow-flow-debug-prompt-2.md"],
+      ["flow-verify", [...verifyInputs, secondDebugResult], "demo-flow-flow-verify-prompt-3.md"],
+    ];
+    for (const [next, positional, expected] of loops) {
+      const saved = await buildContinuation({ ...options, next, positional });
+      assert(saved.invocation.startsWith(`/${next} `), `a /${next} continuation was refused`);
+      assert(path.basename(saved.savedPath) === expected,
+        `the prompt ${expected} was saved as ${path.basename(saved.savedPath)}`);
+    }
+    await expectFailure(
+      () => buildContinuation({
+        ...options,
+        next: "flow-verify",
+        positional: [...verifyInputs, unnamedDebugResult],
+      }),
+      "does not name the verification attempt",
+      "a prompt was saved for a debug-result whose attempt is unknown");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

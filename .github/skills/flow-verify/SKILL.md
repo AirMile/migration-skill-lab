@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.14.0`.
+Skill version: `0.15.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -34,8 +34,9 @@ every attempt after a repair also `debug-result.json`.
   artifact is missing, incompatible, inconsistent or outside the declared flow.
 - Run
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status --contract <flow-contract.json>`.
-  A saved `<flowId>-flow-verify-prompt.md` means an earlier phase chose to
-  continue later: say so in one line and resume from the artifacts it names.
+  A saved `<flowId>-flow-verify-prompt.md`, or `-prompt-<N>.md` on attempt N
+  below, means an earlier phase chose to continue later: say so in one line
+  and resume from the artifacts it names. Another attempt's prompt is spent.
 - From the contract: `scenarios`, `visualParity`, `renderedSurfaceInventory`,
   `characterizationRequired`, `scope`, the test, typecheck and build commands, `checkpointPolicy` and
   `validationPlan.manualValidation`. The walkthrough's items are the

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.14.0
+targetVersion: 0.15.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-verify` v0.14.0 acceptance criteria
+# `flow-verify` v0.15.0 acceptance criteria
 
 ## Hard gates
 
@@ -133,3 +133,7 @@ The source is acceptable when:
     answers, records `verificationAttempt` N and adds `-<N>` to every file it
     writes, so it never overwrites the failed attempt's evidence or a file a
     debug artifact hashes.
+45. only a saved prompt named for this attempt, `<flowId>-flow-verify-prompt.md`
+    on attempt 1 and `-prompt-<N>.md` on attempt N, is treated as this run's
+    continuation; an earlier attempt's prompt names no debug-result and is
+    never resumed from.
