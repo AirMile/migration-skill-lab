@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.9.0
+targetVersion: 0.10.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-11
 ---
 
-# `flow-verify` v0.9.0 acceptance criteria
+# `flow-verify` v0.10.0 acceptance criteria
 
 ## Hard gates
 
@@ -22,7 +22,8 @@ run.
 - Declared test, typecheck and build outcomes.
 - Coverage evidence for the selected flow when measurement is approved.
 - Manual/Maui validation status and explicit blockers.
-- A schema-valid `verification-result.json` and concise human-readable report.
+- A schema-valid `verification-result.json` and an inline summary, with no
+  prose report.
 - A concrete repair diagnosis for every `FAIL` or repairable `BLOCKED`.
 - A schema-valid observation artifact written after the verification outputs,
   including an empty observation list when no concrete skill signal occurred.
@@ -97,11 +98,22 @@ The source is acceptable when:
     summary is inline;
 32. the visual verdict is assigned here, from the manual evidence, not carried
     over from the migration result;
-33.e continuation offers exactly three routes — open the next phase now
+33. the continuation offers exactly three routes — open the next phase now
     using the host's own mechanism, show the invocation to paste, or save it in
     the run directory as a resumable checkpoint — and never opens a second
     terminal window;
 34. the applied/not-applied question is a confirmation of what the migration
     handoff already recorded, not an open question asked afresh;
-35. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
-    computed by hand.
+35. artifact pointers come from a script (`seed-work-item.mjs`,
+    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
+    by hand;
+36. `references/debug-handoff.md` is read only for a non-PASS result, and
+    `references/push.md` only when checkpoints were committed or the push policy
+    is `confirm-after-pass`;
+37. the manual verification environment comes from the contract's
+    `validationPlan`, not from a separate read of the project constants;
+38. the work-item snapshot is seeded from the migration snapshot with
+    `seed-work-item.mjs`, with the application outcome passed as a
+    confirmation of what that snapshot recorded;
+39. a `FAIL` or repairable `BLOCKED` hands off to `flow-debug`, which owns the
+    repair; nothing is returned to `flow-migrate`.

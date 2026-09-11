@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.12.0
+targetVersion: 0.13.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-11
 ---
 
-# `flow-migrate` v0.12.0 acceptance criteria
+# `flow-migrate` v0.13.0 acceptance criteria
 
 ## Hard gates
 
@@ -35,8 +35,9 @@ during its own run.
 
 The source is acceptable when:
 
-1. its write gate requires the validator root and rejects a draft, rejected or
-   unapproved contract;
+1. its write gate requires the validator root and a contract that validates,
+   and treats the `/flow-migrate` invocation as the authorization to write
+   inside that contract's allowlist, never an earlier run or a report;
 2. it refuses unapproved dependencies, lockfiles, configuration and host
    changes, while allowing exact architecture-approved paths and changes;
 3. it preserves pre-existing product worktree changes;
@@ -113,9 +114,18 @@ The source is acceptable when:
 36. `renderedSurfaceComparison.surfaces` records `addressed` or `not-addressed`
     at schemaVersion 4 and never a `matches` verdict; the visual judgement is
     `flow-verify`'s;
-37.e continuation offers exactly three routes — open the next phase now
+37. the continuation offers exactly three routes — open the next phase now
     using the host's own mechanism, show the invocation to paste, or save it in
     the run directory as a resumable checkpoint — and never opens a second
     terminal window;
-38. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
-    computed by hand.
+38. artifact pointers come from a script (`seed-work-item.mjs`,
+    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
+    by hand;
+39. `references/checkpoints.md` is read only under `auto-local`, and nothing is
+    committed under `disabled`;
+40. the run starts from `run-context.mjs --save-status` and ends with its
+    `--compare`;
+41. the work-item snapshot is seeded from the baseline snapshot with
+    `seed-work-item.mjs` and finalized with its `--finalize`;
+42. the continuation passes every artifact `flow-verify` validates: the
+    contract, the migration result and both work-item snapshots.

@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.2.0`.
+Skill version: `0.3.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -153,76 +153,21 @@ the new-chat transition.
 
 ## Reading discipline
 
-Context is a budget this run spends once, and every re-read of the same bytes
-is paid again for nothing.
+Context is spent once; every re-read pays again for nothing.
 
-- Read a file once, at the range you need. Return to it only for a range you
-  have not read; never re-read it whole after reading part of it, and never
-  request a range overlapping one you already hold.
-- Widen or narrow a search rather than repeating it. Two patterns that differ
-  only in alternation, wording or case return mostly the same hits, so the
-  second one buys nothing.
-- Do not read `schemas\` or `scripts\` source to learn an artifact's shape.
-  Copy the shape from `examples\handoff\detail-drawer-line-edit\`, write the artifact, run
-  `validate-handoff.mjs` and act on its errors; the validator names what is
-  missing far more cheaply than a schema read does. When an error names a rule
-  but not the fix, and one more attempt does not resolve it, reading the rule in
-  `scripts\validate-handoff.mjs` is the cheaper route: record it as an
-  observation so the message gets improved instead of the next run guessing too.
-- Resolve a module path before reading it. A directory may be a barrel or a
-  single file, so check which exists instead of guessing and failing.
+- Read a file once, at the range you need, and never re-read a range you hold.
+- Widen or narrow a search instead of repeating it in other words.
+- Learn an artifact's shape from
+  `node "<migration-skill-lab-root>\scripts\print-shape.mjs" <example>`, never
+  from `schemas\`, `scripts\` or a whole example file; write the artifact and
+  act on the validator's errors. Read the validator's rule only when an error
+  names no fix and one retry fails, and record that as an observation.
+- Resolve a module path, barrel or single file, before reading it.
 
 ## Post-run observation capture
 
-During the run, silently retain concrete evidence of user corrections,
-instruction deviations, skill-caused tool failures, ambiguous instructions,
-missing failure handling, unused context, unsuitable delegation, deterministic
-steps that should be scripted, or output mismatches. Do not interrupt or
-reprioritize the debug workflow to analyze these signals.
-
 After `debug-result.json` and the re-verification handoff are complete, or
 after the final `blocked` or `parked` response when that artifact cannot be
-produced:
-
-1. Evaluate this run's own tool history against these checks and record every
-   one that fired. They are countable, so answer them from the history rather
-   than from impression:
-   - the same file read more than twice, or re-read over a range already
-     held: `unnecessary-context-load`;
-   - two or more searches whose patterns differ only in alternation, wording
-     or case: `unnecessary-context-load`;
-   - a schema, validator or renderer source read instead of running the
-     command: `unnecessary-context-load`;
-   - a tool call that failed because this skill named a path, command or flag
-     that does not exist or does not behave as written:
-     `skill-caused-tool-failure`;
-   - a step performed by hand that a script in `scripts\` already performs:
-     `deterministic-step-candidate`;
-   - a user correction, a restated instruction, or the same question asked
-     twice: `user-correction` or `ambiguous-instruction`;
-   - an artifact that needed a repair pass before it validated:
-     `output-mismatch`.
-2. Exclude product defects, external blockers, expected precondition blockers,
-   missing Angular conventions themselves, preferences and static speculation.
-   Executor noise means a host or transport failure unrelated to this skill; a
-   tool call this skill's own wording caused is never executor noise.
-3. Deduplicate semantically equivalent signals from this run and preserve their
-   occurrence count. Do not cap the number of material observations.
-4. Write `<run-artifact-directory>\skill-run-observations-flow-debug.json`. The
-   filename carries the skill because phases of one flow share a run directory,
-   and a bare `skill-run-observations.json` means the second skill to finish
-   silently overwrites the first one's evidence.
-   Copy the shape from `examples\handoff\detail-drawer-line-edit\` rather than writing it from this
-   description: an entry needs `id`, `category`, `observation`, `effect`,
-   `evidence`, `skillLocations`, `causality` and `occurrenceCount`, and
-   `primaryOutcome.status` is `repaired`, `blocked` or `parked` for this skill.
-   An empty `observations` list is a claim that every check in step 1 was
-   evaluated and none fired; write it only when that is true.
-5. Validate it with
-   `node "<migration-skill-lab-root>\scripts\validate-handoff.mjs"
-   "<skill-run-observations-flow-debug.json>"`.
-6. Report a capture or validation failure separately without changing the
-   primary debug status.
-
-The artifact is evidence for a later `migration-skill-audit`, not a change
-proposal or authorization. Never edit skill source during this run.
+produced, read `<migration-skill-lab-root>\docs\flow-observation-capture.md`
+and follow it with `--primary <debug-result.json> --status repaired`,
+`blocked` or `parked`.

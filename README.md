@@ -8,9 +8,9 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.18.0, `flow-migrate` v0.12.0 and
-  `flow-verify` v0.9.0 source skills;
-- experimental `flow-debug` v0.2.0 source skill;
+- experimental `flow-baseline` v0.19.0, `flow-migrate` v0.13.0 and
+  `flow-verify` v0.10.0 source skills;
+- experimental `flow-debug` v0.3.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
@@ -18,6 +18,16 @@ This lab contains:
   which is the shape reference every skill copies from;
 - `scripts\hash-artifact.mjs`, which prints the path-and-sha256 pointer block
   one artifact needs to reference another;
+- the deterministic steps every flow skill used to do by hand, each with
+  `--help` and `--self-test`: `run-context.mjs` (product status and its later
+  comparison, run directory, runId, earlier handoffs, terminating commands),
+  `print-shape.mjs` (a compact skeleton of an example artifact instead of the
+  whole file), `seed-work-item.mjs` (the next work-item snapshot from the
+  previous one, and `--finalize` for progress and actions),
+  `continuation.mjs` (the next phase's invocation) and `new-observations.mjs`
+  (the observation sidecar);
+- `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`, the
+  steps the flow skills share and read only when they reach them;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
   preflight;
 - schema-valid post-run observation sidecars for later skill audits;
@@ -173,7 +183,8 @@ reasoning, and the mechanical steps are already scripts.
    heavy attempt, and hands repaired candidates to a user-confirmed fresh
    independent `flow-verify` chat.
 6. After its primary output, each skill writes a
-   `skill-run-observations.json` sidecar. An empty observation list proves that
+   `skill-run-observations-<skill>.json` sidecar with
+   `scripts\new-observations.mjs`. An empty observation list proves that
    capture ran without inventing feedback.
 
 Each phase also writes an immutable work-item snapshot and deterministic

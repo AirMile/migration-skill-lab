@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.18.0
+targetVersion: 0.19.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-11
 ---
 
-# `flow-baseline` v0.18.0 acceptance criteria
+# `flow-baseline` v0.19.0 acceptance criteria
 
 ## Hard gates
 
@@ -54,16 +54,18 @@ allowlist the slice does not need, or stores sensitive content.
   questions. It asks for no reply, authorizes nothing, and restates no confirmed
   behavior, because a citation is checked by opening it.
 - Exactly one user-chosen continuation: a fresh `flow-migrate` chat opened now,
-  the invocation shown for pasting, or the invocation saved beside the report.
+  the invocation shown for pasting, or the invocation saved in the run
+  directory.
 
 ## Acceptance check
 
 The source is acceptable when:
 
-1. it requires a human-selected flow, migration-skill-lab root and explicit
-   report/run locations;
+1. it requires a human-selected flow and the migration-skill-lab root, and
+   derives the run location instead of asking for it;
 2. it cannot write product code or tests;
-3. it produces a draft, never self-approved, Flow Contract;
+3. it produces a final Flow Contract that is never self-approved and carries no
+   approval state;
 4. it refuses unsupported Angular target claims;
 5. its example artifact validates with `validate-handoff.mjs`;
 6. its source does not alter `migration-analyze` v0.1.
@@ -76,11 +78,10 @@ The source is acceptable when:
 10. it proposes a new story only after explicit request or evidence-backed
     scope splitting and never invents an external ID;
 11. it creates no product or empty checkpoint commit in the read-only phase;
-12. it builds the approval checkpoint from validated contract fields rather
-    than report prose, and withholds the approve option while a blocking open
-    question is unresolved;
+12. it builds the review summary from validated contract fields rather than
+    from prose;
 13. it never sets or claims to set the host plan mode, and defers its artifact
-    writes until after approval when the session already runs in plan mode;
+    writes until plan mode is exited when the session already runs in it;
 14. it opens a `flow-migrate` chat only on the user's explicit route choice and
     never continues or delegates the migration itself.
 15. it groups technical checkpoints under stakeholder-readable Tasks instead
@@ -90,8 +91,8 @@ The source is acceptable when:
 18. browser automation and Maui host smoke validation stay separate.
 19. a possible behavior improvement triggers one explicit preserve/include/
     follow-up choice and remains open until answered.
-20. it preserves draft pending/open wording as immutable history and requires a
-    separate approved successor artifact with resolved decisions.
+20. it never edits an earlier run's artifacts; a changed boundary, allowlist or
+    scenario is a new run that declares `supersedes`.
 21. it records visual parity requirements, including drawer insets and input
     containment, for independent browser verification.
 22. it ends by offering a user-confirmed fresh `/flow-migrate` chat rather than
@@ -145,9 +146,8 @@ The source is acceptable when:
 41. every question it asks has answerable options, and it offers no route the
     validator rejects, no command the safety boundary forbids and no value the
     run can derive;
-42. the approval checkpoint offers a change request as well as approve, reject
-    and ask, and a change request produces a successor draft rather than an
-    edit to the existing one.
+42. a wish to change the boundary, the write allowlist or a scenario is answered
+    with a new run, never with an edit to the written contract.
 43. `dependencyChanges` follows from the product's own dependency manifest, and
     a missing target framework yields `required: true` with the manifest,
     lockfile, build-config and TypeScript paths;
@@ -192,13 +192,13 @@ The source is acceptable when:
 62. the CI configuration is read before any claim about coverage, and a
     measurement CI already takes is recorded as not retrieved for this run
     rather than as unavailable;
-63. the manual-validation environment is proposed from the product's own
-    scripts and configuration for the user to correct, not asked open-ended;
+63. the manual-validation environment is transcribed from the project
+    constants, never asked;
 64. every `openQuestions` entry is something this run could not determine; a
     choice it could have made is decided or put to the user, never parked for
     `flow-migrate` to report `BLOCKED` on;
-65. the continuation route for a fresh chat is `/new` in this session
-    followed by the invocation, never a second terminal window;
+65. a fresh chat is opened through the host's own mechanism, never through a
+    second terminal window;
 66. `docs\project-constants.md` is read before the survey and the run states
     that it did; nothing on that page reaches the user as a question or lands
     in `openQuestions`;
@@ -220,13 +220,30 @@ The source is acceptable when:
     in the same breath whether anything in it is off limits;
 72. the observation sidecar is named `skill-run-observations-flow-baseline.json`
     so a later phase in the same run directory cannot overwrite it;
-73.e continuation offers exactly three routes — open the next phase now
+73. the continuation offers exactly three routes — open the next phase now
     using the host's own mechanism, show the invocation to paste, or save it in
     the run directory as a resumable checkpoint — and never opens a second
     terminal window;
 74. a scenario names concrete values a tester can act on, never a category such
     as "a robot with FeedPush capability" that a later phase has to resolve;
-75. artifact pointers come from `scripts/hash-artifact.mjs`, not from digests
-    computed by hand;
+75. artifact pointers come from a script (`seed-work-item.mjs`,
+    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
+    by hand;
 76. a saved continuation prompt found in the run directory is reported in one
     line and resumed from, not treated as a second run.
+77. the flowId, run directory, runId, earlier handoffs, saved prompts, product
+    status and terminating commands come from `run-context.mjs`, not from hand
+    derivation;
+78. artifact shapes come from `print-shape.mjs` on the example chain; no whole
+    example file and no schema is read to learn a shape;
+79. `references/flow-contract.md` is read when the contract content is recorded,
+    and `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`
+    at their own steps, never all at the start;
+80. a rerun's work-item snapshot is seeded with `seed-work-item.mjs` and
+    finalized with its `--finalize`, so settled text is never retyped and
+    actions and Story progress are never set by hand;
+81. the continuation invocation comes from `continuation.mjs` and the
+    observation sidecar from `new-observations.mjs`;
+82. the worktree comparison is `run-context.mjs --compare`, which also catches a
+    further change to a file that was already dirty, and it writes nothing into
+    the run directory.

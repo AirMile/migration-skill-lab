@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.2.0
+targetVersion: 0.3.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-11
 ---
 
-# `flow-debug` v0.2.0 acceptance criteria
+# `flow-debug` v0.3.0 acceptance criteria
 
 ## Hard gates
 
@@ -82,3 +82,6 @@ The source is acceptable when:
 19. observation capture evaluates the countable checks against this run's own
     tool history, and an empty list means every check was evaluated and none
     fired rather than that none was looked for.
+20. observation capture follows `docs\flow-observation-capture.md`, shared with
+    the other flow skills, and the sidecar is created with
+    `new-observations.mjs`.

@@ -1,250 +1,109 @@
-# Flow Contract requirements
+# Flow Contract fields
 
-Use this reference for every `flow-baseline` run.
+Read this at step 6 of `flow-baseline`, when the run starts recording the
+contract. It says what each field carries. Copy each field's exact shape from
+`print-shape.mjs` on `examples\handoff\detail-drawer-line-edit\flow-contract.json`
+and let `validate-handoff.mjs` name anything missing.
 
-## Goal
+## Carry or cite
 
-Create a compact behavioral handoff, not an Angular design. The handoff must
-give a later migration run enough evidence to know what may change, what must
-remain observable and which unknowns block writing.
+Carry in the contract what a later reader cannot recover from the product
+source: the write allowlist with the start and end state; the rendered-surface
+classification, which is a choice about this slice rather than a fact about
+the code; the target architecture, because the Angular side does not exist yet;
+the visual-parity requirements; the scenarios as the behavior this migration
+promises; hypotheses that took cross-file reasoning; decisions and open
+questions; validation commands, rollback and checkpoint policy.
 
-## Choosing the slice
+Cite what the product source already holds: how a control behaves today (the
+conversion arithmetic, the debounce window, the history rule, the tab order,
+the spacing tokens) and which controls render under which condition. A
+restated mechanism silently disagrees with the source the day someone edits
+it; a citation cannot go stale unnoticed. Never copy application source into
+the contract.
 
-The boundary is chosen during the run, not supplied before it. The survey in
-step 3 produces the rendered-surface inventory and, for each surface with its
-own component, the importers outside this flow's directory. Only then can two or
-three candidate boundaries be put side by side, each judged against:
+## Fields
 
-1. **one owner** — every migrated surface belongs to this flow, not to several
-   object types;
-2. **no shared infrastructure in the write allowlist** — a component other forms
-   import stays outside the cut;
-3. **a measurable neighbour** — a nested mount needs a `retain-react` sibling to
-   compare visual parity against;
-4. **bounded branches** — capability gates and mode branches are counted,
-   because each one doubles what a later verification must cover.
-
-Asking for the boundary up front makes the human decide before the evidence
-exists, and it is why two runs over the same route produced different cuts for
-line creation, Delete and the selected-line label. `scope.startState` and
-`scope.endState` follow from the chosen candidate; they describe that slice, not
-the whole route.
-
-The chosen candidate and the rejected ones are recorded as a `decisions` entry.
-The importer counts are not: they are reproducible from the source, and the
-decision carries the conclusion.
-
-## What the contract carries, and what it cites
-
-There is no separate baseline report and no draft state. The contract is the
-only durable analysis artifact and it is final when written; the run's chat
-summary lets a reader check it, and authorizes nothing. Two categories decide
-where something belongs.
-
-Carry it in the contract when a later reader cannot recover it from the product
-source:
-
-- the write allowlist, and the start and end state that bound the slice;
-- the rendered-surface classification, which is a choice about this slice and
-  not a fact about the code;
-- the target architecture, because the Angular side does not exist yet;
-- visual-parity requirements: which surface must match which retained
-  counterpart, and along which dimensions;
-- scenarios, as the behavior this migration promises to preserve;
-- hypotheses that took cross-file reasoning and still need characterizing;
-- decisions taken between conflicting sources, and the questions still open;
-- validation commands, rollback and checkpoint policy.
-
-Cite it instead when the product source already holds it:
-
-- how a control behaves today: the conversion arithmetic, the debounce window,
-  the history rule, the tab order, the exact spacing tokens. A scenario names
-  the behavior and points at the file and line that proves it.
-- which controls the current form renders, and under what condition.
-
-The reason is not brevity. A restated mechanism is a copy that silently
-disagrees with the source the day someone edits it, and `flow-migrate` opens
-that source anyway to write the code. A citation cannot go stale without the
-staleness being visible.
-
-## `flow-contract.json`
-
-The artifact must validate against
-`schemas/flow-contract.schema.json`. It contains pointers and concise
-descriptions only. Do not copy application source into JSON.
-
-Populate:
-
-- `repository` with the inspected root and revision;
-- `scope` with the start state, the end state and an explicit write allowlist,
-  and nothing else. Every path in that allowlist has been checked for consumers
-  outside this flow, and it contains a location for the new Angular code; a
-  design with nowhere to land cannot be implemented. From schemaVersion 6 there
-  is no `includedPaths` and no `excludedPaths`: the inventory below names every
-  surface with a citation, the allowlist is the boundary, and the validator
-  rejects a contract that restates either as a third path list;
-- `renderedSurfaceInventory` with one entry per visible control, conditional
+- `repository`: the inspected root and revision.
+- `scope`: `startState`, `endState` and `allowedWritePaths`, and nothing else;
+  schemaVersion 6 rejects `includedPaths` and `excludedPaths`. The start and
+  end state describe the chosen slice, not the whole route.
+  The allowlist is the only thing bounding `flow-migrate`'s writes, and it
+  holds exactly three kinds of path: the directory the new Angular code lands
+  in, since a design with nowhere to land cannot be implemented; the test
+  directory the `characterizationRequired` entries need, which the project
+  constants name; and every `dependencyChanges.paths` entry, which the
+  validator enforces. Check every existing file in it for consumers outside
+  this flow: shared infrastructure stays out, or a `decisions` entry names the
+  consumers considered and why the risk is accepted. Nothing goes in that the
+  slice does not need.
+- `scope.partialMount`: required. `nested: true` with `retainedParent` and
+  `siblingSections` when the slice mounts inside a retained React parent;
+  `nested: false` is a deliberate statement, not an omission. Both downstream
+  skills read it to decide whether real-host evidence is mandatory. A partial
+  mount replaces only `migrate` items and stays inside the parent form while
+  siblings are `retain-react`.
+- `renderedSurfaceInventory`: one cited entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
-  `excluded` and cited;
-- `targetArchitecture` with the ownership boundary, the typed adapter
-  (`inputs`, `commands`, `events`, `nonSuccessOutcome`, `forbiddenAccess`),
-  lifecycle and styling rules, and `dependencyChanges`. The mount mechanism,
-  compilation strategy, change-detection strategy, framework version and
-  package set are transcribed from `docs\project-constants.md`, not decided
-  here. When `dependencyChanges.required` is true it carries `packages` as
-  exact `name@version` strings and `paths` as repository-relative paths that
-  `scope.allowedWritePaths` covers, and `validationPlan.installCommand` says
-  how they are applied; the validator rejects a contract that requires a change
-  to a file its own allowlist forbids;
-- `scenarios` as Given/When/Then observable outcomes with evidence pointers;
-- `characterizationRequired` for each unproven hypothesis, with the behavior it
-  blocks;
-- `decisions` for a choice that shapes what this contract says: the chosen
-  boundary, an accepted shared-path risk, a conflict between sources that has
-  been resolved. Not why an earlier run was discarded; that is evidence about a
-  skill and belongs in `skill-run-observations.json`;
-- `testGaps` only for behavior without adequate evidence;
-- `openQuestions` for unknowns that cannot be inferred safely;
-- `workItemContext` with the existing Epic, Feature and selected User Story
-  IDs. Omit the ones that do not exist on the board yet; the matching work-item
-  entries then use `create` and the standup omits `storyExternalId`. A
-  placeholder ID reads like a real Targetprocess reference and is worse than an
-  honest proposal;
-- `checkpointPolicy` with `disabled` unless the user asks for `auto-local`,
-  which then requires `expectedBranch`, `externalRef` and `milestones`. Only
-  `mode` and `pushPolicy` are required otherwise, and `pushPolicy` is `never`
-  whenever the mode is `disabled`. Leave an unassigned value absent rather than
+  `excluded`. It binds the migration: no component may replace a parent whose
+  `retain-react` items it would hide, whatever the scenario list says.
+- `targetArchitecture`: `boundary.angularOwns` and `boundary.reactRetains`; the
+  `adapter` with `inputs`, `commands`, `events`, `nonSuccessOutcome` and
+  `forbiddenAccess`; `lifecycle` rules for mount, unmount and cancellation;
+  `styling` rules; and `dependencyChanges`. Every one of these is an array of
+  strings except `nonSuccessOutcome`, which is one string, and
+  `dependencyChanges`. Transcribe the mount mechanism, compilation and
+  change-detection strategy, framework version and package set from
+  `docs\project-constants.md` and cite it; this run decides only the boundary,
+  adapter, lifecycle and styling of the slice. Preserve boundaries that are
+  sound; do not mirror React mechanically or redesign the app.
+- `targetArchitecture.dependencyChanges`: a boolean `required`, `packages` as
+  exact `name@version` strings, `paths` repository-relative, and an optional
+  `note`. Read the product's dependency manifest first and cite it. When the
+  framework is absent there, `required` is `true`, with the constants' package
+  set and every file that set changes (manifest, lockfile, TypeScript
+  configuration). Never write `false` on the assumption that an earlier slice
+  added it: that unchecked claim hides the migration's largest decision.
+- `scenarios`: Given/When/Then observable outcomes, each with evidence pointers
+  and concrete values a tester can act on.
+- `visualParity`: one entry per `migrate` inventory id and no other id (the
+  validator checks both directions), with the retained `counterpart`, the
+  `appearance` requirements (border, radius, icon and label placement,
+  trailing unit, design tokens rather than literal values), the `layout`
+  requirements (width, alignment and spacing against the retained sibling
+  sections, drawer insets, input containment) and a `reference` citing the
+  counterpart. Add a reference screenshot when one is available. A surface
+  that is not declared here can never fail downstream, so anything a user
+  would notice belongs here.
+- `characterizationRequired`: `id`, `hypothesis`, `proveBefore` (the behavior
+  it blocks) and `evidence`, an array even for one citation.
+- `decisions`: `topic`, `decision`, `rationale` and `followUp`, for a choice that
+  shapes what the contract says: the boundary with its rejected candidates, an
+  accepted shared-path risk, a resolved conflict between sources. An open
+  conflict stays an open question, and why an earlier run was discarded goes
+  to the observation sidecar.
+- `testGaps`: only behavior without adequate evidence, with the safe
+  measurement it would need. Coverage is evidence about executed code, never a
+  per-flow baseline on its own, and a figure CI already measures is recorded
+  as not retrieved, with where it lives.
+- `openQuestions`: only what this run could not determine. `flow-migrate`
+  reports `BLOCKED` on each one, so a choice this run could make is decided or
+  put to the user instead. The mount mechanism is an open question only when
+  the project-constants page is missing, and then the missing page is the
+  question.
+- `workItemContext`: the existing Epic, Feature and Story IDs. Omit an item that
+  is not on the board yet, so its work-item entry proposes `create`.
+- `checkpointPolicy`: `mode: disabled` with `pushPolicy: never`. Only a user who
+  asks for `auto-local` unprompted changes that, and supplies
+  `expectedBranch`, `externalRef` and `milestones`; `authorizedByRole` and
+  `authorizedAt` exist only then. Leave an unassigned value absent rather than
   filling it with a placeholder.
-  `authorizedByRole` and `authorizedAt` are present only for `auto-local`, and
-  `pushPolicy` is `never` whenever the mode is `disabled`;
-- `validationPlan` with targeted tests that terminate, typecheck, build, the
-  manual verification scenarios and the required host validation. Verification
-  is manual, so record what a person walks through and the environment they
-  walk it through in, rather than a runner to automate it; nobody is assigned
-  to it, so those two are the whole instruction;
-- `rollback` with concrete scope-preserving instructions: which files return to
-  which state, and what a revert must not disturb. Restating that
-  `migration-result.json` records the checkpoint SHAs tells `flow-migrate`
-  something it already knows and answers nothing.
-
-`renderedSurfaceInventory` is binding during partial migration. A component may
-not replace a parent React form when that would hide an item marked
-`retain-react`. Every `migrate` entry needs a `visualParity` entry with the same
-id, and `visualParity` may not name anything else.
-
-## Work-item handoff
-
-Write `work-item-baseline.json` against
-`schemas/work-item-handoff.schema.json` after the Flow Contract. The snapshot
-must point to the exact Flow Contract hash and map scenarios to the Epic,
-Feature and User Story template fields. Add stakeholder-readable child Tasks
-whose contribution weights total 100, calculate Story progress from those
-Tasks, and include a daily standup block using the same percentage. Render it
-to Markdown with
-`scripts/render-work-item-handoff.mjs`, then show the `--inline` output in the
-chat as the handoff for that step.
-
-Targetprocess remains human-in-the-loop. `copy-ready` means the proposal is
-ready to paste, not that it was applied. Only a later snapshot may record
-`confirmed-applied`, and only after the user explicitly confirms the real
-external state. Always render confirmed current state/progress separately from
-the proposed Task-derived values.
-
-## Visual parity
-
-Record the source layout insets, spacing, input bounds and visual test evidence
-as observable behavior. A framework boundary does not inherit React wrapper
-styles; require browser verification that the replacement stays within the
-drawer and preserves the declared padding or margin.
-
-Appearance is a declared acceptance criterion, not a review instruction. From
-schemaVersion 4 the contract carries `visualParity`: one entry per migrated
-surface with its `id`, the retained `counterpart` it must look like, the
-`appearance` requirements (border, radius, icon and label placement, trailing
-unit, design tokens instead of literal values) and the `layout` requirements
-(width, alignment and spacing against the retained sibling sections). Cite the
-counterpart with file and line in `reference` when one exists.
-
-The validator enforces this list downstream: `flow-migrate` must return a
-verdict per surface and `flow-verify` must status each one on its own. A
-surface that is not declared here can therefore never fail later, so an
-appearance difference the user would notice belongs in `visualParity` rather
-than in the chat summary. `scope.partialMount` is required too; `nested: false` is
-a deliberate statement about the mount shape, not an omission.
-
-When the slice mounts inside a retained React parent, declare it in the
-contract as `scope.partialMount` with `nested: true`, the `retainedParent` and
-the `siblingSections` a migrated field must match. `flow-migrate` and
-`flow-verify` both read that flag to decide whether real-host evidence is
-mandatory, so leaving it out weakens the two downstream checks without any
-visible error.
-
-## Coverage discipline
-
-Coverage is evidence about executed code, not proof of correct behavior.
-Prioritize missing tests by user risk, integration boundary and missing
-scenario evidence. A global percentage must not substitute for a per-flow
-baseline.
-
-Read the CI configuration before concluding that no coverage exists. A pipeline
-that runs a coverage script, keeps its output as a build artifact or uploads it
-to an analysis service is a repository fact, and a report produced there is
-available even though the working tree holds none. Record such a measurement as
-not retrieved for this run, with where it lives; "no measurement is available"
-is a different and stronger claim, and it is false whenever CI already takes it.
-
-If a coverage report really is not available anywhere, do not create
-product-repository artifacts merely to obtain one. State the unavailable
-measurement, why it matters and the safe command and location it would need.
-
-## Review summary and continuation
-
-The run ends at one review summary, not at a checkpoint. Build it from
-the validated contract instead of from remembered prose, so the human reviews what
-`flow-migrate` will actually read:
-
-- `flowId`, the user-visible goal and the included/excluded boundary;
-- `scope.partialMount`, including a deliberate `nested: false`;
-- every `visualParity` id with the counterpart it must match;
-- `scope.allowedWritePaths` verbatim, because that list is the only thing
-  bounding the next phase's writes;
-- the test, typecheck and build commands, the manual verification scenarios and
-  the rollback;
-- `checkpointPolicy`, including `disabled`;
-- every open question and decision.
-
-The summary is not a gate. It authorizes nothing and asks for no reply: the
-contract it renders is already final. End it by naming what would need a new
-run to change, which is the boundary, the write allowlist or a scenario.
-
-Plan mode is a session mode of the host, not something a skill can switch on.
-`/plan`, `--plan` and `--mode plan` belong to the user. When the session is
-already in plan mode, that mode forbids repository writes until it is exited,
-so write the contract and work-item snapshot after that instead of before it.
-Their content and validation do not change; only their position in the run does.
-
-Then ask which continuation the user wants, and perform only that one:
-
-1. A fresh chat in this same session. Tell the user to run `/new`, then show
-   `<invocation>` for them to paste into it.
-
-   `/new` is the CLI's own command for starting a chat, and a skill cannot type
-   it any more than it can enter plan mode; the route is an instruction, not a
-   launch this skill performs. Do not open a second terminal window for it.
-   `wt.exe nt` starts its command through `CreateProcess`, which does not apply
-   `PATHEXT`, and npm installs the CLI as `copilot.cmd` with no `copilot.exe`,
-   so that route fails with `0x80070002` naming the executable while looking
-   like a missing artifact path.
-
-2. Show `<invocation>` in this chat for the user to paste into a chat they open
-   themselves.
-3. Save `<invocation>` in the run directory as
-   `<flowId>-flow-migrate-prompt.md` for a later session.
-
-`<invocation>` is the same string in all three routes: `/flow-migrate` followed
-by the contract path, the work-item handoff path, the
-migration-skill-lab root, the product root and the run directory.
-`flow-migrate` reads its inputs from those files and never from this chat, so a
-saved invocation stays valid for a session opened days later. Keep the
-invocation on one line and free of semicolons, which `wt.exe` reads as a
-command separator, and prefer paths without spaces over nested quoting.
+- `validationPlan`: test commands that terminate, `typecheckCommand`,
+  `buildCommand`, `installCommand` from the constants, `browserValidation`
+  naming an existing component-rendering harness such as Storybook when the
+  product has one, and `manualValidation` with the scenario a person walks
+  through and the environment from the constants. Nobody is assigned to it,
+  so those two are the whole instruction.
+- `rollback`: which files return to which state, and what a revert must not
+  disturb. Restating that `migration-result.json` records the checkpoint SHAs
+  answers nothing.
