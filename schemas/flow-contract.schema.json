@@ -295,7 +295,7 @@
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "hypothesis": { "type": "string", "minLength": 1 },
-          "proveBefore": { "type": "string", "minLength": 1 },
+          "proveBefore": { "type": ["string", "array"] },
           "evidence": {
             "type": "array",
             "uniqueItems": true,

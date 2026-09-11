@@ -150,7 +150,7 @@ a mismatched flow, missing artifact or unknown status.
 
 A schema accepts more than one `schemaVersion` at a time: `flow-contract`
 accepts 3 to 6, `verification-result` accepts 3 and 4, `migration-result`
-accepts 2 and 3, and `debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
+accepts 2 to 5, and `debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
 optional and the validator's rule layer makes it mandatory for the newer
 version. Completed runs stay valid at the version they were written under,
 which matters because a run's artifacts are immutable
@@ -204,6 +204,13 @@ schemaVersion 4 `flow-migrate` records `addressed` or `not-addressed` — what i
 did — and `flow-verify` decides `matches` or `deviates`. An automated test in
 jsdom is not evidence about padding, spacing or containment, so the phase that
 wrote the code cannot also clear its own visual work.
+
+From migration-result schemaVersion 5 `flow-migrate` also records one
+`characterization` entry per `characterizationRequired` hypothesis: confirmed
+or disproved with the test that settled it, or not-run, which a completed
+result cannot contain. `flow-verify` tests the scenarios a disproved
+hypothesis names in `proveBefore` explicitly, because they were migrated on a
+corrected assumption.
 
 Both phases run the contract's test, typecheck and build commands, and that is
 deliberate rather than duplicated: `flow-migrate` runs them as a gate on its

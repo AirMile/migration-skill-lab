@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.12.0`.
+Skill version: `0.13.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -37,7 +37,7 @@ every attempt after a repair also `debug-result.json`.
   A saved `<flowId>-flow-verify-prompt.md` means an earlier phase chose to
   continue later: say so in one line and resume from the artifacts it names.
 - From the contract: `scenarios`, `visualParity`, `renderedSurfaceInventory`,
-  `scope`, the test, typecheck and build commands, `checkpointPolicy` and
+  `characterizationRequired`, `scope`, the test, typecheck and build commands, `checkpointPolicy` and
   `validationPlan.manualValidation`. The walkthrough's items are the
   `scenarios` and `visualParity` entries themselves; `manualValidation` gives
   the environment it runs in and the route through them, with the concrete
@@ -78,6 +78,10 @@ outcome, a diagnosis and the next action.
    or the manual walkthrough. Compare the rendered drawer with
    `renderedSurfaceInventory`: an omitted retained control, action or
    conditional branch is `FAIL`, even when the migrated fields pass.
+   Every hypothesis `migration-result.characterization` records as
+   `disproved` was migrated on a corrected assumption: test each scenario its
+   contract entry names in `proveBefore` explicitly, never by the hypothesis
+   it replaced.
 4. **Lead the manual walkthrough** in `manualValidation.environment`, along
    its route. Do not ask whether someone did it already; conducting it is this
    skill's work. Build each item from its `scenarios` or `visualParity` entry,

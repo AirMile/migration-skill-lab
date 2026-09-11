@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage: it produces the contract every later stage reads.
 
-Skill version: `0.20.0`.
+Skill version: `0.21.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.

@@ -75,8 +75,11 @@ the contract.
   counterpart. Add a reference screenshot when one is available. A surface
   that is not declared here can never fail downstream, so anything a user
   would notice belongs here.
-- `characterizationRequired`: `id`, `hypothesis`, `proveBefore` (the behavior
-  it blocks) and `evidence`, an array even for one citation.
+- `characterizationRequired`: `id`, `hypothesis`, `proveBefore` as an array of
+  the scenario ids it blocks, and `evidence`, an array even for one citation.
+  `flow-migrate` records an outcome per id and `flow-verify` re-examines the
+  scenarios behind a disproved one, so `proveBefore` names ids the validator
+  can check, never prose.
 - `decisions`: `topic`, `decision`, `rationale` and `followUp`, for a choice that
   shapes what the contract says: the boundary with its rejected candidates, an
   accepted shared-path risk, a resolved conflict between sources. An open

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.20.0
+targetVersion: 0.21.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-baseline` v0.20.0 acceptance criteria
+# `flow-baseline` v0.21.0 acceptance criteria
 
 ## Hard gates
 
@@ -249,4 +249,6 @@ The source is acceptable when:
     observation sidecar from `new-observations.mjs`;
 82. the worktree comparison is `run-context.mjs --compare`, which also catches a
     further change to a file that was already dirty, and it writes nothing into
-    the run directory.
+    the run directory;
+83. every `characterizationRequired` entry names the scenarios it blocks as a
+    `proveBefore` array of declared scenario ids.

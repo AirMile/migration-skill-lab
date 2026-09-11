@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.15.0`.
+Skill version: `0.16.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -76,8 +76,11 @@ as an established Lely standard.
    comparison baseline. Add only the React characterizing tests the scenarios
    need and run them against the React code before changing behavior. Every
    `characterizationRequired` entry is one of them and comes first: replacing
-   the behavior it names before settling it migrates a guess. Record the
-   outcome, including a hypothesis the test disproves. Include one rendered test
+   the behavior it names before settling it migrates a guess. Record each
+   outcome as a `characterization` entry: `confirmed` or `disproved` with the
+   test that settled it, or `not-run`, which keeps the result from
+   `completed`. A disproved hypothesis is a finding, not a failure. Include
+   one rendered test
    proving every retained control stays visible across the relevant capability
    branches.
 4. **Dependencies.** When `dependencyChanges.required` is true, apply it first
@@ -115,7 +118,9 @@ as an established Lely standard.
     and the result cannot be `completed`. Never merge, push or publish.
 11. **Write `migration-result.json`** in the run directory, copying the shape
     from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\migration-result.json"`,
-    and validate it together with the contract; it never validates alone.
+    at schemaVersion 5, and validate it together with the contract; it never
+    validates alone. The example predates `characterization`: add one
+    `{ id, outcome, test, note }` entry per `characterizationRequired` id.
     Record every committed, skipped or blocked checkpoint. When
     `scope.partialMount.nested` is set, record the step 2 comparison as
     `renderedSurfaceComparison` with `evidenceSource: real-parent-tree`, the

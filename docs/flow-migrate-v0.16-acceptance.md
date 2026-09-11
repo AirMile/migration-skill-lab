@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.15.0
+targetVersion: 0.16.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-migrate` v0.15.0 acceptance criteria
+# `flow-migrate` v0.16.0 acceptance criteria
 
 ## Hard gates
 
@@ -136,4 +136,8 @@ The source is acceptable when:
     contract, the migration result and both work-item snapshots;
 43. `run-context.mjs --compare --contract` runs before `migration-result.json`
     is written, and a path under `comparison.outsideAllowlist` keeps the
-    result from `completed`.
+    result from `completed`;
+44. `migration-result.json` is written at schemaVersion 5 with one
+    `characterization` outcome per `characterizationRequired` id, the test that
+    settled each confirmed or disproved one, and no `not-run` in a `completed`
+    result.

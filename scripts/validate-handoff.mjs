@@ -39,6 +39,9 @@ const describeType = value => {
 };
 
 const matchesType = (value, expectedType) => {
+  if (Array.isArray(expectedType)) {
+    return expectedType.some(candidate => matchesType(value, candidate));
+  }
   if (expectedType === "array") return Array.isArray(value);
   if (expectedType === "object") {
     return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -71,7 +74,7 @@ const validateNode = (value, schema, location, errors) => {
 
   if (schema.type && !matchesType(value, schema.type)) {
     errors.push(
-      `${location} must be ${schema.type}, received ${describeType(value)}.`,
+      `${location} must be ${[schema.type].flat().join(" or ")}, received ${describeType(value)}.`,
     );
     return;
   }
@@ -468,6 +471,30 @@ const validateArtifactRules = (value, errors) => {
         }
       }
     }
+    // A disproved hypothesis tells flow-verify which scenarios to re-examine,
+    // so from the array form every entry has to name a declared scenario.
+    const scenarioIds = new Set((value.scenarios ?? []).map(scenario => scenario.id));
+    for (const entry of value.characterizationRequired ?? []) {
+      const location = `$.characterizationRequired ${entry.id}.proveBefore`;
+      if (typeof entry.proveBefore === "string") {
+        if (entry.proveBefore.trim().length === 0) {
+          errors.push(`${location} must not be empty.`);
+        }
+        continue;
+      }
+      if (!Array.isArray(entry.proveBefore)) continue;
+      if (entry.proveBefore.length === 0) {
+        errors.push(`${location} must name at least one scenario id.`);
+      }
+      if (new Set(entry.proveBefore).size !== entry.proveBefore.length) {
+        errors.push(`${location} must use unique scenario ids.`);
+      }
+      for (const scenarioId of entry.proveBefore) {
+        if (!scenarioIds.has(scenarioId)) {
+          errors.push(`${location} names ${scenarioId}, which $.scenarios does not declare.`);
+        }
+      }
+    }
     return;
   }
 
@@ -523,6 +550,21 @@ const validateArtifactRules = (value, errors) => {
             `$.renderedSurfaceComparison.surfaces ${surface.visualParityId} uses verdict ${surface.verdict}; from schemaVersion 4 a migration-result records addressed or not-addressed and flow-verify owns matches or deviates.`,
           );
         }
+      }
+    }
+    if (value.schemaVersion >= 5 && !Array.isArray(value.characterization)) {
+      errors.push(
+        "$.characterization is required from schemaVersion 5; record the outcome of every characterizationRequired hypothesis, not-run included.",
+      );
+    }
+    const characterization = value.characterization ?? [];
+    const characterizationIds = characterization.map(entry => entry.id);
+    if (new Set(characterizationIds).size !== characterizationIds.length) {
+      errors.push("$.characterization must use unique ids.");
+    }
+    for (const entry of characterization) {
+      if (entry.outcome !== "not-run" && !entry.test) {
+        errors.push(`$.characterization ${entry.id} needs the test that ${entry.outcome} it.`);
       }
     }
     return;
@@ -1265,6 +1307,36 @@ const validateArtifactLinks = artifacts => {
         if (surface.verdict !== settled) {
           throw new Error(
             `A completed migration-result cannot leave visual parity surface ${surface.visualParityId} on verdict ${surface.verdict}.`,
+          );
+        }
+      }
+    }
+
+    // Replacing the behavior a hypothesis names before settling it migrates a
+    // guess, so every hypothesis carries an outcome from schemaVersion 5.
+    if (migration.value.schemaVersion >= 5) {
+      const hypothesisIds = (contract.value.characterizationRequired ?? []).map(
+        entry => entry.id,
+      );
+      const outcomes = new Map(
+        (migration.value.characterization ?? []).map(entry => [entry.id, entry]),
+      );
+      for (const id of hypothesisIds) {
+        if (!outcomes.has(id)) {
+          throw new Error(
+            `migration-result does not record an outcome for the characterizationRequired hypothesis ${id}.`,
+          );
+        }
+      }
+      for (const [id, entry] of outcomes) {
+        if (!hypothesisIds.includes(id)) {
+          throw new Error(
+            `migration-result records characterization ${id}, which the flow-contract does not declare.`,
+          );
+        }
+        if (migration.value.status === "completed" && entry.outcome === "not-run") {
+          throw new Error(
+            `A completed migration-result cannot leave the characterizationRequired hypothesis ${id} not-run.`,
           );
         }
       }
@@ -2296,6 +2368,138 @@ const runSelfTest = async () => {
       "Handoff validator self-test did not reject a schemaVersion 3 migration-result using the newer verdict vocabulary.",
     );
   }
+
+  const typeListErrors = [];
+  validateNode(["valid-length-edit"], { type: ["string", "array"] }, "$", typeListErrors);
+  validateNode("valid-length-edit", { type: ["string", "array"] }, "$", typeListErrors);
+  const wrongTypeErrors = [];
+  validateNode(3, { type: ["string", "array"] }, "$", wrongTypeErrors);
+  if (typeListErrors.length > 0 ||
+    !wrongTypeErrors.some(error => error.includes("must be string or array"))) {
+    throw new Error("Handoff validator self-test did not apply a list of accepted types.");
+  }
+
+  const exampleContract = artifacts.find(
+    artifact => artifact.value.artifactType === "flow-contract",
+  ).value;
+  const scenarioIds = exampleContract.scenarios.map(scenario => scenario.id);
+  const hypotheses = ["first-hypothesis", "second-hypothesis"].map(id => ({
+    id,
+    hypothesis: `A reasoned but unproven claim (${id}) about behavior a scenario promises.`,
+    proveBefore: [scenarioIds[0]],
+    evidence: ["src/example.ts:1"],
+  }));
+  const proveBeforeErrors = proveBefore => {
+    const contract = structuredClone(exampleContract);
+    contract.characterizationRequired = structuredClone(hypotheses);
+    contract.characterizationRequired[0].proveBefore = proveBefore;
+    const contractErrors = [];
+    validateArtifactRules(contract, contractErrors);
+    return contractErrors.filter(error => error.includes("proveBefore"));
+  };
+  if (proveBeforeErrors(scenarioIds.slice(0, 2)).length > 0) {
+    throw new Error(
+      "Handoff validator self-test rejected a proveBefore array of declared scenario ids.",
+    );
+  }
+  if (!proveBeforeErrors([scenarioIds[0], "undeclared-scenario"]).some(error =>
+    error.includes("names undeclared-scenario, which $.scenarios does not declare"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a proveBefore id that names no scenario.",
+    );
+  }
+
+  // From schemaVersion 5 a migration-result records what each hypothesis turned
+  // out to be; archived runs at 4 keep validating without it.
+  const hypothesisIds = hypotheses.map(entry => entry.id);
+  const settledCharacterization = hypothesisIds.map(id => ({
+    id,
+    outcome: "confirmed",
+    test: "src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.functions.test.ts",
+    note: "The characterizing test passed against the React implementation.",
+  }));
+  const characterizationRuleErrors = mutate => {
+    const migration = structuredClone(
+      artifacts.find(artifact => artifact.value.artifactType === "migration-result").value,
+    );
+    migration.schemaVersion = 5;
+    migration.characterization = structuredClone(settledCharacterization);
+    mutate(migration);
+    const migrationErrors = [];
+    validateArtifactRules(migration, migrationErrors);
+    return migrationErrors;
+  };
+  if (characterizationRuleErrors(() => {}).length > 0) {
+    throw new Error(
+      "Handoff validator self-test rejected a schemaVersion 5 migration-result with settled characterization.",
+    );
+  }
+  if (!characterizationRuleErrors(migration => {
+    delete migration.characterization;
+  }).some(error => error.includes("$.characterization is required from schemaVersion 5"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a schemaVersion 5 migration-result without characterization.",
+    );
+  }
+  if (!characterizationRuleErrors(migration => {
+    delete migration.characterization[0].test;
+  }).some(error => error.includes("needs the test that confirmed it"))) {
+    throw new Error(
+      "Handoff validator self-test did not reject a confirmed hypothesis without its test.",
+    );
+  }
+
+  const settledLinks = structuredClone(artifacts);
+  for (const artifact of settledLinks) {
+    if (artifact.value.artifactType === "flow-contract") {
+      artifact.value.characterizationRequired = structuredClone(hypotheses);
+    }
+    if (artifact.value.artifactType === "migration-result") {
+      artifact.value.schemaVersion = 5;
+      artifact.value.characterization = structuredClone(settledCharacterization);
+    }
+  }
+  validateArtifactLinks(settledLinks);
+
+  expectLinkRejection(
+    ({ contract, migration }) => {
+      contract.characterizationRequired = structuredClone(hypotheses);
+      migration.schemaVersion = 5;
+      migration.characterization = structuredClone(settledCharacterization).slice(1);
+    },
+    `does not record an outcome for the characterizationRequired hypothesis ${hypothesisIds[0]}`,
+    "a schemaVersion 5 migration-result that skipped a hypothesis",
+  );
+
+  expectLinkRejection(
+    ({ contract, migration }) => {
+      contract.characterizationRequired = structuredClone(hypotheses);
+      migration.schemaVersion = 5;
+      migration.characterization = [
+        ...structuredClone(settledCharacterization),
+        {
+          id: "undeclared-hypothesis",
+          outcome: "disproved",
+          test: "src/undeclared.test.ts",
+          note: "A hypothesis the contract never raised.",
+        },
+      ];
+    },
+    "records characterization undeclared-hypothesis, which the flow-contract does not declare",
+    "a characterization outcome for a hypothesis the contract does not declare",
+  );
+
+  expectLinkRejection(
+    ({ contract, migration }) => {
+      contract.characterizationRequired = structuredClone(hypotheses);
+      migration.schemaVersion = 5;
+      migration.characterization = structuredClone(settledCharacterization);
+      migration.characterization[0].outcome = "not-run";
+      delete migration.characterization[0].test;
+    },
+    `cannot leave the characterizationRequired hypothesis ${hypothesisIds[0]} not-run`,
+    "a completed migration resting on a hypothesis nobody tested",
+  );
 
   // A disabled checkpoint policy has no branch to push to, and a contract that
   // approved no milestones is a rejection rather than a crash.

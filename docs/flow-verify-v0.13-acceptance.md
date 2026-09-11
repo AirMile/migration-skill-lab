@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.12.0
+targetVersion: 0.13.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-verify` v0.12.0 acceptance criteria
+# `flow-verify` v0.13.0 acceptance criteria
 
 ## Hard gates
 
@@ -126,4 +126,6 @@ The source is acceptable when:
     repaired chain comes back to a fresh verification with every artifact it
     validates;
 42. the allowlist check comes from `allowlist.outside` in the
-    `run-context.mjs --contract` output, never from a comparison made by hand.
+    `run-context.mjs --contract` output, never from a comparison made by hand;
+43. every scenario a `disproved` hypothesis names in `proveBefore` is tested
+    explicitly, because it was migrated on a corrected assumption.
