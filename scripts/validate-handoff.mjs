@@ -2418,16 +2418,22 @@ const runSelfTest = async () => {
     test: "src/features/floorPlanCreator/detailDrawer/lineForm/__tests__/LineForm.functions.test.ts",
     note: "The characterizing test passed against the React implementation.",
   }));
+  const asSchemaVersion5 = (migration, characterization = settledCharacterization) => {
+    migration.schemaVersion = 5;
+    for (const surface of migration.renderedSurfaceComparison?.surfaces ?? []) {
+      surface.verdict = "addressed";
+    }
+    migration.characterization = structuredClone(characterization);
+  };
   const characterizationRuleErrors = mutate => {
     const migration = structuredClone(
       artifacts.find(artifact => artifact.value.artifactType === "migration-result").value,
     );
-    migration.schemaVersion = 5;
-    migration.characterization = structuredClone(settledCharacterization);
+    asSchemaVersion5(migration);
     mutate(migration);
     const migrationErrors = [];
     validateArtifactRules(migration, migrationErrors);
-    return migrationErrors;
+    return migrationErrors.filter(error => error.includes("characterization"));
   };
   if (characterizationRuleErrors(() => {}).length > 0) {
     throw new Error(
@@ -2455,8 +2461,7 @@ const runSelfTest = async () => {
       artifact.value.characterizationRequired = structuredClone(hypotheses);
     }
     if (artifact.value.artifactType === "migration-result") {
-      artifact.value.schemaVersion = 5;
-      artifact.value.characterization = structuredClone(settledCharacterization);
+      asSchemaVersion5(artifact.value);
     }
   }
   validateArtifactLinks(settledLinks);
@@ -2464,8 +2469,7 @@ const runSelfTest = async () => {
   expectLinkRejection(
     ({ contract, migration }) => {
       contract.characterizationRequired = structuredClone(hypotheses);
-      migration.schemaVersion = 5;
-      migration.characterization = structuredClone(settledCharacterization).slice(1);
+      asSchemaVersion5(migration, settledCharacterization.slice(1));
     },
     `does not record an outcome for the characterizationRequired hypothesis ${hypothesisIds[0]}`,
     "a schemaVersion 5 migration-result that skipped a hypothesis",
@@ -2474,16 +2478,15 @@ const runSelfTest = async () => {
   expectLinkRejection(
     ({ contract, migration }) => {
       contract.characterizationRequired = structuredClone(hypotheses);
-      migration.schemaVersion = 5;
-      migration.characterization = [
-        ...structuredClone(settledCharacterization),
+      asSchemaVersion5(migration, [
+        ...settledCharacterization,
         {
           id: "undeclared-hypothesis",
           outcome: "disproved",
           test: "src/undeclared.test.ts",
           note: "A hypothesis the contract never raised.",
         },
-      ];
+      ]);
     },
     "records characterization undeclared-hypothesis, which the flow-contract does not declare",
     "a characterization outcome for a hypothesis the contract does not declare",
@@ -2492,8 +2495,7 @@ const runSelfTest = async () => {
   expectLinkRejection(
     ({ contract, migration }) => {
       contract.characterizationRequired = structuredClone(hypotheses);
-      migration.schemaVersion = 5;
-      migration.characterization = structuredClone(settledCharacterization);
+      asSchemaVersion5(migration);
       migration.characterization[0].outcome = "not-run";
       delete migration.characterization[0].test;
     },
