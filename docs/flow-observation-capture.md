@@ -1,6 +1,6 @@
 ---
 document: flow-observation-capture
-version: 0.1.0
+version: 0.2.0
 status: experimental
 date: 2026-09-11
 ---
@@ -45,11 +45,13 @@ reprioritize the primary workflow to analyze them.
    `occurrenceCount`. Do not cap the number of material observations.
 4. Create the sidecar with
    `node "<lab>\scripts\new-observations.mjs" --primary <primary artifact> --status <status> --summary "<one sentence>"`,
-   or with `--skill`, `--skill-version`, `--run-id`, `--flow-id` and `--run-dir`
-   when no primary artifact exists. It names the file
-   `skill-run-observations-<skill>.json`, so phases sharing a run directory
-   never overwrite each other's evidence, rejects a status that does not belong
-   to the skill, and prints the entry shape. Add one entry per check that fired.
+   or with `--skill`, `--skill-version`, `--run-id`, `--flow-id` and `--run-dir`,
+   plus `--attempt <N>` on a later verification attempt or its repair, when no
+   primary artifact exists. It names the file
+   `skill-run-observations-<skill>.json`, with the attempt's `-<N>` from 2 on,
+   so phases and attempts sharing a run directory never overwrite each other's
+   evidence, rejects a status that does not belong to the skill, and prints the
+   entry shape. Add one entry per check that fired.
    An empty `observations` list claims every check was evaluated and none
    fired; leave it empty only when that is true.
 5. Validate it with `node "<lab>\scripts\validate-handoff.mjs" <sidecar>`.

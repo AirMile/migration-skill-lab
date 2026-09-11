@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.13.0`.
+Skill version: `0.14.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -45,6 +45,13 @@ every attempt after a repair also `debug-result.json`.
   tester, and this skill leads them.
 - The previous proposal's outcome is already in `work-item-migration.json`:
   quote it and ask whether it still holds, as a confirmation.
+- **Attempt.** Without a debug result this is attempt 1, with the file names
+  used below. After a repair it is one more than the attempt the debug result
+  answers: `debug-result.json` answers 1, `debug-result-<N>.json` answers N.
+  Attempt N from 2 on records `verificationAttempt` N and adds `-<N>` to every
+  file it writes, such as `verification-result-2.json`, `debug-handoff-2.json`
+  and `work-item-verification-2.json`, because the debug artifacts hash the
+  earlier attempt's files.
 
 ## Criterion status
 
@@ -128,8 +135,8 @@ outcome, a diagnosis and the next action.
    checkpoints or `pushPolicy` is `confirm-after-pass`, read
    `references/push.md`. Otherwise record `push` as `not-requested` with the
    reason.
-8. **Write `verification-result.json`** in the run directory, copying the shape
-   from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\verification-result.json"`.
+8. **Write `verification-result.json`**, named for the attempt, in the run
+   directory, copying the shape from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\verification-result.json"`.
    It references the exact hashes of the consumed contract and migration
    result. `push` always carries `remote`, `branch`, `commitShas` and
    `upstreamSet`, even with nothing to push, and `browserValidation.status`

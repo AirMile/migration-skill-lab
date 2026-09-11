@@ -1,6 +1,6 @@
 ---
 document: flow-work-item-steps
-version: 0.1.0
+version: 0.2.0
 status: experimental
 date: 2026-09-11
 ---
@@ -15,7 +15,8 @@ validator enforces the rules; this page is the order to apply them in.
 | `flow-baseline`, first run for the flow | `work-item-baseline.json` | none | `flow-contract.json` |
 | `flow-baseline`, rerun | `work-item-baseline.json` | the latest earlier baseline, as `supersedes` | `flow-contract.json` |
 | `flow-migrate` | `work-item-migration.json` | `work-item-baseline.json` | `migration-result.json` |
-| `flow-verify` | `work-item-verification.json` | `work-item-migration.json` | `verification-result.json` |
+| `flow-verify`, attempt 1 | `work-item-verification.json` | `work-item-migration.json` | `verification-result.json` |
+| `flow-verify`, attempt N after a repair | `work-item-verification-<N>.json` | `work-item-migration.json` | `verification-result-<N>.json` |
 
 1. **Start from the previous snapshot, never from memory.** When one exists,
    run

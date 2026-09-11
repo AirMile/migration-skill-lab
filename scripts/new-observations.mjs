@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,13 +17,17 @@ const validatorPath = path.join(rootDirectory, "scripts", "validate-handoff.mjs"
 
 const usage = `Usage:
   node scripts/new-observations.mjs --primary <artifact.json> --status <status> --summary <text> [--run-dir <dir>]
-  node scripts/new-observations.mjs --skill <name> --skill-version <x.y.z> --run-id <id> --flow-id <id> --run-dir <dir> --status <status> --summary <text>
+  node scripts/new-observations.mjs --skill <name> --skill-version <x.y.z> --run-id <id> --flow-id <id> --run-dir <dir> --status <status> --summary <text> [--attempt <n>]
 
 Writes <run-dir>\\skill-run-observations-<skill>.json with an empty
 observations list and the primary outcome filled in. With --primary, the skill,
 version, runId, flowId, pointer and sha256 come from the primary artifact and
 the run directory defaults to its directory. Without a primary artifact, for a
 run that could not produce one, pass the identity flags. Never overwrites.
+
+A verification attempt N from 2 on, and the repair answering it, add -<N> to
+every file they write. The sidecar takes N from a primary artifact named
+verification-result-<N>.json or debug-result-<N>.json, or from --attempt.
 
 Statuses: flow-baseline draft|failed|blocked; flow-migrate completed|failed|blocked;
 flow-verify PASS|FAIL|BLOCKED; flow-debug repaired|blocked|parked.
@@ -64,8 +68,9 @@ const createSidecar = async options => {
   let identity;
   let pointer = {};
   let runDirectory = options["run-dir"];
+  let attempt = options.attempt;
   if (options.primary) {
-    const given = identityFlags.filter(name => options[name]);
+    const given = [...identityFlags, "attempt"].filter(name => options[name]);
     if (given.length > 0) {
       throw new Error(
         `--${given[0]} comes from the primary artifact; pass it only when there is no --primary.`,
@@ -85,6 +90,7 @@ const createSidecar = async options => {
       sha256: createHash("sha256").update(raw).digest("hex"),
     };
     runDirectory ??= path.dirname(absolute);
+    attempt = /^(?:verification|debug)-result-(\d+)\.json$/.exec(path.basename(absolute))?.[1];
   } else {
     const missing = [...identityFlags, "run-dir"].filter(name => !options[name]);
     if (missing.length > 0) {
@@ -112,9 +118,12 @@ const createSidecar = async options => {
     );
   }
 
+  if (attempt !== undefined && !/^[1-9]\d*$/.test(attempt)) {
+    throw new Error(`--attempt must be a positive integer, not ${attempt}.`);
+  }
   const sidecarPath = path.join(
     path.resolve(runDirectory),
-    `skill-run-observations-${identity.skill}.json`,
+    `skill-run-observations-${identity.skill}${attempt > 1 ? `-${attempt}` : ""}.json`,
   );
   const sidecar = {
     schemaVersion: 1,
@@ -141,7 +150,7 @@ const createSidecar = async options => {
 
 const parseArguments = argumentsList => {
   const options = {};
-  const valued = new Set(["primary", "status", "summary", "run-dir", ...identityFlags]);
+  const valued = new Set(["primary", "status", "summary", "run-dir", "attempt", ...identityFlags]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
     const name = argument.slice(2);
@@ -230,6 +239,31 @@ const runSelfTest = async () => {
     const blocked = spawnSync(process.execPath, [validatorPath, blockedPath], { encoding: "utf8" });
     assert(blocked.status === 0,
       `a sidecar without a primary artifact does not validate:\n${blocked.stderr || blocked.stdout}`);
+
+    const secondAttempt = path.join(temporary, "verification-result-2.json");
+    await copyFile(
+      path.join(rootDirectory, "examples", "debug", "demo-line-drawer", "reverified-verification-result.json"),
+      secondAttempt,
+    );
+    const secondPath = await createSidecar({
+      primary: secondAttempt,
+      status: "PASS",
+      summary: "The repair holds.",
+    });
+    assert(path.basename(secondPath) === "skill-run-observations-flow-verify-2.json",
+      "a second verification attempt's sidecar does not carry the attempt suffix");
+    const secondBlockedPath = await createSidecar({
+      skill: "flow-debug",
+      "skill-version": "0.3.0",
+      "run-id": "demo-flow-debug-1",
+      "flow-id": "demo-flow",
+      "run-dir": temporary,
+      attempt: "2",
+      status: "blocked",
+      summary: "The second repair needs a contract change.",
+    });
+    assert(path.basename(secondBlockedPath) === "skill-run-observations-flow-debug-2.json",
+      "--attempt does not carry the attempt suffix");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

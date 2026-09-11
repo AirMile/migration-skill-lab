@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.13.0
+targetVersion: 0.14.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-verify` v0.13.0 acceptance criteria
+# `flow-verify` v0.14.0 acceptance criteria
 
 ## Hard gates
 
@@ -23,8 +23,8 @@ run.
 - Coverage evidence for the selected flow through the safe measurement the
   contract's `testGaps` names, or a CI figure recorded as not retrieved.
 - Manual/Maui validation status and explicit blockers.
-- A schema-valid `verification-result.json` and an inline summary, with no
-  prose report.
+- A schema-valid `verification-result.json`, or `verification-result-<N>.json`
+  on attempt N after a repair, and an inline summary, with no prose report.
 - A concrete repair diagnosis for every `FAIL` or repairable `BLOCKED`.
 - A schema-valid observation artifact written after the verification outputs,
   including an empty observation list when no concrete skill signal occurred.
@@ -129,3 +129,7 @@ The source is acceptable when:
     `run-context.mjs --contract` output, never from a comparison made by hand;
 43. every scenario a `disproved` hypothesis names in `proveBefore` is tested
     explicitly, because it was migrated on a corrected assumption.
+44. attempt N after a repair, one more than the attempt its debug result
+    answers, records `verificationAttempt` N and adds `-<N>` to every file it
+    writes, so it never overwrites the failed attempt's evidence or a file a
+    debug artifact hashes.

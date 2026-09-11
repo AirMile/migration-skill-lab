@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.5.0`.
+Skill version: `0.6.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -103,8 +103,9 @@ Report `BLOCKED` before any product write when:
 8. **Write `debug-result.json`** in the run directory, copying the shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\debug\demo-line-drawer\debug-result.json"`
    and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,
-   and validate it together with the four artifacts it consumed. It carries
-   the starting tier, the attempt ledger, the diagnosis, changed paths,
+   and validate it together with the four artifacts it consumed. Answering
+   `verification-result-<N>.json`, name it `debug-result-<N>.json`: a later
+   verification hashes the earlier one. It carries the starting tier, the attempt ledger, the diagnosis, changed paths,
    validation and checkpoint evidence, remaining limitations and one status:
    - `repaired`: the targeted reproduction and declared validations pass,
      every changed path is allowlisted and the ledger is complete;

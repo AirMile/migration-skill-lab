@@ -1104,6 +1104,19 @@ const validateWorkItemActions = (label, currentItems, previousItems) => {
   }
 };
 
+// A later verification attempt and the repair that answers it add -<N> to
+// every file they write, so no attempt overwrites a file an earlier pointer
+// hashes. Names outside that family, such as the examples', are not checked.
+const requireAttemptName = (artifact, stem, attempt) => {
+  if (!artifact.absolutePath) return;
+  const name = path.basename(artifact.absolutePath);
+  if (!new RegExp(`^${stem}(?:-\\d+)?\\.json$`).test(name)) return;
+  const expected = attempt === 1 ? `${stem}.json` : `${stem}-${attempt}.json`;
+  if (name !== expected) {
+    throw new Error(`${name} belongs to verification attempt ${attempt}; name it ${expected}.`);
+  }
+};
+
 const validateArtifactLinks = artifacts => {
   const byType = new Map();
 
@@ -1119,6 +1132,10 @@ const validateArtifactLinks = artifacts => {
   const verification = byType.get("verification-result");
   const debugHandoff = byType.get("debug-handoff");
   const debugResult = byType.get("debug-result");
+  // After a repair the set carries the debug-result this attempt consumed,
+  // not one answering it, beside this attempt's own debug-handoff.
+  const debugResultIsPrevious = Boolean(debugResult) &&
+    verification?.value.debugResult?.sha256 === debugResult.sha256;
   const workItemHandoffs = artifacts.filter(
     artifact => artifact.value.artifactType === "work-item-handoff",
   );
@@ -1561,7 +1578,8 @@ const validateArtifactLinks = artifacts => {
   }
 
   if (debugResult && contract && migration && verification) {
-    if (debugHandoff && debugHandoff.value.status !== "repairable") {
+    if (debugHandoff && !debugResultIsPrevious &&
+      debugHandoff.value.status !== "repairable") {
       throw new Error("flow-debug cannot run for an external-blocked handoff.");
     }
     if (debugResult.value.flowId !== contract.value.flowId ||
@@ -1572,7 +1590,7 @@ const validateArtifactLinks = artifacts => {
       debugResult.value.migrationResult.sha256 !== migration.sha256) {
       throw new Error("debug-result artifact hashes do not match.");
     }
-    if (debugHandoff &&
+    if (debugHandoff && !debugResultIsPrevious &&
       (debugResult.value.verificationResult.sha256 !== verification.sha256 ||
         debugResult.value.debugHandoff.sha256 !== debugHandoff.sha256)) {
       throw new Error("debug-result source artifact hashes do not match.");
@@ -1611,6 +1629,24 @@ const validateArtifactLinks = artifacts => {
       throw new Error(
         "A repaired auto-local debug attempt requires checkpoint evidence.",
       );
+    }
+  }
+
+  if (verification) {
+    const attempt = verification.value.verificationAttempt;
+    requireAttemptName(verification, "verification-result", attempt);
+    if (debugHandoff) requireAttemptName(debugHandoff, "debug-handoff", attempt);
+    if (debugResult) {
+      requireAttemptName(
+        debugResult,
+        "debug-result",
+        debugResultIsPrevious ? attempt - 1 : attempt,
+      );
+    }
+    for (const handoff of workItemHandoffs) {
+      if (handoff.value.handoffPhase === "verification") {
+        requireAttemptName(handoff, "work-item-verification", attempt);
+      }
     }
   }
 
@@ -1906,7 +1942,7 @@ const observationExamplePath = path.join(
 const runSelfTest = async () => {
   const artifacts = await validateFiles(exampleFiles);
   const debugArtifacts = await validateFiles(debugSourceFiles);
-  await validateFiles(debugReverifyFiles);
+  const reverifyArtifacts = await validateFiles(debugReverifyFiles);
   const observationArtifact = await loadArtifact(observationExamplePath);
 
   const contractPath = exampleFiles[0];
@@ -2224,6 +2260,62 @@ const runSelfTest = async () => {
     throw new Error(
       "Handoff validator self-test did not reject Done without host validation.",
     );
+  }
+
+  // A failed second attempt validates with the debug-result it consumed beside
+  // its own debug-handoff, and every per-attempt file is named for its attempt.
+  const linkError = set => {
+    try {
+      validateArtifactLinks(set);
+      return "";
+    } catch (error) {
+      return error.message;
+    }
+  };
+  const renamed = (artifact, name) => ({
+    ...structuredClone(artifact),
+    absolutePath: path.join(path.dirname(artifact.absolutePath), name),
+  });
+  const replaceAt = (set, index, artifact) =>
+    set.map((entry, position) => (position === index ? artifact : entry));
+  const [debugContract, debugMigration, failedVerification, firstHandoff, firstDebugResult] =
+    debugArtifacts.map(artifact => structuredClone(artifact));
+  const secondAttempt = renamed(failedVerification, "verification-result-2.json");
+  secondAttempt.sha256 = "2".repeat(64);
+  secondAttempt.value.verificationAttempt = 2;
+  secondAttempt.value.debugResult = structuredClone(reverifyArtifacts[3].value.debugResult);
+  const secondHandoff = renamed(firstHandoff, "debug-handoff-2.json");
+  secondHandoff.value.verificationResult.sha256 = secondAttempt.sha256;
+  const secondChain = [
+    debugContract, debugMigration, secondAttempt, secondHandoff, firstDebugResult,
+  ];
+  const secondChainError = linkError(secondChain);
+  if (secondChainError) {
+    throw new Error(
+      `Handoff validator self-test rejected a failed second attempt: ${secondChainError}`,
+    );
+  }
+  for (const [set, expected, description] of [
+    [
+      replaceAt(secondChain, 3, renamed(secondHandoff, "debug-handoff.json")),
+      "name it debug-handoff-2.json",
+      "a second attempt's debug-handoff under attempt 1's name",
+    ],
+    [
+      replaceAt(reverifyArtifacts, 3, renamed(reverifyArtifacts[3], "verification-result.json")),
+      "name it verification-result-2.json",
+      "a re-verification that takes attempt 1's name",
+    ],
+    [
+      artifacts.map(artifact => (artifact.value.handoffPhase === "verification" ?
+        renamed(artifact, "work-item-verification-2.json") : artifact)),
+      "name it work-item-verification.json",
+      "an attempt 1 snapshot with an attempt suffix",
+    ],
+  ]) {
+    if (!linkError(set).includes(expected)) {
+      throw new Error(`Handoff validator self-test did not reject ${description}.`);
+    }
   }
 
   const observationSchemaPath = path.join(

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.5.0
+targetVersion: 0.6.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-debug` v0.5.0 acceptance criteria
+# `flow-debug` v0.6.0 acceptance criteria
 
 ## Hard gates
 
@@ -26,7 +26,8 @@ verification, declares `PASS`, or modifies skill source during its own run.
   `immediate -> light -> heavy`.
 - For every attempt: reproduction evidence, hypothesis, changed paths,
   validation outcomes and checkpoint status.
-- A `debug-result.json` whose status is only `repaired`, `blocked` or
+- A `debug-result.json`, or `debug-result-<N>.json` when it answers
+  verification attempt N, whose status is only `repaired`, `blocked` or
   `parked`, with no prose report beside it.
 - Changed paths that remain a subset of `allowedWritePaths`.
 - Local checkpoint evidence created through `verify-checkpoint.mjs` for every
@@ -97,3 +98,6 @@ The source is acceptable when:
 25. `run-context.mjs --compare --contract` runs before `debug-result.json` is
     written, and a path under `comparison.outsideAllowlist` keeps the result
     from `repaired`.
+26. a repair answering `verification-result-<N>.json` writes
+    `debug-result-<N>.json`, never overwriting the earlier repair a later
+    verification hashes.
