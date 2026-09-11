@@ -1,7 +1,7 @@
 {
   "generatedAt": "2026-09-11T12:00:00.000Z",
   "productRoot": "C:\\Project\\demo-product",
-  "revision": "2fbe81e8a46ab6bda43fea8735dc3457737601ad",
+  "revision": "7e070822cab89d4fae102be5e425d6681c2cf6fc",
   "reactPackages": [
     "react",
     "react-dom",
@@ -16,7 +16,27 @@
     "typeOnlyImports": 0,
     "unresolvedImports": 0
   },
+  "structure": {
+    "path": "examples\\migration-map\\demo\\angular-structure.json",
+    "sha256": "31d8db1d724ecec5e48e9adcb08b8218c4897da4a1dd14a3f3b022a9f53fe005",
+    "root": "src/angular",
+    "counts": {
+      "angular": 1,
+      "move": 9,
+      "stay": 1
+    },
+    "unmatched": [],
+    "collisions": []
+  },
   "units": [
+    {
+      "unit": "angular",
+      "files": 1,
+      "tsxFiles": 0,
+      "importsIn": 0,
+      "importsOut": 0,
+      "agnosticShare": 1
+    },
     {
       "unit": "components",
       "files": 3,
@@ -51,17 +71,17 @@
     },
     {
       "unit": "state",
-      "files": 2,
+      "files": 1,
       "tsxFiles": 0,
       "importsIn": 2,
       "importsOut": 0,
-      "agnosticShare": 0.5
+      "agnosticShare": 0
     }
   ],
   "featureDirectoriesNotInMap": [],
   "angularFiles": [
-    "src/features/lineDrawer/lineForm/angular/radio-button-group.component.ts",
-    "src/state/angular/line-store.adapter.ts"
+    "src/angular/domains/floor-plan/store/line.store.ts",
+    "src/features/lineDrawer/lineForm/angular/radio-button-group.component.ts"
   ],
   "sharedFiles": [
     {
@@ -94,6 +114,9 @@
       "flowId": "demo-line-drawer",
       "files": 2,
       "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/line-drawer/line-form"
+      ],
       "reactBoundImports": [
         {
           "file": "src/components/Text.tsx",
@@ -125,6 +148,9 @@
       "flowId": "demo-charger-form",
       "files": 1,
       "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/line-drawer/charger-form"
+      ],
       "reactBoundImports": [
         {
           "file": "src/components/Text.tsx",
@@ -150,6 +176,9 @@
       "flowId": "demo-line-drawer-parent",
       "files": 1,
       "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/line-drawer"
+      ],
       "reactBoundImports": [
         {
           "file": "src/features/lineDrawer/chargerForm/ChargerForm.tsx",
@@ -169,6 +198,9 @@
       "flowId": "demo-route-list-item",
       "files": 1,
       "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/route/pages/route-list"
+      ],
       "reactBoundImports": [
         {
           "file": "src/components/Text.tsx",
@@ -216,6 +248,29 @@
       "reactBound": "direct",
       "prerequisite": "line-store",
       "angular": "built"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "radio-button-group",
+      "reactSource": "src/components/radioButton/RadioButtonGroup.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/radio-button/radio-button-group.component.ts",
+      "drift": false
+    },
+    {
+      "id": "text",
+      "reactSource": "src/components/Text.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/text.component.ts",
+      "drift": false
+    },
+    {
+      "id": "line-store",
+      "reactSource": "src/state/LineStore.ts",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/store/line.store.ts",
+      "drift": false
     }
   ]
 }

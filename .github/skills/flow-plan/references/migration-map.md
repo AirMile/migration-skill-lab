@@ -11,8 +11,9 @@ Carry in the map what is judgement: which slices exist, how they depend on
 each other, how they fare against the four criteria, which shared files are
 prerequisites and of what kind, and what the user chose. Leave to the metrics
 what the script counts: file totals, importers, which files a slice imports,
-how many slices share one. A count retyped into the map is stale the moment
-the code moves; the metrics are measured again on every run.
+how many slices share one, and where each file's Angular counterpart goes. A
+count retyped into the map is stale the moment the code moves; the metrics are
+measured again on every run.
 
 ## Fields
 
@@ -39,9 +40,10 @@ the code moves; the metrics are measured again on every run.
   owns.
   - `kind` is `shared-component` for UI and `adapter` for state, a context or
     a host bridge.
-  - `angular` is `none` until a counterpart exists beside `reactSource`, then
-    `built` with its `path` and the slice that built it (`builtBy`). The
-    validator checks the location against the project constant.
+  - `angular` is `none` until a counterpart exists at the prerequisite's
+    `target` in the metrics, then `built` with its `path` and the slice that
+    built it (`builtBy`). The validator checks that the path lies under the
+    measured Angular root.
   - `copies` are counterparts built elsewhere, inside one slice, such as the
     first slice's local rebuild. A slice that builds the shared counterpart
     leaves each copy for a later consolidation, so no landed slice changes

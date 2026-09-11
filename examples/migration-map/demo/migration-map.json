@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "artifactType": "migration-map",
   "skill": "flow-plan",
-  "skillVersion": "0.1.0",
+  "skillVersion": "0.2.0",
   "runId": "demo-migration-map-1",
   "repository": {
     "root": "C:\\Project\\demo-product",
-    "revision": "2fbe81e8a46ab6bda43fea8735dc3457737601ad"
+    "revision": "7e070822cab89d4fae102be5e425d6681c2cf6fc"
   },
   "metrics": {
     "path": "examples\\migration-map\\demo\\migration-metrics.json",
-    "sha256": "9003fb380c554b13161ea9e545020d69ea927e894067fd062ceba5347ac7a277"
+    "sha256": "fe6dcf207105da09ead09de01a7e3bce3936bfa96f5158c9701119bf6512dfac"
   },
   "features": [
     {
@@ -86,7 +86,7 @@
         },
         "noSharedInfrastructure": {
           "verdict": "pass",
-          "note": "Reuses the Angular RadioButtonGroup once it is built beside its React original."
+          "note": "Reuses the Angular RadioButtonGroup once it is built at its measured target."
         },
         "measurableNeighbour": {
           "verdict": "pass",
@@ -193,7 +193,7 @@
       "reactSource": "src/state/LineStore.ts",
       "angular": {
         "status": "built",
-        "path": "src/state/angular/line-store.adapter.ts",
+        "path": "src/angular/domains/floor-plan/store/line.store.ts",
         "builtBy": "demo-line-drawer"
       },
       "copies": []
@@ -215,7 +215,7 @@
   "decisions": [
     {
       "topic": "Shared RadioButtonGroup",
-      "decision": "The charger form builds the Angular RadioButtonGroup beside its React original; the line form's local copy is consolidated later.",
+      "decision": "The charger form builds the Angular RadioButtonGroup at its measured target in shared components; the line form's local copy is consolidated later.",
       "rationale": "Two landed or candidate slices use it; consolidating inside the charger form would touch a landed slice."
     }
   ],

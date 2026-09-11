@@ -248,11 +248,6 @@ const validateMigrationMapRules = (value, errors) => {
     if (angular.status === "none" && (angular.path || angular.builtBy)) {
       errors.push(`${location}.angular has no Angular counterpart yet, so it has no path or builtBy.`);
     }
-    // project-constants.md: the counterpart lives in angular\ beside its React original.
-    const home = `${path.posix.dirname(normalizeProductPath(prerequisite.reactSource))}/angular`;
-    if (angular.path && !pathCovers(home, normalizeProductPath(angular.path))) {
-      errors.push(`${location}.angular.path must lie under ${home}, beside its React original.`);
-    }
     for (const builder of [angular.builtBy, ...prerequisite.copies.map(copy => copy.builtBy)]) {
       if (builder && !slicesById.has(builder)) {
         errors.push(`${location} names builder ${builder}, which is not in $.slices.`);
@@ -295,7 +290,22 @@ const validateMigrationMapPointers = async (absolutePath, value) => {
     return JSON.parse(raw.toString("utf8").replace(/^﻿/, ""));
   };
 
-  await readPointer("metrics", value.metrics);
+  // The measured structure names the Angular root; a counterpart outside it
+  // was built somewhere no later slice looks.
+  const metrics = await readPointer("metrics", value.metrics);
+  const built = value.prerequisites.filter(prerequisite => prerequisite.angular.status === "built");
+  const root = metrics.structure?.root;
+  if (built.length > 0 && !root) {
+    throw new Error(`${absolutePath} metrics carry no structure root; measure again with migration-map.mjs.`);
+  }
+  for (const prerequisite of built) {
+    if (!pathCovers(root, normalizeProductPath(prerequisite.angular.path))) {
+      throw new Error(
+        `${absolutePath} prerequisite ${prerequisite.id} is built at ${prerequisite.angular.path}, ` +
+          `outside the Angular root ${root}.`,
+      );
+    }
+  }
 
   if (value.supersedes) {
     const previous = await readPointer("supersedes", value.supersedes);
@@ -3487,11 +3497,6 @@ const runSelfTest = async () => {
     "evidence on a slice that has not landed",
   );
   expectMapRejection(
-    map => { map.prerequisites[2].angular.path = "src/features/lineDrawer/angular/line-store.adapter.ts"; },
-    "beside its React original",
-    "an Angular counterpart away from its React original",
-  );
-  expectMapRejection(
     map => { map.recommendation.options.push({ flowId: "demo-line-drawer", reason: "Again." }); },
     "has already landed",
     "a recommendation of a landed slice",
@@ -3522,6 +3527,23 @@ const runSelfTest = async () => {
     map => { map.metrics.sha256 = "0".repeat(64); },
     "metrics hash does not match",
     "a metrics pointer whose hash does not match",
+  );
+  await expectMapPointerRejection(
+    map => { map.prerequisites[2].angular.path = "src/state/angular/line-store.adapter.ts"; },
+    "outside the Angular root",
+    "a built counterpart outside the measured Angular root",
+  );
+  await expectMapPointerRejection(
+    async map => {
+      // Any hashed file without a structure stands in for metrics measured before one.
+      const unstructured = path.join(debugExampleDirectory, "failed-verification-result.json");
+      map.metrics = {
+        path: path.relative(rootDirectory, unstructured),
+        sha256: createHash("sha256").update(await readFile(unstructured)).digest("hex"),
+      };
+    },
+    "metrics carry no structure root",
+    "a built counterpart with metrics that name no Angular root",
   );
   await expectMapPointerRejection(
     async map => {

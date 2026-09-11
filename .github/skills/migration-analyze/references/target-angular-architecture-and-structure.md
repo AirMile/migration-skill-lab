@@ -124,6 +124,9 @@ than silently promoting a lower-priority source:
   observed in Horizon Architecture Demo? `HorizonUICodeReview.md:188-190`
   requires Frontend Chapter agreement for this kind of architectural choice;
   no record of that agreement exists in the material reviewed here.
+  Resolved for Route Assistant on 2026-09-11: the project chose `core/`,
+  `shared/` and `domains/` under `src/angular/`, recorded in the lab's
+  `docs\angular-structure.json`.
 - Hub Dashboard UI is an operations/administration dashboard, not a
   farm-domain application. Its folder layout may not be a representative
   analogue for a farm/robot-domain migration target like Route Assistant.

@@ -4,15 +4,19 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { checkStructure, createResolver, loadStructure } from "./angular-structure.mjs";
 
 // Which slices to cut is judgement; which files a slice leans on is not. This
 // script owns the second half, so flow-plan counts the same way on every run
 // and flow-baseline starts from numbers nobody retyped.
 
+const labDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
 const usage = `Usage:
   node scripts/migration-map.mjs --init --product-root <dir> --out <map.json> --run-id <id> --skill-version <x.y.z>
   node scripts/migration-map.mjs --seed --previous <map.json> --out <map.json> --run-id <id> --skill-version <x.y.z> --lab-root <dir>
-  node scripts/migration-map.mjs --measure --product-root <dir> --map <map.json> [--lab-root <dir>] [--out <metrics.json>] [--threshold <n>] [--react-packages <a,b>]
+  node scripts/migration-map.mjs --measure --product-root <dir> --map <map.json> [--lab-root <dir>] [--out <metrics.json>] [--structure <angular-structure.json>] [--threshold <n>] [--react-packages <a,b>]
 
 Init writes a first migration-map.json with one feature per folder under
 src/features that holds source other than tests and stories, and no slices.
@@ -30,15 +34,22 @@ file counts and framework-agnostic share, every file with --threshold (10) or
 more importers from other units and whether it is React-bound, and per mapped
 slice the React-bound files outside its paths that it imports, each with the
 prerequisite and Angular counterpart the map records for it, and every file
-under an angular folder. It then points the map's metrics and repository at
-what it measured, and prints the unmapped feature folders, the slices whose
-paths match nothing, the React-bound files two or more slices share that the
-map records as no prerequisite and no slice owns, and the Angular files.
+under an angular folder. It applies the Angular target structure, by default
+docs\\angular-structure.json in this lab, to every file under src, tests
+included, and records the structure file, the files no rule matches and the
+targets two or more files move to; per prerequisite its target and whether a
+built counterpart drifted from it; per slice the Angular folders its files move
+to. It then points the map's metrics and repository at what it measured, and
+prints the unmapped feature folders, the slices whose paths match nothing, the
+React-bound files two or more slices share that the map records as no
+prerequisite and no slice owns, the Angular files, the count of unmatched files
+and collisions, and the drifted prerequisites.
 
 A file is React-bound when it is .tsx, value-imports a --react-packages
 package (react, react-dom, styled-components, @auth0/auth0-react) or
-value-imports a React-bound file. Product paths are relative with forward
-slashes; a pointer is relative to --lab-root when its file lies inside it.
+value-imports a React-bound file; a test or story is React-bound when a file
+it value-imports is. Product paths are relative with forward slashes; a
+pointer is relative to --lab-root when its file lies inside it.
 
 Never writes inside the product. Init and seed never overwrite.
 
@@ -195,6 +206,7 @@ const analyzeProduct = (productRoot, reactPackages) => {
   }
 
   return {
+    allFiles,
     sourceFiles,
     testAndStoryFileCount: allFiles.length - sourceFiles.length,
     typeOnlyImports,
@@ -226,8 +238,53 @@ const listFeatureDirectories = (productRoot, graph) => {
     .sort();
 };
 
+// What the structure engine needs to know about the product, over every file
+// tests included. A test or story is outside the graph, so it takes the
+// boundness of the files it imports, which is its subject's.
+const structureFacts = graph => {
+  const { allFiles, sourceFiles, importedBy, bound, productPath } = graph;
+  const fileByProductPath = new Map(allFiles.map(file => [productPath(file), file]));
+  const sourceSet = new Set(sourceFiles);
+  const filesByFolder = new Map();
+  for (const filePath of fileByProductPath.keys()) {
+    const folder = path.posix.dirname(filePath);
+    if (!filesByFolder.has(folder)) filesByFolder.set(folder, []);
+    filesByFolder.get(folder).push(filePath);
+  }
+  const testBound = new Map();
+  return {
+    isReactBound: filePath => {
+      const file = fileByProductPath.get(filePath);
+      if (!file) return false;
+      if (sourceSet.has(file)) return bound.has(file);
+      if (!testBound.has(file)) {
+        const { value } = extractSpecifiers(readFileSync(file, "utf8"));
+        testBound.set(file, value.some(specifier =>
+          (specifier.startsWith(".") || specifier.startsWith("/")) && bound.has(resolveInternal(file, specifier))));
+      }
+      return testBound.get(file);
+    },
+    importersOf: filePath => [...importedBy.get(fileByProductPath.get(filePath)) ?? []].map(productPath),
+    siblingsOf: filePath => filesByFolder.get(path.posix.dirname(filePath)) ?? [],
+  };
+};
+
 const buildMetrics = (graph, map, options) => {
   const { sourceFiles, fileData, importedBy, directlyBound, bound, productPath } = graph;
+  const resolver = createResolver(options.structure.spec, structureFacts(graph));
+  const allPaths = graph.allFiles.map(productPath);
+  const structure = checkStructure(resolver, allPaths);
+  const placedInRoot = placed =>
+    (placed.outcome === "move" || placed.outcome === "merge") && covers(resolver.root, placed.target);
+  // The folders a slice's files move to, a folder inside another left out.
+  const angularTargets = sliceBases => {
+    const folders = [...new Set(allPaths
+      .filter(filePath => sliceBases.some(base => covers(base, filePath)))
+      .map(resolver.resolve)
+      .filter(placedInRoot)
+      .map(placed => path.posix.dirname(placed.target)))].sort();
+    return folders.filter(folder => !folders.some(other => other !== folder && covers(other, folder)));
+  };
   const unitByFile = new Map(sourceFiles.map(file => [file, unitOf(productPath(file))]));
   const fileByProductPath = new Map(sourceFiles.map(file => [productPath(file), file]));
 
@@ -311,6 +368,7 @@ const buildMetrics = (graph, map, options) => {
       files: own.length,
       missingPaths: sliceBases.filter(base =>
         !sourceFiles.some(file => covers(base, productPath(file)))),
+      angularTargets: angularTargets(sliceBases),
       reactBoundImports,
     };
   });
@@ -342,6 +400,14 @@ const buildMetrics = (graph, map, options) => {
       typeOnlyImports: graph.typeOnlyImports,
       unresolvedImports: graph.unresolvedImports,
     },
+    structure: {
+      path: pointerPath(options.structure.file, options.labRoot),
+      sha256: sha256(options.structure.raw),
+      root: resolver.root,
+      counts: structure.counts,
+      unmatched: structure.unmatched,
+      collisions: structure.collisions,
+    },
     units: [...units.values()]
       .sort((left, right) => left.unit.localeCompare(right.unit))
       .map(({ agnosticFiles, ...entry }) => ({
@@ -354,6 +420,19 @@ const buildMetrics = (graph, map, options) => {
     sharedFiles,
     slices,
     sharedAcrossSlices,
+    // A built counterpart away from its target drifted: the structure moved,
+    // or the counterpart was built before it was decided.
+    prerequisites: map.prerequisites.map(prerequisite => {
+      const placed = resolver.resolve(toProductPath(prerequisite.reactSource));
+      const target = placedInRoot(placed) ? placed.target : null;
+      return {
+        id: prerequisite.id,
+        reactSource: toProductPath(prerequisite.reactSource),
+        outcome: placed.outcome,
+        target,
+        drift: prerequisite.angular.status === "built" && toProductPath(prerequisite.angular.path) !== target,
+      };
+    }),
   };
 };
 
@@ -518,12 +597,17 @@ const measureMap = async options => {
     options["react-packages"].split(",").map(name => name.trim()).filter(Boolean) :
     defaultReactPackages;
 
+  const structureFile = path.resolve(options.structure ?? path.join(labDirectory, "docs", "angular-structure.json"));
+  const structure = { file: structureFile, raw: await readFile(structureFile), spec: loadStructure(structureFile) };
+
   const revision = readRevision(productRoot);
   const metrics = buildMetrics(analyzeProduct(productRoot, reactPackages), map, {
     productRoot,
     revision,
     reactPackages,
     threshold,
+    structure,
+    labRoot: options["lab-root"],
   });
   const metricsPath = path.resolve(options.out ?? path.join(path.dirname(mapPath), "migration-metrics.json"));
   const metricsRaw = `${JSON.stringify(metrics, null, 2)}\n`;
@@ -542,6 +626,11 @@ const measureMap = async options => {
       .filter(entry => !entry.prerequisite && !entry.ownedBy)
       .map(({ file, sliceCount, slices }) => ({ file, sliceCount, slices })),
     angularFiles: metrics.angularFiles,
+    structure: {
+      unmatched: metrics.structure.unmatched.length,
+      collisions: metrics.structure.collisions.length,
+    },
+    driftedPrerequisites: metrics.prerequisites.filter(entry => entry.drift).map(entry => entry.id),
   };
 };
 
@@ -550,7 +639,7 @@ const parseArguments = argumentsList => {
   const flags = new Set(["init", "seed", "measure", "self-test", "help"]);
   const valued = new Set([
     "product-root", "out", "run-id", "skill-version", "previous", "lab-root", "map",
-    "threshold", "react-packages",
+    "threshold", "react-packages", "structure",
   ]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
@@ -604,9 +693,14 @@ const runSelfTest = async () => {
       "src/shared/mixed.ts": "import { type Props, useThing } from \"../components/Button\";\nexport const y = useThing();\n",
       "src/shared/lonely.ts": "export const lonely = 1;\n",
       "src/shared/__tests__/lonely.test.ts": "import { lonely } from \"../lonely\";\n",
-      "src/features/alpha/AlphaForm.tsx": "import { Text } from \"../../components/Text\";\nimport { y } from \"../../shared/mixed\";\nimport { b } from \"../../shared/cycleB\";\nexport const AlphaForm = () => null;\n",
+      // No file is named orphan, so this test takes the boundness of what it imports.
+      "src/shared/__tests__/orphan.test.ts": "import { b } from \"../cycleB\";\n",
+      "src/state/LineStore.ts": "import { useSyncExternalStore } from \"react\";\nexport const useLines = () => 1;\n",
+      "src/state/Shared.ts": "import { useSyncExternalStore } from \"react\";\nexport const useShared = () => 1;\n",
+      "src/angular/domains/north/store/line.store.ts": "export class LineStore {}\n",
+      "src/features/alpha/AlphaForm.tsx": "import { Text } from \"../../components/Text\";\nimport { y } from \"../../shared/mixed\";\nimport { b } from \"../../shared/cycleB\";\nimport { useLines } from \"../../state/LineStore\";\nimport { useShared } from \"../../state/Shared\";\nexport const AlphaForm = () => null;\n",
       "src/components/angular/text.component.ts": "export class TextComponent {}\n",
-      "src/features/beta/BetaForm.tsx": "import { Text } from \"../../components/Text\";\nimport { b } from \"../../shared/cycleB\";\nexport const BetaForm = () => null;\n",
+      "src/features/beta/BetaForm.tsx": "import { Text } from \"../../components/Text\";\nimport { b } from \"../../shared/cycleB\";\nimport { useShared } from \"../../state/Shared\";\nexport const BetaForm = () => null;\n",
       "src/features/__test__/only.test.ts": "export {};\n",
     };
     for (const [relativePath, content] of Object.entries(files)) await write(product, relativePath, content);
@@ -622,6 +716,10 @@ const runSelfTest = async () => {
     assert(isBound("src/shared/mixed.ts"), "a mixed type and value import does not make a file bound");
     assert(graph.importedBy.get(path.join(product, "src", "shared", "lonely.ts")).size === 0,
       "a test file counts as an importer");
+    const facts = structureFacts(graph);
+    assert(facts.isReactBound("src/shared/__tests__/orphan.test.ts") &&
+      !facts.isReactBound("src/shared/__tests__/lonely.test.ts"),
+      "a test does not take the boundness of the files it imports");
 
     const lab = path.join(temporary, "lab");
     const firstMap = path.join(lab, "runs", "2026-01-01-migration-map-1", "migration-map.json");
@@ -649,15 +747,37 @@ const runSelfTest = async () => {
       { flowId: "beta-form", featureId: "beta", title: "Beta form", paths: ["src/features/beta"],
         dependsOn: [], requires: ["text"], criteria, status: "candidate" },
     ];
-    first.prerequisites = [{
-      id: "text", kind: "shared-component", reactSource: "src/components/Text.tsx",
-      angular: { status: "built", path: "src/components/angular/text.component.ts", builtBy: "alpha-form" },
-      copies: [],
-    }];
+    first.prerequisites = [
+      { id: "text", kind: "shared-component", reactSource: "src/components/Text.tsx",
+        angular: { status: "built", path: "src/components/angular/text.component.ts", builtBy: "alpha-form" },
+        copies: [] },
+      { id: "line-store", kind: "adapter", reactSource: "src/state/LineStore.ts",
+        angular: { status: "built", path: "src/angular/domains/north/store/line.store.ts", builtBy: "alpha-form" },
+        copies: [] },
+      { id: "shared-state", kind: "adapter", reactSource: "src/state/Shared.ts", angular: { status: "none" }, copies: [] },
+    ];
     await writeFile(firstMap, serializeMap(first));
     await write(product, "src/features/gamma/Gamma.ts", "export const g = 1;\n");
+    const structurePath = path.join(lab, "docs", "angular-structure.json");
+    await write(lab, "docs/angular-structure.json", JSON.stringify({
+      root: "src/angular",
+      preprocess: { islandFolder: "angular" },
+      tables: { featureDomain: { alpha: "north", beta: "south" } },
+      rules: [
+        { id: "state", match: "src/state/**", outcome: "move", nameStyle: "store",
+          placeByUsage: { oneDomain: "{root}/domains/{domain}/store/{rest}", otherwise: "{root}/core/store/{rest}" } },
+        { id: "components", match: "src/components/**", outcome: "move", target: "{root}/shared/components/{rest}" },
+        { id: "shared-agnostic", match: "src/shared/**", when: { reactBound: false }, outcome: "stay" },
+        { id: "shared", match: "src/shared/**", outcome: "move", target: "{root}/shared/{rest}" },
+        { id: "features", match: "src/features/*/**", outcome: "move",
+          domainFrom: { table: "featureDomain", keyFrom: "segment:2" },
+          target: "{root}/domains/{domain}/pages/{feature}/{rest}" },
+      ],
+    }));
 
-    const measured = await measureMap({ "product-root": product, map: firstMap, "lab-root": lab });
+    const measured = await measureMap({
+      "product-root": product, map: firstMap, "lab-root": lab, structure: structurePath,
+    });
     const metrics = await readJsonFile(measured.metrics);
     const alpha = metrics.slices.find(slice => slice.flowId === "alpha-form");
     const beta = metrics.slices.find(slice => slice.flowId === "beta-form");
@@ -673,8 +793,31 @@ const runSelfTest = async () => {
     assert(JSON.stringify(measured.unmappedShared.map(entry => entry.file)) ===
       JSON.stringify(["src/shared/cycleB.ts"]),
       `a shared file with no prerequisite is not reported, or a mapped one is: ${JSON.stringify(measured.unmappedShared)}`);
-    assert(JSON.stringify(measured.angularFiles) === JSON.stringify(["src/components/angular/text.component.ts"]),
-      `the Angular files are ${JSON.stringify(measured.angularFiles)}`);
+    assert(JSON.stringify(measured.angularFiles) === JSON.stringify([
+      "src/angular/domains/north/store/line.store.ts", "src/components/angular/text.component.ts",
+    ]), `the Angular files are ${JSON.stringify(measured.angularFiles)}`);
+    assert(metrics.structure.path === path.join("docs", "angular-structure.json") &&
+      metrics.structure.sha256 === sha256(await readFile(structurePath)) && metrics.structure.root === "src/angular",
+      "the metrics do not point at the structure they applied");
+    assert(JSON.stringify(metrics.structure.unmatched.map(entry => entry.file)) ===
+      JSON.stringify(["src/features/__test__/only.test.ts", "src/features/gamma/Gamma.ts"]),
+      `the unmatched files are ${JSON.stringify(metrics.structure.unmatched)}`);
+    assert(metrics.structure.collisions.length === 1 &&
+      metrics.structure.collisions[0].target === "src/angular/shared/components/text.component.ts",
+      `the collisions are ${JSON.stringify(metrics.structure.collisions)}`);
+    assert(measured.structure.unmatched === 2 && measured.structure.collisions === 1,
+      "the unmatched and collision counts are not printed");
+    const target = id => metrics.prerequisites.find(entry => entry.id === id);
+    assert(target("text").drift && target("text").target === "src/angular/shared/components/text.component.ts",
+      "a counterpart built away from its target does not drift");
+    assert(!target("line-store").drift && target("line-store").target === "src/angular/domains/north/store/line.store.ts",
+      "state one domain uses is not targeted at that domain's store, or its counterpart there drifts");
+    assert(!target("shared-state").drift && target("shared-state").target === "src/angular/core/store/shared.store.ts",
+      "state two domains use is not targeted at core");
+    assert(JSON.stringify(measured.driftedPrerequisites) === JSON.stringify(["text"]),
+      "the drifted prerequisites are not printed");
+    assert(JSON.stringify(alpha.angularTargets) === JSON.stringify(["src/angular/domains/north/pages/alpha"]),
+      `the alpha slice's Angular folders are ${JSON.stringify(alpha.angularTargets)}`);
     const measuredMap = await readJsonFile(firstMap);
     assert(measuredMap.metrics.path === path.join("runs", "2026-01-01-migration-map-1", "migration-metrics.json") &&
       measuredMap.metrics.sha256 === sha256(await readFile(measured.metrics)),

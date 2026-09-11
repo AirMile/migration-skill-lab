@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.22.0`.
+Skill version: `0.23.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -54,12 +54,13 @@ about most.
   scripts. Ask only when the flow maps to more than one plausible id.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
   where the user chose this slice: take its `flowId` and read only that
-  slice's entry and the prerequisites in its `requires`. Its `paths` and
-  criteria verdicts are the planning view, not the boundary: the map's cut is
-  one of the step-3 candidates, and choosing another is a `decisions` entry
-  the next `flow-plan` run reads. A prerequisite marked `built` is reused
-  unchanged; one this slice builds lands in the `angular\` folder beside its
-  React original, which joins the allowlist.
+  slice's entry and the prerequisites in its `requires`, and from the metrics
+  it points to that slice's `angularTargets` and those prerequisites'
+  `target`. Its `paths` and criteria verdicts are the planning view, not the
+  boundary: the map's cut is one of the step-3 candidates, and choosing
+  another is a `decisions` entry the next `flow-plan` run reads. A
+  prerequisite marked `built` is reused unchanged; one this slice builds lands
+  at its measured `target`, whose folder joins the allowlist.
 - A saved `<flowId>-<skill>-prompt.md` means an earlier phase chose to continue
   later: say so in one line and resume from the artifacts it names, exactly as
   if the phases had run back to back.
@@ -70,10 +71,10 @@ about most.
   `flow-migrate`, or `writesToWorktree`. Confirm them in one line.
 - Read `<lab>\docs\project-constants.md` before the survey and say that you did.
   It settles the framework version, packages, compilation and mount mechanism,
-  change detection, install command, test location, coverage and the manual
-  verification environment. Never ask about anything on it and never put it in
-  `openQuestions`; if the file is absent, record that single gap as the open
-  question instead of reconstructing it.
+  the Angular target structure, change detection, install command, test
+  location, coverage and the manual verification environment. Never ask about
+  anything on it and never put it in `openQuestions`; if the file is absent,
+  record that single gap as the open question instead of reconstructing it.
 - Coverage is measured in CI: record per-flow figures as not retrieved, never
   as unavailable, and never run the product's coverage script, which writes an
   ungitignored `coverage\` and `junit.xml` into the worktree.

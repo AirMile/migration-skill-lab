@@ -8,7 +8,7 @@
     content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"
   >
   <meta name="backlog-schema-version" content="1">
-  <meta name="backlog-sha256" content="38a9481b89b6ff8fa9d14e9bd6c87258dfcdf8fae086d02a4868c3ccb3dd5dee">
+  <meta name="backlog-sha256" content="7ff8f231ef035303b8f6e8d61721a10ae2b5ed219e10089016aead6db8b30e7f">
   <title>migration-skill-lab backlog</title>
   <style>
     :root {
@@ -96,7 +96,7 @@
         <code>backlog/backlog.json</code> and run the renderer instead of editing this HTML.
       </div>
       <div class="summary">
-        <div class="metric"><strong>31</strong><span>Total items</span></div>
+        <div class="metric"><strong>32</strong><span>Total items</span></div>
         <div class="metric"><strong>17</strong><span>Done</span></div>
         <div class="metric"><strong>2</strong><span>Ready or active</span></div>
         <div class="metric"><strong>9</strong><span>Blocked</span></div>
@@ -521,7 +521,7 @@
       </div>
     </section>
     <section>
-      <h2>P2 <span class="muted">(15)</span></h2>
+      <h2>P2 <span class="muted">(16)</span></h2>
       <div class="phase-grid">
         
     <article class="card">
@@ -977,16 +977,47 @@
         <ul><li>validate-three-skill-workflow-v0: Validate three-skill workflow v0.1</li></ul>
       </details>
       <details>
-        <summary>Acceptance criteria (3)</summary>
-        <ul><li>migration-map.mjs reproduces the follow-up research&#039;s per-candidate shared-component counts on the product.</li><li>A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.</li><li>A PASS from flow-verify lands its slice in the next map without a hand edit.</li></ul>
+        <summary>Acceptance criteria (4)</summary>
+        <ul><li>migration-map.mjs reproduces the follow-up research&#039;s per-candidate shared-component counts on the product.</li><li>A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.</li><li>A PASS from flow-verify lands its slice in the next map without a hand edit.</li><li>migration-map.mjs --measure applies docs/angular-structure.json to the product with no unmatched file and no collision.</li></ul>
       </details>
-      <details open>
-        <summary>Open questions (1)</summary>
-        <ul><li>Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?</li></ul>
+      <details>
+        <summary>Open questions (0)</summary>
+        <p class="muted">No open questions.</p>
       </details>
       <details>
         <summary>Sources (2)</summary>
         <ul><li>skill-architecture: Angular migration skill architecture</li><li>product-frontend: Route Assistant frontend</li></ul>
+      </details>
+    </article>
+    <article class="card">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">relocate-first-slice-to-target-structure</p>
+          <h3>Relocate the first slice to the Angular target structure</h3>
+        </div>
+        <span class="badge status-proposed">proposed</span>
+      </div>
+      <p>Product work: move the Angular files of the lineForm angular folder to their targets under src/angular as firstSliceRelocation in docs/angular-structure.json lists them, move the React host AngularLineFieldsHost.tsx one folder up where it stays React, and re-anchor the Analog transformFilter and the tsconfig.app.json include to src/angular/ as buildScoping says. It changes no behavior; until it lands, project-constants.md describes the provisional compiler scope.</p>
+      <dl class="metadata">
+        <div><dt>Type</dt><dd>benchmark</dd></div>
+        <div><dt>Risk</dt><dd>medium</dd></div>
+        <div><dt>Evidence value</dt><dd>medium</dd></div>
+      </dl>
+      <details>
+        <summary>Dependencies (0)</summary>
+        <p class="muted">No dependencies.</p>
+      </details>
+      <details>
+        <summary>Acceptance criteria (5)</summary>
+        <ul><li>Every firstSliceRelocation entry sits at its target and no Angular file is left in the lineForm angular folder.</li><li>The transformFilter and the tsconfig.app.json include select only files under src/angular/, as buildScoping records.</li><li>Typecheck, build and the existing tests pass, and a manual look at the line form in the Route Assistant desktop app shows no change.</li><li>migration-map.mjs --measure on the relocated product reports no unmatched file and no collision.</li><li>project-constants.md describes the re-anchored compiler scope.</li></ul>
+      </details>
+      <details>
+        <summary>Open questions (0)</summary>
+        <p class="muted">No open questions.</p>
+      </details>
+      <details>
+        <summary>Sources (2)</summary>
+        <ul><li>product-frontend: Route Assistant frontend</li><li>stage-approach: Angular migration stage approach and feasibility</li></ul>
       </details>
     </article>
       </div>
@@ -1955,15 +1986,37 @@
       &quot;acceptanceCriteria&quot;: [
         &quot;migration-map.mjs reproduces the follow-up research&#039;s per-candidate shared-component counts on the product.&quot;,
         &quot;A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.&quot;,
-        &quot;A PASS from flow-verify lands its slice in the next map without a hand edit.&quot;
+        &quot;A PASS from flow-verify lands its slice in the next map without a hand edit.&quot;,
+        &quot;migration-map.mjs --measure applies docs/angular-structure.json to the product with no unmatched file and no collision.&quot;
       ],
       &quot;sourceIds&quot;: [
         &quot;skill-architecture&quot;,
         &quot;product-frontend&quot;
       ],
-      &quot;openQuestions&quot;: [
-        &quot;Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?&quot;
-      ]
+      &quot;openQuestions&quot;: []
+    },
+    {
+      &quot;id&quot;: &quot;relocate-first-slice-to-target-structure&quot;,
+      &quot;title&quot;: &quot;Relocate the first slice to the Angular target structure&quot;,
+      &quot;type&quot;: &quot;benchmark&quot;,
+      &quot;status&quot;: &quot;proposed&quot;,
+      &quot;phase&quot;: &quot;P2&quot;,
+      &quot;description&quot;: &quot;Product work: move the Angular files of the lineForm angular folder to their targets under src/angular as firstSliceRelocation in docs/angular-structure.json lists them, move the React host AngularLineFieldsHost.tsx one folder up where it stays React, and re-anchor the Analog transformFilter and the tsconfig.app.json include to src/angular/ as buildScoping says. It changes no behavior; until it lands, project-constants.md describes the provisional compiler scope.&quot;,
+      &quot;dependencies&quot;: [],
+      &quot;evidenceValue&quot;: &quot;medium&quot;,
+      &quot;risk&quot;: &quot;medium&quot;,
+      &quot;acceptanceCriteria&quot;: [
+        &quot;Every firstSliceRelocation entry sits at its target and no Angular file is left in the lineForm angular folder.&quot;,
+        &quot;The transformFilter and the tsconfig.app.json include select only files under src/angular/, as buildScoping records.&quot;,
+        &quot;Typecheck, build and the existing tests pass, and a manual look at the line form in the Route Assistant desktop app shows no change.&quot;,
+        &quot;migration-map.mjs --measure on the relocated product reports no unmatched file and no collision.&quot;,
+        &quot;project-constants.md describes the re-anchored compiler scope.&quot;
+      ],
+      &quot;sourceIds&quot;: [
+        &quot;product-frontend&quot;,
+        &quot;stage-approach&quot;
+      ],
+      &quot;openQuestions&quot;: []
     }
   ]
 }
@@ -1974,7 +2027,7 @@
       Updated 2026-09-11 |
       schemaVersion 1 |
       source backlog/backlog.json |
-      sha256 38a9481b89b6ff8fa9d14e9bd6c87258dfcdf8fae086d02a4868c3ccb3dd5dee
+      sha256 7ff8f231ef035303b8f6e8d61721a10ae2b5ed219e10089016aead6db8b30e7f
     </footer>
   </main>
 </body>

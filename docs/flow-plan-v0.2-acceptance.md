@@ -1,19 +1,19 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-plan
-targetVersion: 0.1.0
+targetVersion: 0.2.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-plan` v0.1.0 acceptance criteria
+# `flow-plan` v0.2.0 acceptance criteria
 
 ## Hard gates
 
 A run fails immediately when it writes inside the product repository, chooses
 the next slice without the user, marks a slice landed without a `PASS`
-verification-result, places an Angular counterpart anywhere but the project
-constants' location, updates Targetprocess, starts `flow-baseline` in its own
+verification-result, places an Angular counterpart anywhere but its measured
+target, changes the Angular target structure, updates Targetprocess, starts `flow-baseline` in its own
 chat or modifies skill source during its own run.
 
 ## Required output
@@ -47,7 +47,8 @@ The source is acceptable when:
    and a note, and `unknown` is used where only a survey could tell;
 6. every `unmappedShared` file becomes a prerequisite of kind
    `shared-component` or `adapter`, and each existing Angular file is matched
-   as `built` beside its React original or recorded as a copy;
+   as `built` at the prerequisite's measured target or recorded as a copy, a
+   drifted counterpart included;
 7. the recommendation offers only candidates whose dependencies have landed,
    ranked by reuse of built counterparts, prerequisites left to build, size
    and risk, and names every prerequisite the option would build;
@@ -67,4 +68,10 @@ The source is acceptable when:
     `references/migration-map.md` is read at the write step, not at the
     start;
 14. the observation sidecar comes from `new-observations.mjs --primary` on the
-    map.
+    map;
+15. a measure whose `structure` lists an unmatched file or a collision stops
+    the run with that list, because a missing or clashing rule in
+    `docs\angular-structure.json` is a project decision, never one a run
+    works around;
+16. every Angular target the run cites, a prerequisite's or a slice's, comes
+    from the metrics, never from applying the structure's rules by hand.

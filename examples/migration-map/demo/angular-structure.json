@@ -1,0 +1,73 @@
+{
+  "document": "angular-structure",
+  "version": "0.1.0",
+  "status": "demo",
+  "date": "2026-09-11",
+  "source": "The structure the synthetic demo product behind examples/migration-map/demo is measured against. It follows the shape of docs/angular-structure.json, the project's decided structure, with one rule per folder the demo has.",
+  "root": "src/angular",
+  "note": "Ordered rule list, first match wins; scripts/angular-structure.mjs applies it and scripts/migration-map.mjs --measure records the result in migration-metrics.json.",
+  "usage": {
+    "purpose": "Decides `placeByUsage`: the domains of the files that use a React original, found by walking its importers up until each path reaches a file with a domain.",
+    "ignoreImporters": []
+  },
+  "tables": {
+    "featureDomain": {
+      "lineDrawer": "floor-plan",
+      "routeList": "route"
+    }
+  },
+  "preprocess": {
+    "islandFolder": "angular",
+    "note": "A file in an `angular` folder beside its React parent lands where that parent's rule sends it, keeping its name."
+  },
+  "rules": [
+    {
+      "id": "state",
+      "match": "src/state/**",
+      "outcome": "move",
+      "placeByUsage": {
+        "oneDomain": "{root}/domains/{domain}/store/{rest}",
+        "otherwise": "{root}/core/store/{rest}"
+      },
+      "nameStyle": "store",
+      "reason": "A store adapter lives with the one domain that uses it, and in `core/store/` when several do."
+    },
+    {
+      "id": "shared-utils-agnostic",
+      "match": "src/shared/utils/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "A pure helper is imported by Angular where it is."
+    },
+    {
+      "id": "shared-utils",
+      "match": "src/shared/utils/**",
+      "outcome": "move",
+      "target": "{root}/shared/utils/{rest}",
+      "nameStyle": "auto",
+      "reason": "A React-bound helper keeps its role in the shared utils folder."
+    },
+    {
+      "id": "components",
+      "match": "src/components/**",
+      "outcome": "move",
+      "target": "{root}/shared/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "Design-system primitives are reused across every domain."
+    },
+    {
+      "id": "features",
+      "match": "src/features/*/**",
+      "outcome": "move",
+      "domainFrom": {
+        "table": "featureDomain",
+        "keyFrom": "segment:2"
+      },
+      "target": "{root}/domains/{domain}/pages/{feature}/{rest}",
+      "nameStyle": "auto",
+      "reason": "Every feature folder is a page of exactly one domain."
+    }
+  ]
+}

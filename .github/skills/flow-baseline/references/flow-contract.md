@@ -29,12 +29,13 @@ the contract.
   schemaVersion 6 rejects `includedPaths` and `excludedPaths`. The start and
   end state describe the chosen slice, not the whole route.
   The allowlist is the only thing bounding `flow-migrate`'s writes, and it
-  holds exactly four kinds of path: the directory the new Angular code lands
-  in, since a design with nowhere to land cannot be implemented; the `angular\`
-  folder beside the React original of each prerequisite this slice builds,
-  per the project constants; the test directory the
-  `characterizationRequired` entries need, which the project constants name;
-  and every `dependencyChanges.paths` entry, which the validator enforces.
+  holds exactly four kinds of path: the folders the new Angular code lands
+  in, since a design with nowhere to land cannot be implemented, which are the
+  slice's measured `angularTargets` when a migration map proposed it; the
+  folder of the measured `target` of each prerequisite this slice builds; the
+  test directory the `characterizationRequired` entries need, which the
+  project constants name; and every `dependencyChanges.paths` entry, which the
+  validator enforces.
   Check every existing file in it for consumers outside this flow: shared
   infrastructure stays out, or a `decisions` entry names the consumers
   considered and why the risk is accepted. That holds for an Angular

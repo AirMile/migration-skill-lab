@@ -11,7 +11,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 This skill holds the overview: it decides nothing about one slice's behavior,
 only which slice goes next and what it can build on.
 
-Skill version: `0.1.0`.
+Skill version: `0.2.0`.
 
 Recommended model: Claude Opus 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.
@@ -47,8 +47,8 @@ Derive everything else, state each value in one line and continue:
 - An invocation that names a `verification-result.json` comes from a `PASS`:
   that slice lands in the seed step. Say so in one line.
 - Read `<lab>\docs\project-constants.md` and say that you did. Its Angular
-  counterpart location is where every prerequisite's Angular version lives;
-  never propose another place.
+  target structure puts every prerequisite's counterpart at the `target` the
+  measure records for it; never propose another place.
 - The four slice criteria are `flow-baseline`'s, in workflow step 3 of
   `<lab>\.github\skills\flow-baseline\SKILL.md`. Read them there, once.
 
@@ -57,7 +57,7 @@ Derive everything else, state each value in one line and continue:
 1. Take the product revision and status from `run-context.mjs`. A dirty
    worktree is evidence, not permission to change it.
 2. **Seed.** With a previous map, run
-   `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version 0.1.0 --lab-root <lab>`.
+   `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version 0.2.0 --lab-root <lab>`.
    It carries every field, lands each slice with a `PASS` verification-result
    and moves each started candidate to `in-progress`; report both lists in one
    line. Without one, run `--init --product-root <product>` with the same
@@ -67,6 +67,10 @@ Derive everything else, state each value in one line and continue:
    `node "<lab>\scripts\migration-map.mjs" --measure --product-root <product> --map <migration-map.json> --lab-root <lab>`.
    Run it again after every change to slices or prerequisites, and last before
    validating, since the metrics describe the map as it stood when measured.
+   When its `structure` counts an unmatched file or a collision, stop and
+   report the metrics' `structure.unmatched` and `structure.collisions`: a
+   missing or clashing rule is a project decision for
+   `<lab>\docs\angular-structure.json`, not for this run.
 4. **Features.** Add one for each `featureDirectoriesNotInMap` entry. Take a
    feature's `externalId` from a baseline work-item snapshot that names it, or
    from the user; never invent one.
@@ -84,10 +88,12 @@ Derive everything else, state each value in one line and continue:
 6. **Prerequisites.** Every `unmappedShared` file from the measure becomes a
    prerequisite: `shared-component` when it renders, `adapter` when a slice
    reads or writes state, a context or a host bridge through it. Match the
-   measure's `angularFiles`: a counterpart under `angular\` beside the React
-   original is `built`, with the slice that built it; one anywhere else is a
-   `copies` entry. Add each prerequisite to the `requires` of every slice
-   that imports it. A classification carries forward; judge only new files.
+   measure's `angularFiles` against each prerequisite's `target` in the
+   metrics: a counterpart at its target is `built`, with the slice that built
+   it; one anywhere else, a `driftedPrerequisites` entry included, is a
+   `copies` entry, since no later slice looks for it there. Add each
+   prerequisite to the `requires` of every slice that imports it. A
+   classification carries forward; judge only new files.
 7. **Recommend.** Offer two or three candidates whose `dependsOn` have all
    landed, ranked in this order: reuses `built` counterparts; leaves the
    fewest prerequisites to build, naming each one it would build, a `copies`
@@ -132,8 +138,8 @@ Never:
 - choose the next slice for the user, or cut slices for a feature nobody is
   working on;
 - mark a slice `landed` by hand: only the seed does, from a `PASS`;
-- decide anything the Frontend Chapter owns, or place a counterpart anywhere
-  but where the project constants say;
+- change the Angular target structure, or place a counterpart anywhere but
+  its measured target;
 - update Targetprocess, or invent an external ID;
 - store source copies, credentials, tokens, private URLs or unnecessary
   personal data;

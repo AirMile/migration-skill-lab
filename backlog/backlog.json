@@ -819,15 +819,37 @@
       "acceptanceCriteria": [
         "migration-map.mjs reproduces the follow-up research's per-candidate shared-component counts on the product.",
         "A first real /flow-plan run writes a map that validates and hands a user-chosen slice to flow-baseline.",
-        "A PASS from flow-verify lands its slice in the next map without a hand edit."
+        "A PASS from flow-verify lands its slice in the next map without a hand edit.",
+        "migration-map.mjs --measure applies docs/angular-structure.json to the product with no unmatched file and no collision."
       ],
       "sourceIds": [
         "skill-architecture",
         "product-frontend"
       ],
-      "openQuestions": [
-        "Does the Frontend Chapter accept an angular folder beside each React original as the interim location for shared counterparts?"
-      ]
+      "openQuestions": []
+    },
+    {
+      "id": "relocate-first-slice-to-target-structure",
+      "title": "Relocate the first slice to the Angular target structure",
+      "type": "benchmark",
+      "status": "proposed",
+      "phase": "P2",
+      "description": "Product work: move the Angular files of the lineForm angular folder to their targets under src/angular as firstSliceRelocation in docs/angular-structure.json lists them, move the React host AngularLineFieldsHost.tsx one folder up where it stays React, and re-anchor the Analog transformFilter and the tsconfig.app.json include to src/angular/ as buildScoping says. It changes no behavior; until it lands, project-constants.md describes the provisional compiler scope.",
+      "dependencies": [],
+      "evidenceValue": "medium",
+      "risk": "medium",
+      "acceptanceCriteria": [
+        "Every firstSliceRelocation entry sits at its target and no Angular file is left in the lineForm angular folder.",
+        "The transformFilter and the tsconfig.app.json include select only files under src/angular/, as buildScoping records.",
+        "Typecheck, build and the existing tests pass, and a manual look at the line form in the Route Assistant desktop app shows no change.",
+        "migration-map.mjs --measure on the relocated product reports no unmatched file and no collision.",
+        "project-constants.md describes the re-anchored compiler scope."
+      ],
+      "sourceIds": [
+        "product-frontend",
+        "stage-approach"
+      ],
+      "openQuestions": []
     }
   ]
 }

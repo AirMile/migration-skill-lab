@@ -1,0 +1,534 @@
+{
+  "document": "angular-structure",
+  "version": "0.2.0",
+  "status": "decided",
+  "date": "2026-09-11",
+  "source": "Chosen on 2026-09-11 from the research in runs/2026-09-11-angular-structure-research-1 and C:/Obsidian/Notes 2025/Lely/Angular migratie/analyses/2026-09-11-angular-target-structure.md; state and hooks are placed by usage instead of all in core and shared.",
+  "root": "src/angular",
+  "note": "Ordered rule list, first match wins. Every rule is data: no rule asks a person about an individual file. `outcome` is `move` (an Angular counterpart is created at `target`), `stay` (framework-agnostic, Angular imports the React file where it is), `retire` (a React-only construct with no Angular counterpart, such as a re-export barrel or a styled-components theme) or `merge` (a React file whose single Angular counterpart another rule already names; merges are left out of collision detection). A rule with `placeByUsage` takes `oneDomain` when every file that uses the React original sits in one domain, and `otherwise` when it is used across domains or by nothing but the shell. A test goes with the file it tests (the file with its name in the test's folder or in the parent of `__tests__`): it lands at `<folder of that file's target>/__tests__/<that target's name>.spec.ts`, so `useJunoSettings.test.tsx` becomes `juno-settings.store.spec.ts`, or it takes that file's `stay` or `retire`; only a test with no such file is matched by the rules. A file already under `root` is Angular code in place and no rule applies to it. scripts/angular-structure.mjs applies these rules and scripts/migration-map.mjs --measure reports every file they leave unmatched or send to the same path.",
+  "placeholders": {
+    "{root}": "the Angular root, `src/angular`",
+    "{domain}": "resolved through the table named by `domainFrom.table`, or for `placeByUsage` the one domain every user of the file sits in",
+    "{page}": "the page folder named by the `pageDomain` table entry",
+    "{feature}": "the React feature-folder segment, kebab-cased, with a trailing `Page` removed (`overviewPage` -> `overview`)",
+    "{rest}": "every path segment after the matched prefix, kebab-cased, with the file renamed by `nameStyle`",
+    "{file}": "only the renamed file of `{rest}`, dropping the carried folders"
+  },
+  "nameStyles": {
+    "auto": "`X.tsx` -> `x.component.ts`; `index.tsx` -> `<folder>.component.ts`, unless another file in the folder already carries the folder's name, which makes it a re-export barrel and retires it; `useX.ts(x)` -> `x.service.ts`; `X.styles.ts` -> `x.component.css`; `X.stories.tsx` -> `x.stories.ts`; `X.test.ts(x)` with no file it tests -> `__tests__/x.spec.ts`; `X.logic.ts` -> `utils/x.logic.ts`; `IX.ts`/`X.types.ts` -> `models/x.model.ts`; `EX.ts` -> `enums/x.enum.ts`; any other `.ts` helper -> `utils/x.ts`. Folders are kebab-cased and carried over; `__test__` is normalised to `__tests__`.",
+    "service": "`useX.ts(x)` and a `useX/index.ts` folder entry -> `x.service.ts`, other files as `auto`",
+    "store": "`useX.tsx`/`XContext.tsx`/`XStore.ts` -> `x.store.ts`, other files as `auto`",
+    "page": "`XPage.tsx` -> `x.component.ts` directly in the domain's page folder, no extra component folder",
+    "keep": "file name kebab-cased, extension forced to `.ts`, nothing else added",
+    "asis": "file name unchanged; applied by `preprocess` to files that are already Angular"
+  },
+  "reactBoundness": {
+    "purpose": "Only rules with a `when.reactBound` condition use it. It decides whether an infrastructure file needs an Angular counterpart at all.",
+    "source": "Computed by scripts/migration-map.mjs from the product's value-import graph: a file is React-bound when it is .tsx, value-imports a React package, or value-imports a React-bound file. A test or story takes the outcome of the file it tests."
+  },
+  "usage": {
+    "purpose": "Decides `placeByUsage`: the domains of the files that use a React original, found by walking its importers up until each path reaches a file with a domain.",
+    "ignoreImporters": [
+      "src/app/App.tsx",
+      "src/app/main.tsx"
+    ],
+    "reason": "The shell composes every provider; composing is wiring, not use, and counting it would send all state to core."
+  },
+  "tables": {
+    "featureDomain": {
+      "floorPlanCreator": "floor-plan",
+      "annotationPopup": "route",
+      "editPage": "route",
+      "overviewPage": "route",
+      "recoveryRoute": "route",
+      "copy": "route",
+      "undoRedo": "route",
+      "startPage": "package",
+      "newPackagePage": "package",
+      "robot": "package",
+      "navbar": "platform",
+      "sideBarFilled": "platform",
+      "breadCrumbs": "platform",
+      "about": "platform"
+    },
+    "looseFeatureDomain": {
+      "CenterRobotButton": "floor-plan",
+      "Drawing": "floor-plan",
+      "FloorPlanCreatorDrawing": "floor-plan",
+      "EditRouteNameComponent": "route",
+      "RecoveryRouteName": "route",
+      "Utils": "route",
+      "UploadModal": "package",
+      "CloseApplicationModal": "platform"
+    },
+    "pageDomain": {
+      "FloorPlanCreator": {
+        "domain": "floor-plan",
+        "page": "floor-plan-creator"
+      },
+      "EditRoutePage": {
+        "domain": "route",
+        "page": "edit"
+      },
+      "OverviewPage": {
+        "domain": "route",
+        "page": "overview"
+      },
+      "RecoveryRoutePage": {
+        "domain": "route",
+        "page": "recovery-route"
+      },
+      "StartPage": {
+        "domain": "package",
+        "page": "start"
+      },
+      "BasicPage": {
+        "domain": "package",
+        "page": "start"
+      },
+      "NewPackagePage": {
+        "domain": "package",
+        "page": "new-package"
+      },
+      "RobotSelectionPage": {
+        "domain": "package",
+        "page": "robot-selection"
+      },
+      "JunoSettingsSelectionPage": {
+        "domain": "package",
+        "page": "juno-settings"
+      },
+      "ForwardPage": {
+        "domain": "platform",
+        "page": "forward"
+      },
+      "PageNotFound": {
+        "domain": "platform",
+        "page": "not-found"
+      },
+      "Releases": {
+        "domain": "platform",
+        "page": "about"
+      },
+      "Shortcuts": {
+        "domain": "platform",
+        "page": "about"
+      }
+    },
+    "domainOwners": {
+      "floor-plan": "one owning team, named by the project",
+      "route": "one owning team, named by the project",
+      "package": "one owning team, named by the project",
+      "platform": "one owning team, named by the project"
+    }
+  },
+  "preprocess": {
+    "islandFolder": "angular",
+    "note": "Files already written under the provisional rule (project-constants.md:150-160) sit in an `angular\\` folder beside their React parent. Before the rules are applied, that segment is removed from the path, so the file lands where its React parent's rule sends it. A `.ts` island file keeps its name (it is already Angular-named); a `.tsx` file in that folder is the React host that mounts the island, so it is not Angular code at all and only moves one folder up, staying in React.",
+    "reason": "This is what makes the provisional `angular\\` folders a relocation rather than a rewrite, and it keeps the Angular root free of `.tsx`, which is what lets the compiler select Angular files by path prefix."
+  },
+  "rules": [
+    {
+      "id": "non-source",
+      "match": "**/*.{json,md,css,scss,svg,png,jpg,woff,woff2,d.ts}",
+      "outcome": "stay",
+      "reason": "Not TypeScript source; assets and documentation are not part of the framework mapping."
+    },
+    {
+      "id": "assets",
+      "match": "src/assets/**",
+      "outcome": "stay",
+      "reason": "Static assets are framework-agnostic and keep their Vite-resolved paths."
+    },
+    {
+      "id": "entry-main",
+      "match": "src/app/main.tsx",
+      "outcome": "move",
+      "target": "{root}/main.ts",
+      "reason": "The bootstrap file; migrates last, when React's root render is replaced."
+    },
+    {
+      "id": "entry-app",
+      "match": "src/app/App.tsx",
+      "outcome": "move",
+      "target": "{root}/app.component.ts",
+      "reason": "The shell component; the 18 React providers become `app.config.ts` providers."
+    },
+    {
+      "id": "routes-app",
+      "match": "src/app/routes/AppRoutes.tsx",
+      "outcome": "move",
+      "target": "{root}/app.routes.ts",
+      "reason": "Application-level routes (HorizonUICodeReview.md:144,154 put routes in a `*.routes.ts`)."
+    },
+    {
+      "id": "routes-about",
+      "match": "src/app/routes/AboutRoutes.tsx",
+      "outcome": "move",
+      "target": "{root}/domains/platform/platform.routes.ts",
+      "reason": "A domain route table lives in its domain (HorizonUICodeReview.md:144)."
+    },
+    {
+      "id": "routes-robot",
+      "match": "src/app/routes/RobotRoutes.tsx",
+      "outcome": "move",
+      "target": "{root}/domains/package/package.routes.ts",
+      "reason": "A domain route table lives in its domain (HorizonUICodeReview.md:154)."
+    },
+    {
+      "id": "routes-hook",
+      "match": "src/app/routes/useRouters.tsx",
+      "outcome": "move",
+      "target": "{root}/core/routing/routers.service.ts",
+      "reason": "Routing infrastructure is app-wide and domain-free (HorizonUICodeReview.md:92, folder-structure-en.md:19)."
+    },
+    {
+      "id": "floor-plan-creator-page",
+      "match": "src/app/routes/pages/robot-selection/FloorPlanCreator.tsx",
+      "outcome": "merge",
+      "target": "{root}/domains/floor-plan/pages/floor-plan-creator/floor-plan-creator.component.ts",
+      "reason": "React splits the routed page wrapper from the feature root component (`src/features/floorPlanCreator/index.tsx`); an Angular route loads one component, so the pair merges into the routed component instead of colliding."
+    },
+    {
+      "id": "route-pages",
+      "match": "src/app/routes/pages/**",
+      "outcome": "move",
+      "domainFrom": {
+        "table": "pageDomain",
+        "keyFrom": "basename"
+      },
+      "target": "{root}/domains/{domain}/pages/{page}/{file}",
+      "nameStyle": "page",
+      "reason": "Route-bound page components belong to their domain's `pages/` (HorizonUICodeReview.md:134-141; folder-structure-en.md:58-59)."
+    },
+    {
+      "id": "provider-routing",
+      "match": "src/app/providers/routingContext.tsx",
+      "outcome": "move",
+      "target": "{root}/core/routing/routing.service.ts",
+      "reason": "The hand-rolled router is replaced by Angular's Router; its state service is core infrastructure."
+    },
+    {
+      "id": "provider-translation",
+      "match": "src/app/providers/translationService.tsx",
+      "outcome": "move",
+      "target": "{root}/core/i18n/translation.service.ts",
+      "reason": "i18n is an app-wide singleton (HorizonUICodeReview.md:92,101-106)."
+    },
+    {
+      "id": "provider-connection",
+      "match": "src/app/providers/useConnection.tsx",
+      "outcome": "move",
+      "target": "{root}/core/services/connection.service.ts",
+      "reason": "The SignalR robot-connection hub is an app-wide singleton, not state."
+    },
+    {
+      "id": "providers",
+      "match": "src/app/providers/**",
+      "outcome": "move",
+      "placeByUsage": {
+        "oneDomain": "{root}/domains/{domain}/store/{rest}",
+        "otherwise": "{root}/core/store/{rest}"
+      },
+      "nameStyle": "store",
+      "reason": "React context state lives with the one domain that uses it, and in `core/store/` only when several domains read it (HorizonUICodeReview.md:92,107; folder-structure-en.md:19 keeps domain knowledge out of core)."
+    },
+    {
+      "id": "auth",
+      "match": "src/auth/**",
+      "outcome": "move",
+      "target": "{root}/core/auth/{rest}",
+      "nameStyle": "auto",
+      "reason": "Authentication is an app-wide singleton service (HorizonUICodeReview.md:101-102)."
+    },
+    {
+      "id": "state-store-wrapper",
+      "match": "src/state/StoreWrapper.ts",
+      "outcome": "stay",
+      "reason": "Plain TypeScript with no React import; Angular subscribes to it directly (2026-09-11-codebase-decomposition-research.md:529-541)."
+    },
+    {
+      "id": "state",
+      "match": "src/state/**",
+      "outcome": "move",
+      "placeByUsage": {
+        "oneDomain": "{root}/domains/{domain}/store/{rest}",
+        "otherwise": "{root}/core/store/{rest}"
+      },
+      "nameStyle": "store",
+      "reason": "The Angular counterpart is the adapter over the retained `StoreWrapper` classes; it lives with the one domain that uses it, or in `core/store/` when several do (HorizonUICodeReview.md:107)."
+    },
+    {
+      "id": "drawlib-bridge",
+      "match": "src/modules/**",
+      "when": {
+        "reactBound": true
+      },
+      "outcome": "move",
+      "target": "{root}/core/bridges/{rest}",
+      "nameStyle": "auto",
+      "reason": "Only the React-bound facades of the canvas engine need an Angular counterpart; a host bridge is app-wide infrastructure (folder-structure-en.md:19)."
+    },
+    {
+      "id": "drawlib",
+      "match": "src/modules/**",
+      "outcome": "stay",
+      "reason": "`modules/drawlib` documents itself as running independently of the app and binds its APIs to `window` (modules/drawlib/Readme.md:19-33)."
+    },
+    {
+      "id": "services-bridge",
+      "match": "src/services/**",
+      "when": {
+        "reactBound": true
+      },
+      "outcome": "move",
+      "target": "{root}/core/services/{rest}",
+      "nameStyle": "auto",
+      "reason": "A React-bound data-access file needs an Angular counterpart; data access is app-wide (HorizonUICodeReview.md:92)."
+    },
+    {
+      "id": "services",
+      "match": "src/services/**",
+      "outcome": "stay",
+      "reason": "`restApi` is a plain fetch client and `socketApi` is a plain host socket; Angular imports both unchanged (2026-09-11-codebase-decomposition-research-2.md:244-247)."
+    },
+    {
+      "id": "children-type",
+      "match": "src/shared/types/Children.ts",
+      "outcome": "retire",
+      "reason": "A `ReactNode` alias has no Angular counterpart; content projection replaces it (2026-09-11-codebase-decomposition-research-2.md:272-281)."
+    },
+    {
+      "id": "status-messages",
+      "match": "src/shared/constants/StatusMessages.tsx",
+      "outcome": "stay",
+      "reason": "A plain data object with no JSX, React-bound only by the `.tsx` extension heuristic (2026-09-11-codebase-decomposition-research-2.md:294-302)."
+    },
+    {
+      "id": "shared-types-agnostic",
+      "match": "src/shared/types/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "Enums, DTOs and type aliases are framework-agnostic (2026-09-11-codebase-decomposition-research-2.md:237-257)."
+    },
+    {
+      "id": "shared-types",
+      "match": "src/shared/types/**",
+      "outcome": "move",
+      "target": "{root}/shared/models/{rest}",
+      "nameStyle": "auto",
+      "reason": "A React-bound type needs an Angular counterpart in the shared models folder (folder-structure-en.md:65-71)."
+    },
+    {
+      "id": "shared-constants-agnostic",
+      "match": "src/shared/constants/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "Constant values are framework-agnostic (folder-structure-en.md:86-87)."
+    },
+    {
+      "id": "shared-constants",
+      "match": "src/shared/constants/**",
+      "outcome": "move",
+      "target": "{root}/shared/constants/{rest}",
+      "nameStyle": "auto",
+      "reason": "Constants have a dedicated technical folder (folder-structure-en.md:86-87)."
+    },
+    {
+      "id": "translation-hook",
+      "match": "src/shared/translation/useTranslation.ts",
+      "outcome": "merge",
+      "target": "{root}/core/i18n/translation.service.ts",
+      "reason": "A React provider plus its reader hook collapse into one Angular service; both React files map onto the counterpart `provider-translation` already names, so this is a merge, not a collision."
+    },
+    {
+      "id": "shared-translation",
+      "match": "src/shared/translation/**",
+      "outcome": "move",
+      "target": "{root}/core/i18n/{rest}",
+      "nameStyle": "auto",
+      "reason": "i18n is app-wide technical infrastructure (folder-structure-en.md:19)."
+    },
+    {
+      "id": "risks",
+      "match": "src/shared/utils/risks/**",
+      "outcome": "move",
+      "target": "{root}/core/services/risks/{rest}",
+      "nameStyle": "auto",
+      "reason": "The risk SignalR hubs are an app-wide singleton, not a helper (HorizonUICodeReview.md:92; 2026-09-11-codebase-decomposition-research.md:92-95)."
+    },
+    {
+      "id": "shared-utils-agnostic",
+      "match": "src/shared/utils/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "Pure helpers import nothing React-bound and are reused as-is (2026-09-11-codebase-decomposition-research.md:483-487)."
+    },
+    {
+      "id": "shared-hooks",
+      "match": "src/shared/hooks/**",
+      "outcome": "move",
+      "placeByUsage": {
+        "oneDomain": "{root}/domains/{domain}/services/{rest}",
+        "otherwise": "{root}/shared/services/{rest}"
+      },
+      "nameStyle": "service",
+      "reason": "A React hook holding state or business logic becomes a service (folder-structure-en.md:73-78), in the one domain that uses it or in `shared/services/` when several do."
+    },
+    {
+      "id": "shared-utils",
+      "match": "src/shared/utils/**",
+      "outcome": "move",
+      "target": "{root}/shared/utils/{rest}",
+      "nameStyle": "auto",
+      "reason": "React-bound helpers keep their role in the shared utils folder (folder-structure-en.md:114-115)."
+    },
+    {
+      "id": "shared-ui",
+      "match": "src/shared/ui/**",
+      "outcome": "move",
+      "target": "{root}/shared/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "`shared/ui` holds generic UI primitives; the split with `src/components` is pre-existing React fragmentation and is not carried over (2026-09-11-codebase-decomposition-research.md:509-515)."
+    },
+    {
+      "id": "shared-icons",
+      "match": "src/shared/icons/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "Icon data and names are framework-agnostic."
+    },
+    {
+      "id": "shared-icons-components",
+      "match": "src/shared/icons/**",
+      "outcome": "move",
+      "target": "{root}/shared/components/icons/{rest}",
+      "nameStyle": "auto",
+      "reason": "Icon components are shared presentational components (HorizonUICodeReview.md:116-121)."
+    },
+    {
+      "id": "shared-styles",
+      "match": "src/shared/styles/**",
+      "outcome": "move",
+      "target": "{root}/shared/styles/{rest}",
+      "nameStyle": "keep",
+      "reason": "Global style helpers stay shared (folder-structure-en.md:111-112)."
+    },
+    {
+      "id": "hot-keys",
+      "match": "src/components/useHotKeys/**",
+      "outcome": "move",
+      "target": "{root}/shared/services/hot-keys/{rest}",
+      "nameStyle": "service",
+      "reason": "The keyboard-shortcut registry is shared behaviour, not a component (project-constants.md:144-148)."
+    },
+    {
+      "id": "theme-rules",
+      "match": "src/components/LelyRedRules.tsx",
+      "outcome": "retire",
+      "reason": "A styled-components theme provider has no Angular counterpart; the first slice already reads `@lely/tokens` CSS custom properties directly (project-constants.md:96-101)."
+    },
+    {
+      "id": "styled-helpers",
+      "match": "src/components/styled.ts",
+      "outcome": "retire",
+      "reason": "The styled-components theme helper disappears with styled-components."
+    },
+    {
+      "id": "components-agnostic",
+      "match": "src/components/**",
+      "when": {
+        "reactBound": false
+      },
+      "outcome": "stay",
+      "reason": "Enums and small utilities inside the component folder are framework-agnostic (2026-09-11-codebase-decomposition-research-2.md:244,253)."
+    },
+    {
+      "id": "components",
+      "match": "src/components/**",
+      "outcome": "move",
+      "target": "{root}/shared/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "Design-system primitives are reusable across every domain (HorizonUICodeReview.md:115-121)."
+    },
+    {
+      "id": "form-components",
+      "match": "src/features/formComponents/**",
+      "outcome": "move",
+      "target": "{root}/shared/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "A generic form control is a shared component, not a feature; files belong in the folder that matches their role (HorizonUICodeReview.md:52)."
+    },
+    {
+      "id": "feature-loose-tests",
+      "match": "src/features/__test__/*",
+      "outcome": "move",
+      "domainFrom": {
+        "table": "looseFeatureDomain",
+        "keyFrom": "testSubject"
+      },
+      "target": "{root}/domains/{domain}/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "A test lands with the component it covers (project-constants.md:181-185)."
+    },
+    {
+      "id": "feature-loose",
+      "match": "src/features/*",
+      "outcome": "move",
+      "domainFrom": {
+        "table": "looseFeatureDomain",
+        "keyFrom": "basename"
+      },
+      "target": "{root}/domains/{domain}/components/{rest}",
+      "nameStyle": "auto",
+      "reason": "Files with no feature folder of their own are domain-wide components (2026-09-11-codebase-decomposition-research.md:185-187)."
+    },
+    {
+      "id": "features",
+      "match": "src/features/*/**",
+      "outcome": "move",
+      "domainFrom": {
+        "table": "featureDomain",
+        "keyFrom": "segment:2"
+      },
+      "target": "{root}/domains/{domain}/pages/{feature}/{rest}",
+      "nameStyle": "auto",
+      "reason": "Every feature folder is a page of exactly one domain; the feature segment is carried so two pages of one domain cannot collide (HorizonUICodeReview.md:132-144)."
+    },
+    {
+      "id": "vite-env",
+      "match": "src/vite-env.d.ts",
+      "outcome": "stay",
+      "reason": "Build-tool typing, not application code."
+    }
+  ],
+  "outsideTheRoot": [
+    "src/modules/drawlib/** (except React-bound facades)",
+    "src/services/restApi/**, src/services/socketApi/**",
+    "src/state/StoreWrapper.ts and the manager classes that extend it",
+    "src/shared/types/**, src/shared/constants/**, framework-agnostic files in src/shared/utils/** and src/components/**",
+    "src/assets/**"
+  ],
+  "buildScoping": {
+    "transformFilter": "(_code, id) => /[\\\\/]src[\\\\/]angular[\\\\/].*\\.component\\.ts$/.test(id)",
+    "tsconfigAppInclude": [
+      "src/angular/**/*.ts"
+    ],
+    "note": "The filter is re-anchored from `*/angular/*` to the single Angular root; the `.component.ts` suffix is kept because that is the proven configuration (project-constants.md:53-89). Widening it to every `.ts` under the root is a separate decision, to be taken when the first Angular service exists."
+  },
+  "firstSliceRelocation": {
+    "note": "A one-off relocation while the first slice is the only one. Verified by `apply-structure.mjs`; `~` is `src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/line-form`.",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.component.ts": "~/line-fields.component.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.types.ts": "~/line-fields.types.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/mount-line-fields.ts": "~/mount-line-fields.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/AngularLineFieldsHost.tsx": "src/features/floorPlanCreator/detailDrawer/lineForm/AngularLineFieldsHost.tsx (React host, leaves the `angular\\` folder but stays React)"
+  }
+}

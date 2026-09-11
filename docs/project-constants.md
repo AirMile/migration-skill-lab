@@ -1,6 +1,6 @@
 ---
 document: project-constants
-version: 0.3.0
+version: 0.4.0
 status: decided
 date: 2026-09-11
 ---
@@ -42,6 +42,11 @@ Added to `dependencies`:
 - `@angular/common@19.2.25`
 - `@angular/compiler@19.2.25`
 - `@angular/platform-browser@19.2.25`
+
+Build tooling, pinned exactly in the product's `package.json`:
+
+- `@analogjs/vite-plugin-angular@2.7.2`
+- `@angular/build`, a 19.x version; the pin in `package.json` is the exact one
 
 `rxjs` and `tslib` arrive as transitive dependencies and are already present in
 `node_modules`. `zone.js` is a peer dependency of `@angular/core@19` and will be
@@ -133,9 +138,9 @@ One line in `tsconfig.json`:
 ```
 
 `@Component` is a legacy TypeScript decorator and does not compile without it.
-Nothing else in `tsconfig.json` changes, and `vite.config.ts` is not touched, so
-the dependency surface of an Angular slice is `package.json`,
-`package-lock.json` and `tsconfig.json`.
+`vite.config.ts` carries the Analog plugin and its `transformFilter`, and
+`tsconfig.app.json` gives the plugin its files, as Compilation describes. All
+three are in place in the product; a slice changes none of them.
 
 ## Embedding
 
@@ -147,17 +152,37 @@ Not Angular Elements: registering custom elements adds a layer of plumbing
 between React and the component for no gain when React already owns the host
 node.
 
-## Angular counterpart location
+## Angular target structure
 
-An Angular file lives in an `angular\` folder beside the React file it
-replaces or mirrors. A slice's own components sit beside the React component
-they mount in, as `lineForm\angular\` does. A shared component or state
-adapter sits beside its React original, such as
-`src\components\radioButton\angular\`, where every later slice that needs it
-finds the one counterpart instead of building its own.
+Decided by the project on 2026-09-11 and held as rules in
+`docs\angular-structure.json`. `scripts\migration-map.mjs --measure` applies
+them to every product file, so a run reads a file's Angular target from the
+metrics and never derives a path by hand.
 
-Provisional until the Frontend Chapter chooses the Angular target structure.
-Moving the `angular\` folders there is then a relocation, not a rewrite.
+- One Angular root, `src\angular\`; React keeps `src\app\`.
+- Inside it `core\`, `shared\` and `domains\`, as `HorizonUICodeReview.md`
+  lays out, with four domains: `floor-plan`, `route`, `package` and
+  `platform`.
+- One component per file; tests as Test location says.
+- The compiler's `transformFilter` and the `tsconfig.app.json` include are
+  anchored to `src/angular/` (`buildScoping` in the structure file).
+- Framework-agnostic code stays where it is and Angular imports it: drawlib,
+  the REST and socket services, `StoreWrapper`, enums and types.
+
+State and hooks are placed by usage. A store or service that one domain uses
+lives in that domain's `store\` or `services\`; one that several domains use,
+or only the shell, lives in `core\store\` or `shared\services\`. Usage is
+found by walking a file's importers up until each path reaches a file with a
+domain; `src\app\App.tsx` and `main.tsx` only compose providers and do not
+count.
+
+A prerequisite's Angular counterpart is built at its measured target, where
+every later slice that needs it finds the one counterpart.
+
+The first slice still sits in `lineForm\angular\`, under the provisional rule
+this replaces. Its relocation to the target (`firstSliceRelocation` in the
+structure file), with the filter and include re-anchored, is pending in the
+product; until then Compilation describes the configuration as it stands.
 
 ## Change detection
 
@@ -183,6 +208,11 @@ proves if the target timing is open.
 `<feature directory>\__tests__\`, beside the code it covers, matching the
 existing `lineForm\__tests__\LineForm.functions.test.ts`. A write allowlist
 that requires characterization tests must contain this directory.
+
+An Angular test is `__tests__\<name>.spec.ts` beside the Angular file it
+tests, named after that file: `juno-settings.store.spec.ts`, not
+`use-juno-settings.spec.ts`. The measured target of the file it tests sets the
+folder.
 
 ## Coverage
 

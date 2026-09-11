@@ -8,10 +8,10 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-plan` v0.1.0 source skill, which keeps the migration map
+- experimental `flow-plan` v0.2.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and proposes the next
   slice;
-- experimental `flow-baseline` v0.22.0, `flow-migrate` v0.16.0 and
+- experimental `flow-baseline` v0.23.0, `flow-migrate` v0.16.0 and
   `flow-verify` v0.16.0 source skills;
 - experimental `flow-debug` v0.7.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
@@ -30,8 +30,10 @@ This lab contains:
   previous one, and `--finalize` for progress and actions),
   `continuation.mjs` (the next phase's invocation, refused when its artifacts
   are not the set that phase validates), `new-observations.mjs`
-  (the observation sidecar) and `migration-map.mjs` (a first or seeded
-  migration map, and the product's value-import graph measured against it);
+  (the observation sidecar), `migration-map.mjs` (a first or seeded
+  migration map, and the product's value-import graph measured against it)
+  and `angular-structure.mjs` (the library that applies the Angular target
+  structure, which `migration-map.mjs --measure` uses);
 - `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`, the
   steps the flow skills share and read only when they reach them;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
@@ -41,8 +43,9 @@ This lab contains:
 - a versioned JSON backlog;
 - `docs\project-constants.md`, the settled per-project decisions every
   skill reads instead of asking: framework version, package set, compilation
-  and mount mechanism, where an Angular counterpart lives, install command,
-  test location, coverage and the manual verification environment;
+  and mount mechanism, the Angular target structure, install command, test
+  location, coverage and the manual verification environment, with
+  `docs\angular-structure.json` holding that structure as rules;
 - a dependency-free renderer for a standalone, read-only HTML backlog;
 - an approved report contract for confidential analyses outside the product
   repository.
