@@ -1,6 +1,6 @@
 ---
 document: project-constants
-version: 0.2.0
+version: 0.3.0
 status: decided
 date: 2026-09-11
 ---
@@ -52,35 +52,77 @@ Install command: `npm install`.
 
 ## Compilation
 
-JIT. `@angular/compiler` ships in the bundle and compiles components while the
-application runs.
+Build-time (AOT), through `@analogjs/vite-plugin-angular@2.7.2` +
+`@angular/build@19` in `vite.config.ts`, scoped by `transformFilter` to
+`*/angular/*.component.ts` files only; the rest of the app keeps using the
+plain React/Vite pipeline untouched. A separate `tsconfig.app.json` at the
+repository root feeds the plugin the file set to compile
+(`src/**/angular/**/*.ts`).
 
-There is no Angular Vite plugin and `vite.config.ts` is not touched. A
-build-time compiler would have to support Vite `8.2.1`, which is recent, and a
-run that stalls on build tooling has failed for a reason that has nothing to do
-with the migration. The compiler in the bundle is the price, and it is a code
-quality concern to revisit later; swapping to build-time compilation does not
-change a single component.
+Superseded on 2026-09-11: the previous decision (pure JIT, no build tooling)
+rested on "Vite 8.2.1 is too recent for a build-time compiler", which was
+factually wrong — `@analogjs/vite-plugin-angular@2.7.2` officially supports
+Vite `^6 || ^7 || ^8` and Angular `19..22`, confirmed via npm and proven with
+a live spike against the first migrated slice
+(`lineForm/angular/line-fields.component.ts`) before adopting it for real.
+
+The plugin runs `fastCompile: true` with `disableTypeChecking: true`: the
+default (non-fast) AOT path silently emitted an empty transform for this
+component instead of a working error, and no working configuration was found
+in the time spent on the live migration. `fastCompile` is documented by
+`@analogjs/vite-plugin-angular` as skipping Angular's template type-checking
+in exchange for a working single-pass compile; the plugin's own docs suggest
+running `ngc -p tsconfig.app.json --noEmit` as a separate check, but that path
+picked up pre-existing, unrelated TypeScript errors elsewhere in the repo
+(outside `tsconfig.app.json`'s intended scope) and was not pursued further.
+This is a known gap: Angular template type errors in a migrated component are
+not caught before Vitest/manual testing catches them. Revisit if this proves
+costly in practice.
+
+The Angular plugin is disabled during Vitest runs (`process.env.VITEST`
+guard in `vite.config.ts`): enabling it there broke 8 unrelated tests in
+`src/state/__tests__/EditorSettingsManager.test.ts` (`TypeError: Cannot
+redefine property: window`), a side effect of the plugin's own Vitest
+integration path, unrelated to any migrated component. Tests do not need the
+plugin: they exercise the same runtime-JIT `createApplication()`/
+`createComponent()` mount path described under Embedding below, which stays
+in the bundle regardless of the build-time compiler.
 
 Consequences for how components are written:
 
-- templates are inline in `@Component`, never a separate `.html` file;
-- dependencies come from `inject()`, never from constructor parameters, because
-  constructor injection needs decorator metadata that JIT does not emit here;
-- inputs and outputs use the signal forms `input()` and `output()`, never the
-  `@Input()` and `@Output()` field decorators. `useDefineForClassFields` is
-  `true` in this repository and field decorators conflict with it.
+- `styles` (and `template`, if ever moved out of the same literal) must be a
+  statically analyzable string literal — no `${...}` JS interpolation.
+  Design-token values that used to be interpolated directly into `styles` are
+  now exposed as CSS custom properties (`var(--foo)`) in the static `styles`
+  string, with their actual values supplied at runtime through a
+  `host: { "[style]": "hostTokenStyle" }` binding (host bindings may be
+  dynamic; `styles`/`template` may not). See
+  `lineForm/angular/line-fields.component.ts` for a full example
+  (`hostTokenStyle`);
+- dependencies still come from `inject()`, never constructor parameters — this
+  was a JIT-only requirement previously, but is kept as the project's DI style
+  regardless;
+- inputs and outputs still use the signal forms `input()` and `output()`,
+  never the `@Input()`/`@Output()` field decorators — same reasoning as above,
+  kept as a style choice independent of the compiler.
+
+Previously inline templates were mandatory (`.html` files needed a custom
+`resourceLoader` under pure JIT, which never existed). That constraint is
+gone: `templateUrl`/`styleUrl` now work like any Angular CLI project, because
+the build-time compiler statically resolves and inlines them at compile time.
+Splitting a large component's template/styles into separate files is a
+reasonable readability improvement going forward, but is not mandated by this
+document; it is a per-component call.
 
 ### Passing inputs to a mounted component
 
-`componentRef.setInput()` does not work here. Signal-based `input()` fields
-never receive `ɵcmp.inputs` metadata under pure JIT, because that metadata is
-emitted by the ahead-of-time compiler this setup deliberately does not run, so
-`setInput()` throws on a name it cannot find.
-
-A mounted component therefore exposes one public method that assigns its
-internal signals, and the host effect calls that. Found by the first slice on
-2026-09-09; without it the next slice rediscovers it the same way.
+`componentRef.setInput()` was previously broken here because signal-based
+`input()` fields never receive `ɵcmp.inputs` metadata under pure JIT, which
+build-time compilation now emits. This has not yet been re-verified end to
+end on the existing mount code
+(`lineForm/angular/mount-line-fields.ts`'s `setAdapterInputs()` workaround);
+treat `setInput()` as newly *possible*, not yet *confirmed*, until a slice
+tries it and the workaround is removed or kept on its own merits.
 
 ## TypeScript configuration
 
