@@ -272,7 +272,7 @@ the ID only after the item exists, through
 Each phase shows its handoff inline in the chat through
 `render-work-item-handoff.mjs --inline ... --since <previous snapshot>`, which
 reports only what moved. The full Markdown render is available on demand from
-the validated snapshot; a run does not write it. See `docs\work-item-handoff-protocol-v0.4.md`.
+the validated snapshot; a run does not write it. See `docs\work-item-handoff-protocol-v0.5.md`.
 
 ## Improvement loop
 

@@ -117,13 +117,17 @@ Every skill version declares:
 ## Current implementation status
 
 `migration-analyze` v0.1.0 remains preserved as a reviewed read-only benchmark
-reference. The source repository now also contains experimental v0.5.0 sources
-for `flow-baseline`, `flow-migrate` and `flow-verify`, plus `flow-debug`
-v0.1.0 and versioned
-functional and work-item handoff schemas, scoped checkpoint preflight and
-examples. No skill has been installed as a personal runtime
-snapshot, and no representative POC migration has run. Use
-`backlog\backlog.json` for current item status.
+reference. The source repository also contains experimental `flow-baseline`
+v0.19.0, `flow-migrate` v0.13.0, `flow-verify` v0.10.0, `flow-debug` v0.3.0
+and `migration-skill-audit` v0.1.0, with versioned functional and work-item
+handoff schemas, scoped checkpoint preflight, examples and the scripts that
+perform the deterministic steps of a run. The flow skills are installed as
+personal runtime snapshots under `~\.copilot\skills`.
+
+A representative POC slice, the Detail Drawer LineForm Length, Angle and Fence
+offset fields, ran baseline, migrate and verify end to end on 2026-09-09 with
+an overall `PASS`; its artifact chain is `examples\handoff\detail-drawer-line-edit\`.
+Use `backlog\backlog.json` for current item status.
 
 ## Scope of the original foundation
 
@@ -171,7 +175,7 @@ Do not use a live symlink. Record the source version in both locations.
 ### Confidential run reports
 
 `flow-baseline` writes no report; its contract is the durable artifact and
-its approval checkpoint is the review surface. Canonical confidential
+its review summary in the chat is the review surface. Canonical confidential
 reports from the phases that still produce one are stored under:
 
 `C:\Obsidian\Notes 2025\Lely\Angular migratie\analyses`

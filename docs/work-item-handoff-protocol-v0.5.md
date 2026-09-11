@@ -1,11 +1,11 @@
 ---
 document: work-item-handoff-protocol
-version: 0.4.0
+version: 0.5.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-11
 ---
 
-# Work-item handoff protocol v0.4
+# Work-item handoff protocol v0.5
 
 ## Purpose
 
@@ -53,7 +53,9 @@ Every Epic, Feature, User Story and Task uses `create`, `update` or
   regenerated. Regenerated prose comes back reworded, and a wording difference
   is indistinguishable from a real change, so the item is forced to `update`
   and the reader re-reviews something that never moved. This is the single
-  reason `no-change` was not reaching the board in practice.
+  reason `no-change` was not reaching the board in practice, so
+  `scripts\seed-work-item.mjs` now does the copy: every phase after the first
+  starts from the previous snapshot rather than from memory.
 - `currentState` and `currentProgress` are never carried forward. They record
   the external board as a human confirmed it for that run.
 - `richReleaseNotes` belongs to its own item. It says what changed about that
@@ -82,21 +84,23 @@ are invented.
 Tasks describe stakeholder-visible delivery, not individual Git operations.
 For the migration flow, prefer:
 
-1. establish the behavior baseline and approve the Flow Contract;
+1. establish the behavior baseline and write the Flow Contract;
 2. add React evidence and implement the bounded Angular slice;
 3. independently verify automated and required host behavior.
 
 Checkpoint commits are evidence on the implementation Task. Do not create one
 Task per commit.
 
-The baseline Task covers the analysis and the human approval of the Flow
-Contract. It cannot be complete while that approval is pending: no other Task
-carries the gate, so a complete baseline Task would put Story progress on the
-board for work nobody has accepted. The validator rejects that combination.
+The baseline Task covers the analysis and is complete once the Flow Contract
+validates. From schemaVersion 6 a contract is final when written and has no
+approval gate for the Task to hold open. The validator still rejects a
+complete baseline Task only against an older contract whose approval is
+pending.
 
 Each Task has a `contributionPercent`; all Tasks under one Story must total
 100. User Story progress is the rounded weighted average of Task progress.
-The validator rejects a hand-entered Story percentage that does not match.
+The validator rejects a hand-entered Story percentage that does not match, and
+`seed-work-item.mjs --finalize` calculates it, together with every action.
 A Task is `Done` exactly when its progress is 100%. A Story can be `Done` only
 when all child Tasks are `Done`.
 
@@ -156,6 +160,22 @@ Each phase snapshot contains a short update for the active User Story:
 This block is copy/paste support for daily communication. It must use the same
 progress as the selected Story and must not claim that Targetprocess was
 updated.
+
+## Seeding
+
+A migration or verification snapshot, and a baseline rerun, is seeded from the
+snapshot before it:
+
+```powershell
+node .\scripts\seed-work-item.mjs --previous <previous.json> --primary <primary-artifact.json> --out <snapshot.json> --applied <status>
+node .\scripts\seed-work-item.mjs --finalize <snapshot.json>
+```
+
+The seed copies every field byte for byte, takes phase, skill version, runId
+and flowId from the primary artifact, and fills every pointer and hash; the
+run changes only the items it moved. `--finalize` derives Story progress from
+the Tasks and sets each action the way the validator judges it. The order a
+skill applies all of this in is `docs\flow-work-item-steps.md`.
 
 ## Rendering
 
