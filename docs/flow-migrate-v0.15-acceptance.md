@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.14.0
+targetVersion: 0.15.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-migrate` v0.14.0 acceptance criteria
+# `flow-migrate` v0.15.0 acceptance criteria
 
 ## Hard gates
 
@@ -133,4 +133,7 @@ The source is acceptable when:
 41. the work-item snapshot is seeded from the baseline snapshot with
     `seed-work-item.mjs` and finalized with its `--finalize`;
 42. the continuation passes every artifact `flow-verify` validates: the
-    contract, the migration result and both work-item snapshots.
+    contract, the migration result and both work-item snapshots;
+43. `run-context.mjs --compare --contract` runs before `migration-result.json`
+    is written, and a path under `comparison.outsideAllowlist` keeps the
+    result from `completed`.

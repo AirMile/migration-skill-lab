@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.14.0`.
+Skill version: `0.15.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -108,7 +108,12 @@ as an established Lely standard.
    When it is `disabled`, commit nothing.
 9. **Coverage** only through the safe measurement `testGaps` names; a gap that
    stays unmeasurable is a limitation.
-10. **Write `migration-result.json`** in the run directory, copying the shape
+10. **Worktree check.** Run
+    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare --contract <flow-contract.json>`
+    and report the final status and its delta. A path under
+    `comparison.outsideAllowlist` is a write outside the boundary: report it,
+    and the result cannot be `completed`. Never merge, push or publish.
+11. **Write `migration-result.json`** in the run directory, copying the shape
     from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\migration-result.json"`,
     and validate it together with the contract; it never validates alone.
     Record every committed, skipped or blocked checkpoint. When
@@ -120,11 +125,9 @@ as an established Lely standard.
     visual verdict is `flow-verify`'s, and jsdom evidence is disqualified for a
     nested mount. A `completed` result cannot skip a surface or leave one
     `not-addressed`. Use `completed`, `failed` or `blocked` honestly.
-11. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
+12. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
     it for `work-item-migration.json`, putting the checkpoint milestones and
     the actual work on the implementation Task.
-12. Run `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`
-    and report the final status and its delta. Never merge, push or publish.
 13. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json>`,
     then offer exactly three routes and perform only the chosen one:

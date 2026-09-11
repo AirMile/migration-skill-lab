@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.4.0`.
+Skill version: `0.5.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -31,7 +31,7 @@ those:
 - Validate first:
   `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
 - Run
-  `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status`.
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status --contract <flow-contract.json>`.
   That status, HEAD and branch, with the failed criteria, failing commands and
   manual observations in `verification-result.json`, are the frozen evidence
   every attempt is measured against. A saved `<flowId>-flow-debug-prompt.md`
@@ -95,7 +95,12 @@ Report `BLOCKED` before any product write when:
    stage only the paths it returns, `--verify-staged <manifest.json>`, commit
    without bypassing hooks, then `--verify-commit <manifest.json> <sha>`. When
    the mode is `disabled`, commit nothing.
-7. **Write `debug-result.json`** in the run directory, copying the shape from
+7. **Worktree check.** Run
+   `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare --contract <flow-contract.json>`
+   and report the delta against the frozen status without reverting unrelated
+   changes. A path under `comparison.outsideAllowlist` is a write outside the
+   boundary, and the result cannot be `repaired`.
+8. **Write `debug-result.json`** in the run directory, copying the shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\debug\demo-line-drawer\debug-result.json"`
    and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,
    and validate it together with the four artifacts it consumed. It carries
@@ -108,9 +113,6 @@ Report `BLOCKED` before any product write when:
    - `parked`: `heavy` could not produce a safe local repair and a human
      decision is required.
    Write no prose report; summarize the result in this chat.
-8. Run `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`
-   and report the delta against the frozen status without reverting unrelated
-   changes.
 9. **Continuation.** A `repaired` result always goes to a fresh, independent
    `/flow-verify`; this skill never declares `PASS` or closes the loop itself.
    Build the invocation with

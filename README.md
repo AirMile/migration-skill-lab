@@ -8,9 +8,9 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-baseline` v0.20.0, `flow-migrate` v0.14.0 and
-  `flow-verify` v0.11.0 source skills;
-- experimental `flow-debug` v0.4.0 source skill;
+- experimental `flow-baseline` v0.20.0, `flow-migrate` v0.15.0 and
+  `flow-verify` v0.12.0 source skills;
+- experimental `flow-debug` v0.5.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
@@ -20,11 +20,13 @@ This lab contains:
   one artifact needs to reference another;
 - the deterministic steps every flow skill used to do by hand, each with
   `--help` and `--self-test`: `run-context.mjs` (product status and its later
-  comparison, run directory, runId, earlier handoffs, terminating commands),
+  comparison, paths outside a contract's allowlist, run directory, runId,
+  earlier handoffs, terminating commands),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `seed-work-item.mjs` (the next work-item snapshot from the
   previous one, and `--finalize` for progress and actions),
-  `continuation.mjs` (the next phase's invocation) and `new-observations.mjs`
+  `continuation.mjs` (the next phase's invocation, refused when its artifacts
+  are not the set that phase validates) and `new-observations.mjs`
   (the observation sidecar);
 - `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`, the
   steps the flow skills share and read only when they reach them;

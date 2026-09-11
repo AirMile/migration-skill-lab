@@ -27,6 +27,10 @@ Options:
                          so a run writes nothing extra into its run directory
   --compare [file]       report what changed since a saved status; without a
                          file it reads that same temp file
+  --contract <file>      a flow-contract.json: list every Git-visible path
+                         outside its scope.allowedWritePaths, and with
+                         --compare every path that changed or was committed
+                         outside it since the saved status
   --self-test            run the built-in checks
 `;
 
@@ -106,6 +110,40 @@ const compareStatus = (saved, current) => {
     removed,
     contentChanged,
   };
+};
+
+// The cover rule verify-checkpoint.mjs and validate-handoff.mjs apply.
+const pathCovers = (basePath, candidatePath) =>
+  basePath === "." || candidatePath === basePath || candidatePath.startsWith(`${basePath}/`);
+
+const normalizeAllowedPath = value =>
+  value.replace(/\\/g, "/").replace(/^(\.\/)+/, "").replace(/\/+$/, "") || ".";
+
+const statusPaths = entry => entry.slice(3).split(" <- ");
+
+const outsideAllowlist = (paths, allowed) =>
+  [...new Set(paths)]
+    .filter(filePath => !allowed.some(basePath => pathCovers(basePath, filePath)))
+    .sort();
+
+const committedPaths = (root, fromHead, toHead) => {
+  if (!fromHead || fromHead === toHead) return [];
+  const diff = git(root, ["diff", "--name-only", "-z", fromHead, toHead]);
+  if (diff.status !== 0) {
+    throw new Error(`git diff ${fromHead} ${toHead} failed in ${root}: ${diff.stderr.trim()}`);
+  }
+  return diff.stdout.split("\0").filter(Boolean);
+};
+
+const readAllowlist = async contractPath => {
+  const contract = JSON.parse(
+    (await readFile(path.resolve(contractPath), "utf8")).replace(/^\uFEFF/, ""),
+  );
+  const allowed = contract.scope?.allowedWritePaths;
+  if (!Array.isArray(allowed) || allowed.length === 0) {
+    throw new Error(`${contractPath} carries no scope.allowedWritePaths.`);
+  }
+  return allowed.map(normalizeAllowedPath);
 };
 
 const classifySegment = segment => {
@@ -282,11 +320,26 @@ const collectContext = async options => {
   if (options["flow-id"]) context.flow = await readFlow(options["lab-root"], options["flow-id"]);
   if (options["run-dir"]) context.runDirectory = await readRunDirectory(options["run-dir"]);
   if (options.commands) context.commands = await readCommands(state.root);
+  const allowed = options.contract ? await readAllowlist(options.contract) : null;
+  if (allowed) {
+    context.allowlist = {
+      allowedWritePaths: allowed,
+      outside: outsideAllowlist(state.status.flatMap(statusPaths), allowed),
+    };
+  }
   const statusPath = option =>
     option === true ? defaultStatusPath(state.root) : path.resolve(option);
   if (options.compare) {
     const saved = JSON.parse(await readFile(statusPath(options.compare), "utf8"));
     context.comparison = compareStatus(saved, state);
+    if (allowed) {
+      const { added, removed, contentChanged } = context.comparison;
+      context.comparison.outsideAllowlist = outsideAllowlist([
+        ...[...added, ...removed].flatMap(statusPaths),
+        ...contentChanged,
+        ...committedPaths(state.root, saved.head, state.head),
+      ], allowed);
+    }
   }
   if (options["save-status"]) {
     const savedPath = statusPath(options["save-status"]);
@@ -303,6 +356,7 @@ const parseArguments = argumentsList => {
   const options = {};
   const valued = new Set([
     "product-root", "lab-root", "flow-id", "run-dir", "save-status", "compare",
+    "contract",
   ]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
@@ -428,6 +482,29 @@ const runSelfTest = async () => {
     assert(path.dirname(defaultSaved.savedStatus) === os.tmpdir() &&
       defaultCompared.comparison.added.includes("?? extra.txt"),
       "the default status file does not round-trip through the temp directory");
+
+    const contractPath = path.join(temporary, "flow-contract.json");
+    await writeFile(contractPath, JSON.stringify({ scope: { allowedWritePaths: ["src\\"] } }));
+    const allowlistSaved = path.join(temporary, "allowlist-status.json");
+    await collectContext({ "product-root": product, "save-status": allowlistSaved });
+    await mkdir(path.join(product, "src"));
+    await writeFile(path.join(product, "src", "inside.txt"), "in\n");
+    await writeFile(path.join(product, "srcfile.txt"), "out\n");
+    await mkdir(path.join(product, "docs"));
+    await writeFile(path.join(product, "docs", "committed.md"), "out\n");
+    runGit(product, ["add", "docs/committed.md"]);
+    runGit(product, ["commit", "-q", "-m", "outside"]);
+    const checked = await collectContext({
+      "product-root": product,
+      contract: contractPath,
+      compare: allowlistSaved,
+    });
+    assert(checked.allowlist.outside.includes("srcfile.txt") &&
+      !checked.allowlist.outside.includes("src/inside.txt"),
+      "a path that only shares the allowlist's prefix is treated as inside it");
+    assert(JSON.stringify(checked.comparison.outsideAllowlist) ===
+      JSON.stringify(["docs/committed.md", "srcfile.txt"]),
+      `unexpected changes outside the allowlist ${JSON.stringify(checked.comparison.outsideAllowlist)}`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

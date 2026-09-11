@@ -13,10 +13,73 @@ product root and the run directory, all as absolute paths. Every path must
 exist. --save also writes it to <run-dir>\\<flowId>-<skill>-prompt.md, taking
 flowId from the first artifact unless --flow-id is given; it never overwrites.
 
+The artifacts must be the set the next phase validates first, or nothing is
+printed: flow-migrate takes the contract and the baseline work-item snapshot;
+flow-verify the contract, the migration result and both earlier snapshots,
+plus debug-result after a repair; flow-debug the contract, the migration and
+verification results, the debug handoff and both earlier snapshots.
+
 Skills: flow-baseline, flow-migrate, flow-verify, flow-debug.
 `;
 
 const nextSkills = ["flow-baseline", "flow-migrate", "flow-verify", "flow-debug"];
+
+// An invocation missing one of these reaches a chat that can only stop.
+const artifactSets = {
+  "flow-migrate": {
+    required: ["flow-contract", "work-item-handoff:baseline"],
+    optional: [],
+  },
+  "flow-verify": {
+    required: [
+      "flow-contract", "migration-result",
+      "work-item-handoff:baseline", "work-item-handoff:migration",
+    ],
+    optional: ["debug-result"],
+  },
+  "flow-debug": {
+    required: [
+      "flow-contract", "migration-result", "verification-result", "debug-handoff",
+      "work-item-handoff:baseline", "work-item-handoff:migration",
+    ],
+    optional: [],
+  },
+};
+
+const artifactKind = async absolute => {
+  let value;
+  try {
+    value = JSON.parse((await readFile(absolute, "utf8")).replace(/^\uFEFF/, ""));
+  } catch {
+    throw new Error(`${absolute} is not a JSON artifact.`);
+  }
+  return value.artifactType === "work-item-handoff"
+    ? `work-item-handoff:${value.handoffPhase}`
+    : String(value.artifactType);
+};
+
+const checkArtifactSet = async (next, artifacts) => {
+  const expected = artifactSets[next];
+  if (!expected) return;
+  const remaining = await Promise.all(artifacts.map(artifactKind));
+  const missing = [];
+  for (const kind of expected.required) {
+    const index = remaining.indexOf(kind);
+    if (index === -1) missing.push(kind);
+    else remaining.splice(index, 1);
+  }
+  const unexpected = remaining.filter(kind => !expected.optional.includes(kind));
+  if (missing.length === 0 && unexpected.length === 0) return;
+  const accepted = [
+    ...expected.required,
+    ...expected.optional.map(kind => `${kind} (optional)`),
+  ];
+  const problems = [
+    ...(missing.length > 0 ? [`missing ${missing.join(", ")}`] : []),
+    ...(unexpected.length > 0 ? [`unexpected ${unexpected.join(", ")}`] : []),
+  ];
+  throw new Error(`/${next} validates ${accepted.join(", ")}: ${problems.join(" and ")}.`);
+};
 
 const quote = value => (/\s/.test(value) ? `"${value}"` : value);
 
@@ -46,6 +109,7 @@ const buildContinuation = async options => {
   for (const artifact of options.positional) {
     artifacts.push(await requireExisting(artifact, "artifact"));
   }
+  await checkArtifactSet(options.next, artifacts);
   const labRoot = await requireExisting(options["lab-root"], "directory");
   const productRoot = await requireExisting(options["product-root"], "directory");
   const runDirectory = await requireExisting(options["run-dir"], "directory");
@@ -148,15 +212,31 @@ const runSelfTest = async () => {
     for (const directory of [productRoot, runDirectory, semicolonDirectory]) {
       await mkdir(directory);
     }
-    const contract = path.join(runDirectory, "flow-contract.json");
-    await writeFile(contract, JSON.stringify({ flowId: "demo-flow" }));
+    const writeArtifact = async (name, value) => {
+      const artifactPath = path.join(runDirectory, name);
+      await writeFile(artifactPath, JSON.stringify({ flowId: "demo-flow", ...value }));
+      return artifactPath;
+    };
+    const contract = await writeArtifact("flow-contract.json", { artifactType: "flow-contract" });
+    const baselineSnapshot = await writeArtifact("work-item-baseline.json", {
+      artifactType: "work-item-handoff",
+      handoffPhase: "baseline",
+    });
+    const migrationSnapshot = await writeArtifact("work-item-migration.json", {
+      artifactType: "work-item-handoff",
+      handoffPhase: "migration",
+    });
+    const migrationResult = await writeArtifact("migration-result.json", {
+      artifactType: "migration-result",
+    });
+    const debugResult = await writeArtifact("debug-result.json", { artifactType: "debug-result" });
 
     const options = {
       next: "flow-migrate",
       "lab-root": temporary,
       "product-root": productRoot,
       "run-dir": runDirectory,
-      positional: [contract],
+      positional: [contract, baselineSnapshot],
       save: true,
     };
     const { invocation, savedPath } = await buildContinuation(options);
@@ -184,6 +264,31 @@ const runSelfTest = async () => {
       () => buildContinuation({ ...options, save: false, next: "flow-deploy" }),
       "--next must be one of",
       "an unknown skill was accepted");
+    await expectFailure(
+      () => buildContinuation({
+        ...options,
+        save: false,
+        next: "flow-verify",
+        positional: [contract, migrationResult, baselineSnapshot],
+      }),
+      "missing work-item-handoff:migration",
+      "a flow-verify invocation without the migration snapshot was accepted");
+    await expectFailure(
+      () => buildContinuation({
+        ...options,
+        save: false,
+        positional: [contract, baselineSnapshot, migrationResult],
+      }),
+      "unexpected migration-result",
+      "an artifact the next phase does not validate was accepted");
+    const reverification = await buildContinuation({
+      ...options,
+      save: false,
+      next: "flow-verify",
+      positional: [contract, migrationResult, baselineSnapshot, migrationSnapshot, debugResult],
+    });
+    assert(reverification.invocation.startsWith("/flow-verify "),
+      "a re-verification after a repair was refused");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

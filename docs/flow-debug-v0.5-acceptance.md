@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.4.0
+targetVersion: 0.5.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-debug` v0.4.0 acceptance criteria
+# `flow-debug` v0.5.0 acceptance criteria
 
 ## Hard gates
 
@@ -93,4 +93,7 @@ The source is acceptable when:
 23. every script, `verify-checkpoint.mjs` included, is invoked from
     `<lab>\scripts\`, never relative to the working directory;
 24. artifact pointers in `debug-result.json` come from `hash-artifact.mjs`,
-    never from digests computed by hand.
+    never from digests computed by hand;
+25. `run-context.mjs --compare --contract` runs before `debug-result.json` is
+    written, and a path under `comparison.outsideAllowlist` keeps the result
+    from `repaired`.

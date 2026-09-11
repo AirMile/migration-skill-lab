@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.11.0`.
+Skill version: `0.12.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -33,7 +33,7 @@ every attempt after a repair also `debug-result.json`.
   adding `debug-result.json` when there is one. Stop with `BLOCKED` when an
   artifact is missing, incompatible, inconsistent or outside the declared flow.
 - Run
-  `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status`.
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status --contract <flow-contract.json>`.
   A saved `<flowId>-flow-verify-prompt.md` means an earlier phase chose to
   continue later: say so in one line and resume from the artifacts it names.
 - From the contract: `scenarios`, `visualParity`, `renderedSurfaceInventory`,
@@ -66,9 +66,11 @@ outcome, a diagnosis and the next action.
 
 1. Take the product status from `run-context.mjs`; change nothing.
 2. **Automated evidence.** Run the declared targeted test, typecheck and build;
-   expand only with a reason recorded in the result. Check that the changed
-   paths stay within the allowlist and that the migration result reports
-   failed or blocked validation honestly. Check coverage only for this flow,
+   expand only with a reason recorded in the result. Take the allowlist check
+   from `allowlist.outside` in the `run-context.mjs` output, never by hand: a
+   path there is `FAIL` unless the user confirms it was dirty before the
+   migration. Check that the migration result reports failed or blocked
+   validation honestly. Check coverage only for this flow,
    only through the safe measurement the contract's `testGaps` names, and
    record a figure CI measures as not retrieved; a percentage supports, never
    proves.
