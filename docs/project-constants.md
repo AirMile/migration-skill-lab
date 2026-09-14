@@ -1,8 +1,8 @@
 ---
 document: project-constants
-version: 0.4.0
+version: 0.5.0
 status: decided
-date: 2026-09-11
+date: 2026-09-14
 ---
 
 # Project constants
@@ -193,6 +193,31 @@ stable `provideZonelessChangeDetection()` arrives in Angular 20.
 zone.js patches `setTimeout`, `addEventListener` and `Promise` globally. In an
 application that stays React for years, that reaches every other screen, not
 just the migrated fields.
+
+Consequences for how components are written:
+
+- a view re-renders only when a signal its template reads changes, a template
+  or host listener fires, `setInput()` is called, or `markForCheck()` runs. A
+  value that arrives from outside Angular — a store subscription, a SignalR or
+  socket event, a REST promise, a `setTimeout` such as `FocusNumberInput`'s
+  debounce — is written into a signal, or the view stays stale without an
+  error;
+- every migrated component uses `ChangeDetectionStrategy.OnPush`: Angular's
+  zoneless guide recommends it, and Hub Dashboard UI already uses it;
+- state derived from other state is a `computed()`. `effect()` only pushes
+  state out to something imperative (drawlib, SVG.js, `localStorage`), never
+  into another signal, which Angular warns causes
+  `ExpressionChangedAfterItHasBeenChecked` errors and update loops;
+- a subscription a component opens is released through
+  `inject(DestroyRef).onDestroy()`, because the application is destroyed on
+  unmount (Embedding) and a live subscription would outlive it;
+- only stable APIs: on 19, `linkedSignal` and `@angular/core/rxjs-interop`
+  (`toSignal`, `takeUntilDestroyed`) are developer preview, `resource` and
+  `httpResource` are experimental, and Signal Forms do not exist yet.
+
+Sources: `v19.angular.dev` guides `experimental/zoneless`, `signals`,
+`signals/linked-signal`, `signals/resource` and `ecosystem/rxjs-interop`,
+checked 2026-09-14.
 
 ## Timing
 
