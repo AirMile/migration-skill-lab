@@ -37,8 +37,9 @@ The source is acceptable when:
 1. the run directory, runId and previous map come from
    `run-context.mjs --map`, never from a directory listing read by hand;
 2. a previous map is carried forward with `migration-map.mjs --seed`, which
-   sets `supersedes` and lands every slice with a `PASS` for its `flowId`; a
-   first map comes from `--init`;
+   sets `supersedes` and lands every slice with a `PASS` for its `flowId`
+   whose contract leaves no remainder, while a `PASS` with a remainder keeps
+   its slice `in-progress`; a first map comes from `--init`;
 3. every count the run cites, from file totals to how many slices share a
    file, comes from `--measure` output or the metrics file, and the metrics
    are measured after the map's last change;

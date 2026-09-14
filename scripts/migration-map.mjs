@@ -28,8 +28,10 @@ Seed writes the next map from the previous one: every field carried over,
 supersedes pointing at the previous map, the recommendation emptied and the
 metrics pointer removed until --measure runs. A slice with a PASS
 verification-result for its flowId under <lab-root>\\runs becomes landed with
-that file as evidence; a candidate with a flow-contract there becomes
-in-progress. Init and seed write schemaVersion ${mapSchemaVersion}.
+that file as evidence, unless its flow-contract records a planSlice remainder:
+then the slice stays open, becomes in-progress and is reported as partial. A
+candidate with a flow-contract there becomes in-progress. Init and seed write
+schemaVersion ${mapSchemaVersion}.
 
 Land applies the same run evidence to the map in place, for slices cut after
 the seed, which could not know them.
@@ -512,16 +514,20 @@ const initMap = async options => {
   return { out: path.resolve(options.out), features: features.map(feature => feature.id) };
 };
 
-// Only a PASS lands a slice and only a flow-contract starts one, so seed and
-// land share this and nothing else changes a status.
+// Only a PASS with no remainder lands a slice and only a flow-contract starts
+// one, so seed and land share this and nothing else changes a status.
 const applyRunEvidence = async (slices, labRoot) => {
   const { passes, started } = await scanRuns(labRoot);
   const landed = [];
   const inProgress = [];
+  const partial = [];
   for (const slice of slices) {
     if (slice.status === "landed") continue;
     const pass = passes.get(slice.flowId);
-    if (pass) {
+    if (pass?.remainder) {
+      if (slice.status === "candidate") slice.status = "in-progress";
+      partial.push(slice.flowId);
+    } else if (pass) {
       slice.status = "landed";
       slice.evidence = {
         path: pointerPath(pass.filePath, labRoot),
@@ -533,7 +539,7 @@ const applyRunEvidence = async (slices, labRoot) => {
       inProgress.push(slice.flowId);
     }
   }
-  return { landed, inProgress };
+  return { landed, inProgress, partial };
 };
 
 const seedMap = async options => {
@@ -560,10 +566,10 @@ const seedMap = async options => {
   delete next.metrics;
   next.recommendation = { options: [], queue: [] };
 
-  const { landed, inProgress } = await applyRunEvidence(next.slices, options["lab-root"]);
+  const { landed, inProgress, partial } = await applyRunEvidence(next.slices, options["lab-root"]);
 
   await writeNew(options.out, serializeMap(next));
-  return { out: path.resolve(options.out), landed, inProgress };
+  return { out: path.resolve(options.out), landed, inProgress, partial };
 };
 
 const landMap = async options => {
@@ -573,9 +579,9 @@ const landMap = async options => {
   const mapPath = path.resolve(options.map);
   const map = await readJsonFile(mapPath);
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
-  const { landed, inProgress } = await applyRunEvidence(map.slices, options["lab-root"]);
-  if (landed.length > 0 || inProgress.length > 0) await writeFile(mapPath, serializeMap(map));
-  return { map: mapPath, landed, inProgress };
+  const { landed, inProgress, partial } = await applyRunEvidence(map.slices, options["lab-root"]);
+  if (landed.length > 0 || inProgress.length > 0 || partial.length > 0) await writeFile(mapPath, serializeMap(map));
+  return { map: mapPath, landed, inProgress, partial };
 };
 
 // A hand-written block missing a field would otherwise surface as a bare
@@ -909,6 +915,23 @@ const runSelfTest = async () => {
     assert(JSON.stringify(landedLater.landed) === JSON.stringify(["gamma-form"]) &&
       gamma.status === "landed" && gamma.evidence?.sha256,
       "a slice cut after the seed did not land from its PASS");
+
+    // A PASS on part of a slice keeps the slice open for the next chain.
+    const third = await readJsonFile(secondMap);
+    third.slices.push({ flowId: "delta-form", featureId: "alpha", title: "Delta", paths: ["src/features/delta"],
+      dependsOn: [], requires: [], criteria, status: "candidate" });
+    await writeFile(secondMap, serializeMap(third));
+    await write(lab, "runs/2026-01-06-delta-form-baseline-1/flow-contract.json", JSON.stringify({
+      artifactType: "flow-contract", flowId: "delta-form",
+      planSlice: { map: {}, flowId: "delta-form", remainder: "the angle field" },
+    }));
+    await write(lab, "runs/2026-01-06-delta-form-baseline-1/verification-result.json",
+      JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "delta-form" }));
+    const partialLand = await landMap({ map: secondMap, "lab-root": lab });
+    const delta = (await readJsonFile(secondMap)).slices.find(slice => slice.flowId === "delta-form");
+    assert(JSON.stringify(partialLand.partial) === JSON.stringify(["delta-form"]) &&
+      !partialLand.landed.includes("delta-form") && delta.status === "in-progress" && !delta.evidence,
+      `a PASS with a remainder landed its slice: ${JSON.stringify(partialLand)} ${delta.status}`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

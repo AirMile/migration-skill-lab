@@ -18,7 +18,8 @@ allowlist the slice does not need, or stores sensitive content.
 
 ## Required output
 
-- Two or three candidate boundaries put to the user after the survey, each with
+- Without a migration map, two or three candidate boundaries put to the user
+  after the survey, each with
   its migrate set, retained neighbours, external importers, conditional branches
   and existing test evidence, judged against the four slice criteria.
 - The chosen boundary with explicit exclusions and confidence, recorded as a
@@ -157,7 +158,8 @@ The source is acceptable when:
 44. an existing component-rendering harness is named in the validation plan
     rather than an unassigned browser runner proposed beside it.
 45. the boundary is chosen during the run from surveyed evidence, never taken
-    as an input before the survey can show what each candidate costs;
+    as an input before the survey can show what each candidate costs; a map
+    slice supplies only its ceiling;
 46. every surface rendered by its own component has its importers outside this
     flow searched and cited, because that is what makes a boundary judgeable;
 47. the chosen and rejected candidates are recorded in `decisions`, so a later
@@ -222,8 +224,9 @@ The source is acceptable when:
 70. every candidate boundary carries its external importer counts as numbers,
     all four criteria answered in writing, its measurable neighbour and its
     existing test evidence, in plain text with no escaped newlines;
-71. the boundary question shows the chosen candidate's write allowlist and asks
-    in the same breath whether anything in it is off limits;
+71. without a migration map, the boundary question shows the chosen
+    candidate's write allowlist and asks in the same breath whether anything
+    in it is off limits;
 72. the observation sidecar is named `skill-run-observations-flow-baseline.json`
     so a later phase in the same run directory cannot overwrite it;
 73. the continuation offers exactly three routes — open the next phase now
@@ -256,10 +259,9 @@ The source is acceptable when:
     the run directory;
 83. every `characterizationRequired` entry names the scenarios it blocks as a
     `proveBefore` array of declared scenario ids.
-84. an invocation that names a `migration-map.json` takes the `flowId` from it
-    and reads only that slice's entry and the prerequisites it requires; the
-    map's cut is one of the boundary candidates, never the boundary itself,
-    and choosing another is recorded in `decisions`;
+84. an invocation that names a `migration-map.json` reads only that slice's
+    entry and the prerequisites it requires; the map's cut is the ceiling of
+    the boundary, never the boundary itself;
 85. a prerequisite the map marks `built` is reused unchanged, and one this
     slice builds lands at its measured `target`, whose folder the allowlist
     then contains;
@@ -272,10 +274,21 @@ The source is acceptable when:
     the available slices to the user, queued ones first, with each one's
     reason, the unbuilt prerequisites it shares with an active slice and
     whether the product moved since the map, and waits for a choice even when
-    one slice is queued; with none available it names `/flow-plan` and stops;
+    one slice is queued; when it reports `replan` it names `/flow-plan` and
+    stops;
 89. every run claims its slice with `run-context.mjs --claim` after the user
     confirmed it and before the survey, a flow the user named included, so two
     chats never baseline one slice; a refused claim offers the next available
     slice rather than taking the held one;
 90. a run abandoned before it wrote anything frees its slice with `--release`,
     which removes only an empty run directory.
+91. a slice from a migration map, named by the invocation or confirmed from
+    `--ready`, keeps the map slice's `flowId` verbatim, never a slug of its
+    title, because `--ready`, the claim and the seed match on it;
+92. when a map names the slice, no boundary question is asked, and the cut is
+    the largest within the slice's ceiling that meets all four criteria,
+    never a broader one;
+93. `planSlice` is recorded whenever the slice comes from a map, and its
+    `remainder` is `null` only when the whole slice migrates;
+94. a run on a slice whose `--ready` entry carries a `remainder` cuts from
+    that remainder.

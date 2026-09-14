@@ -41,7 +41,10 @@ measured again on every run.
     `landed` only from a `PASS`, with `evidence` pointing at it, and
     `blocked` when a chain ended without one and needs a human decision.
     Only `--seed` and `--land` move a slice to `in-progress` or `landed`; only
-    a `candidate` may be offered in `recommendation`.
+    a `candidate` may be offered in `recommendation`. A slice owns its paths
+    until a chain ends with no remainder: a `PASS` whose contract leaves a
+    `planSlice.remainder` keeps it `in-progress`, and `run-context.mjs --ready`
+    offers it again with that remainder.
 - `prerequisites`: a React file that two or more slices import and no slice
   owns.
   - `kind` is `shared-component` for UI and `adapter` for state, a context or

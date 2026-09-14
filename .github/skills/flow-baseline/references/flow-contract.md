@@ -48,6 +48,15 @@ the contract.
   skills read it to decide whether real-host evidence is mandatory. A partial
   mount replaces only `migrate` items and stays inside the parent form while
   siblings are `retain-react`.
+- `planSlice`: present exactly when a migration map proposed the slice. `map`
+  is the map's pointer from `hash-artifact.mjs` with its `runId`, and
+  `flowId` is the map slice's, which the validator checks against the
+  contract's. `remainder` names the surfaces inside the slice's `paths` that
+  stay React after this chain, or is `null` when the whole slice migrates;
+  `--ready` offers a slice with a remainder again, so the next chain cuts
+  from it. The slice is the allowlist's ceiling: the validator rejects a path
+  outside its `paths`, their `__tests__` folders, its measured
+  `angularTargets` and the target folders of the prerequisites it `requires`.
 - `renderedSurfaceInventory`: one cited entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded`. It binds the migration: no component may replace a parent whose

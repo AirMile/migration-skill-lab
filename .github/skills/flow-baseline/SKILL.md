@@ -15,8 +15,8 @@ Skill version: `0.24.0`.
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
 
-Analyze one explicitly selected flow: survey its rendered surfaces, let the
-user choose a boundary from that evidence, write a final `flow-contract.json`
+Analyze one explicitly selected flow: survey its rendered surfaces, settle a
+boundary from that evidence, write a final `flow-contract.json`
 with the behavior baseline, the surface inventory and a bounded
 target-architecture proposal, then `work-item-baseline.json`, then a short
 review summary in this chat. Do not implement Angular code or present the
@@ -40,9 +40,11 @@ Ask the user only for what nobody else holds:
   the map only when the invocation names one, and put its `available` slices
   to the user, queued ones first, each with its `reason`, the unbuilt
   prerequisites in `sharesUnbuiltWithActive`, since a baseline in another
-  chat builds those too, and whether `productMoved`. Wait for the choice even
-  when one slice is queued. With none available, say `/flow-plan` runs first
-  and stop;
+  chat builds those too, its `remainder` and whether `productMoved`. Wait for
+  the choice even when one slice is queued. When it reports `replan`, say
+  `/flow-plan` runs first, with its `replanReason`, and stop. A confirmed
+  entry with a `remainder` continues an earlier chain: this run cuts from
+  that remainder;
 - whether a new Epic, Feature or User Story is requested, and the real external
   ID of any that already exists on the board;
 - the current external board state and progress, kept separate from the
@@ -55,25 +57,25 @@ about most.
 
 - Once the flow is settled and before the survey, run
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --claim --commands --save-status`.
-  The `flowId` is the flow as a slug; reuse an earlier artifact's exact
-  `flowId` so `supersedes` and `--since` still match. Ask only when the flow
-  maps to more than one plausible id. `--claim` creates this run's directory
-  so no other chat takes the same slice: `flow.claimed.directory` and
-  `flow.claimed.runId` are this run's, and `flow.nextRunDirectory` then points
-  past it. A refused claim means another chat holds the flow; offer the next
-  available slice. The output also gives the product revision and status,
-  this flow's earlier work-item handoffs and saved prompts, and the package
-  scripts.
+  Without a map, the `flowId` is the flow as a slug; reuse an earlier
+  artifact's exact `flowId` so `supersedes` and `--since` still match. Ask
+  only when the flow maps to more than one plausible id. `--claim` creates
+  this run's directory so no other chat takes the same slice:
+  `flow.claimed.directory` and `flow.claimed.runId` are this run's, and
+  `flow.nextRunDirectory` then points past it. A refused claim means another
+  chat holds the flow; offer the next available slice. The output also gives
+  the product revision and status, this flow's earlier work-item handoffs and
+  saved prompts, and the package scripts.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
-  where the user queued this slice: take the `flowId` the invocation names or
-  the user confirmed from `--ready`, and read only that
-  slice's entry and the prerequisites in its `requires`, and from the metrics
-  it points to that slice's `angularTargets` and those prerequisites'
-  `target`. Its `paths` and criteria verdicts are the planning view, not the
-  boundary: the map's cut is one of the step-3 candidates, and choosing
-  another is a `decisions` entry the next `flow-plan` run reads. A
-  prerequisite marked `built` is reused unchanged; one this slice builds lands
-  at its measured `target`, whose folder joins the allowlist.
+  where the user queued this slice. The `flowId` is that slice's `flowId`
+  verbatim, from the invocation or the `--ready` entry the user confirmed,
+  never a slug of its title: `--ready`, the claim and the seed match on it.
+  Read only that slice's entry and the prerequisites in its `requires`, and
+  from the metrics it points to that slice's `angularTargets` and those
+  prerequisites' `target`. Its `paths` are the ceiling step 3 cuts within,
+  and its criteria verdicts the planning view. A prerequisite marked `built`
+  is reused unchanged; one this slice builds lands at its measured `target`,
+  whose folder joins the allowlist.
 - A saved `<flowId>-<skill>-prompt.md` means an earlier phase chose to continue
   later: say so in one line and resume from the artifacts it names, exactly as
   if the phases had run back to back.
@@ -118,25 +120,29 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    `migration-map.mjs` leaves them out, and cite them: a control with a dozen
    external importers is shared infrastructure wherever it sits on screen. The counts stay out of the contract; the boundary decision carries
    the conclusion.
-3. **Boundary.** Only now, with the evidence in hand, put two or three
-   materially different candidates to the user. For each, give its `migrate`
-   set, its `retain-react` neighbours, the external importer count, as a
-   number, of every component its allowlist would touch, the conditional
-   branches it takes on and the existing test evidence that covers it. Judge
-   every candidate in writing against all four criteria and say plainly where
-   it fails:
+3. **Boundary.** Only now, with the evidence in hand, weigh materially
+   different candidates. Judge every candidate in writing against all four
+   criteria and say plainly where it fails:
    - one owner: every migrated surface belongs to this flow;
    - no shared infrastructure in the write allowlist;
    - a measurable neighbour: a nested mount needs a `retain-react` sibling to
      compare visual parity against;
    - bounded branches: every capability gate or mode branch doubles what
      verification must cover.
-   Show the preferred candidate's write allowlist in the same question and ask
+   A slice from a map is a ceiling: ask nothing, choose the largest cut within
+   its `paths` that meets all four, never a broader one, and set `planSlice`.
+   Parallel baselines then stay in the lanes `flow-plan` drew, and what the
+   cut leaves is picked up by the next chain instead of a new plan run.
+   Without a map, put two or three candidates to the user. For each, give its
+   `migrate` set, its `retain-react` neighbours, the external importer count,
+   as a number, of every component its allowlist would touch, the conditional
+   branches it takes on and the existing test evidence that covers it. Show
+   the preferred candidate's write allowlist in the same question and ask
    whether anything in it is off limits; honour a constraint and never widen a
-   boundary the user ruled out. Write the question as plain text, since escaped
-   newlines reach the user literally. Record the outcome as a `decisions` entry
-   whose rationale names the rejected candidates and whose `followUp` names
-   what a later slice picks up.
+   boundary the user ruled out. Write the question as plain text, since
+   escaped newlines reach the user literally. Either way, record the outcome
+   as a `decisions` entry whose rationale names the rejected candidates and
+   whose `followUp` names what a later slice picks up.
 4. **Evidence.** Label material conclusions `Confirmed`, `Inference` or
    `Open question`, and cite every confirmed claim with file and line. Map the
    existing tests to behavior, using existing coverage artifacts only; never
@@ -178,6 +184,7 @@ rejects, no command the safety boundary forbids, no value the run can derive.
 10. **Review summary.** Render one screen from the validated contract, never
     from memory, with only what a reader could disagree with:
     - the `flowId`, the boundary and the `scope.partialMount` shape;
+    - the `planSlice` remainder, or that the whole slice migrates;
     - `renderedSurfaceInventory`, one line per surface with its status;
     - the `targetArchitecture` boundary and adapter in a few lines;
     - each scenario id with a one-line summary;
@@ -232,7 +239,8 @@ Never:
 - silently turn a possible UX improvement into accepted migration behavior;
 - enter, leave or simulate a host plan mode, or present the review summary as
   a gate;
-- put a path in `scope.allowedWritePaths` that the chosen slice does not need;
+- put a path in `scope.allowedWritePaths` that the chosen slice does not need
+  or that lies outside the map slice's ceiling;
 - start the migration in this chat, in a background agent or by a route the
   user did not choose.
 

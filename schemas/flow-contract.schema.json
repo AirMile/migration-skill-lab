@@ -65,6 +65,37 @@
         }
       }
     },
+    "planSlice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["map", "flowId", "remainder"],
+      "properties": {
+        "map": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "runId"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "runId": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            }
+          }
+        },
+        "flowId": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "remainder": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      }
+    },
     "scope": {
       "type": "object",
       "additionalProperties": false,

@@ -22,13 +22,15 @@ Options:
   --map                  the latest earlier migration-map.json and the next
                          map run directory and runId; needs --lab-root
   --ready [map]          the slices of a migration map, the latest without a
-                         file, that a new baseline may take: candidates whose
+                         file, that a new baseline may take: open slices whose
                          dependencies landed, in the map or by a PASS not yet
-                         seeded, and that no baseline run has claimed; queued
-                         ones first, each with its reason and the unbuilt
+                         seeded, with no baseline run in flight and either no
+                         run yet or a PASS that left a remainder; queued ones
+                         first, each with its reason, remainder and the unbuilt
                          prerequisites it shares with slices a baseline is
                          already working on, plus each unbuilt prerequisite
-                         two or more available slices share; needs --lab-root
+                         two or more available slices share, and replan when
+                         no slice is available; needs --lab-root
   --claim                create the next baseline run directory for --flow-id,
                          refused while the flow has an open run; mkdir is
                          atomic, so two chats cannot claim one run
@@ -314,20 +316,32 @@ const readFlow = async (labRoot, flowId) => {
 
 const readReady = async (labRoot, mapFile, productHead) => {
   const mapPath = mapFile ? path.resolve(mapFile) : (await readMap(labRoot)).previousMap;
-  if (!mapPath) return { map: null, queue: [], slices: [] };
+  if (!mapPath) {
+    return { map: null, queue: [], active: [], slices: [], replan: true, replanReason: "no migration map; run /flow-plan" };
+  }
   const map = JSON.parse((await readFile(mapPath, "utf8")).replace(/^﻿/, ""));
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
 
   const { passes } = await scanRuns(labRoot);
   const landed = new Set(map.slices
-    .filter(slice => slice.status === "landed" || passes.has(slice.flowId))
+    .filter(slice => slice.status === "landed" ||
+      (passes.has(slice.flowId) && passes.get(slice.flowId).remainder === null))
     .map(slice => slice.flowId));
   const unbuilt = new Set(map.prerequisites
     .filter(prerequisite => prerequisite.angular?.status !== "built")
     .map(prerequisite => prerequisite.id));
-  const runCounts = new Map();
+  const runStates = new Map();
   for (const slice of map.slices) {
-    runCounts.set(slice.flowId, (await baselineRuns(labRoot, slice.flowId)).runs.length);
+    const { runs } = await baselineRuns(labRoot, slice.flowId);
+    const pass = passes.get(slice.flowId);
+    const passRun = runs.find(run => pass && run.directory === path.dirname(pass.filePath)) ??
+      runs.findLast(run => run.pass);
+    runStates.set(slice.flowId, {
+      count: runs.length,
+      inFlight: runs.some(run => run.open || (run.contract && !run.pass)),
+      remainder: pass?.remainder ?? null,
+      laterRuns: Boolean(passRun) && runs.some(run => run.number > passRun.number),
+    });
   }
   // Queued slices, from schemaVersion 2; before it the one chosen slice.
   const queue = map.schemaVersion >= 2 ?
@@ -343,15 +357,20 @@ const readReady = async (labRoot, mapFile, productHead) => {
     }))
     .filter(entry => entry.prerequisites.length > 0);
 
-  const active = map.slices.filter(slice => !landed.has(slice.flowId) && runCounts.get(slice.flowId) > 0);
-  const candidates = map.slices.filter(slice => slice.status === "candidate").map(slice => {
-    const openDependencies = slice.dependsOn.filter(id => !landed.has(id));
-    return {
-      slice,
-      openDependencies,
-      available: openDependencies.length === 0 && runCounts.get(slice.flowId) === 0,
-    };
-  });
+  const active = map.slices.filter(slice => !landed.has(slice.flowId) && runStates.get(slice.flowId).inFlight);
+  const candidates = map.slices
+    .filter(slice => !landed.has(slice.flowId) && ["candidate", "in-progress"].includes(slice.status))
+    .map(slice => {
+      const openDependencies = slice.dependsOn.filter(id => !landed.has(id));
+      const { count, inFlight, remainder, laterRuns } = runStates.get(slice.flowId);
+      // Any run after the partial PASS, a failed or blocked one included, needs a person.
+      return {
+        slice,
+        openDependencies,
+        available: openDependencies.length === 0 && !inFlight &&
+          (count === 0 || (remainder !== null && !laterRuns)),
+      };
+    });
   const available = candidates.filter(entry => entry.available).map(entry => entry.slice);
 
   const rank = flowId => {
@@ -369,7 +388,9 @@ const readReady = async (labRoot, mapFile, productHead) => {
       queuePosition: queue.includes(slice.flowId) ? queue.indexOf(slice.flowId) + 1 : null,
       reason: options.find(option => option.flowId === slice.flowId)?.reason ?? null,
       openDependencies,
-      baselineRuns: runCounts.get(slice.flowId),
+      baselineRuns: runStates.get(slice.flowId).count,
+      inFlight: runStates.get(slice.flowId).inFlight,
+      remainder: runStates.get(slice.flowId).remainder,
       available: isAvailable,
       ...(isAvailable ? { sharesUnbuiltWithActive: sharedUnbuilt(slice, active) } : {}),
     }));
@@ -393,6 +414,8 @@ const readReady = async (labRoot, mapFile, productHead) => {
     active: active.map(slice => slice.flowId),
     slices,
     unbuiltSharedByAvailable,
+    replan: available.length === 0,
+    replanReason: available.length === 0 ? "no slice is available; run /flow-plan" : null,
   };
 };
 
@@ -771,6 +794,73 @@ const runSelfTest = async () => {
     }));
     assert(JSON.stringify((await collectContext({ ...inLab, ready: v1Path })).ready.queue) === JSON.stringify(["gamma"]),
       "a schemaVersion 1 map's chosen slice is not read as its queue");
+    assert(ready.replan === false && ready.replanReason === null, "a map with an available slice asks to replan");
+
+    // A PASS on part of a slice hands the rest to the next chain; a contract
+    // that has not passed yet is still in flight.
+    const writeRun = async (name, files) => {
+      const directory = path.join(lab, "runs", name);
+      await mkdir(directory);
+      for (const [file, value] of Object.entries(files)) {
+        await writeFile(path.join(directory, file), JSON.stringify(value));
+      }
+    };
+    const contractFor = (flowId, remainder) => ({
+      artifactType: "flow-contract", flowId,
+      ...(remainder === undefined ? {} : { planSlice: { map: {}, flowId, remainder } }),
+    });
+    const passFor = flowId => ({ artifactType: "verification-result", status: "PASS", flowId });
+    await writeRun("2026-01-04-eta-baseline-1", {
+      "flow-contract.json": contractFor("eta", "the angle field"),
+      "verification-result.json": passFor("eta"),
+    });
+    await writeRun("2026-01-04-theta-baseline-1", { "flow-contract.json": contractFor("theta") });
+    const partialMapPath = path.join(path.dirname(queuedMapPath), "partial-map.json");
+    await writeFile(partialMapPath, JSON.stringify({
+      ...queuedMap,
+      slices: [
+        slice("eta", { status: "in-progress" }),
+        slice("theta"),
+        slice("iota", { dependsOn: ["eta"] }),
+      ],
+      recommendation: { options: [], queue: [] },
+    }));
+    const partialReady = (await collectContext({ ...inLab, ready: partialMapPath })).ready;
+    const partialByFlow = new Map(partialReady.slices.map(entry => [entry.flowId, entry]));
+    assert(partialByFlow.get("eta")?.available && partialByFlow.get("eta").remainder === "the angle field" &&
+      !partialByFlow.get("eta").inFlight && !partialReady.active.includes("eta"),
+      `a slice whose PASS left a remainder is not offered again: ${JSON.stringify(partialByFlow.get("eta"))}`);
+    assert(partialByFlow.get("theta").inFlight && !partialByFlow.get("theta").available &&
+      JSON.stringify(partialReady.active) === JSON.stringify(["theta"]),
+      `a contract without a PASS is not in flight: ${JSON.stringify(partialByFlow.get("theta"))}`);
+    assert(JSON.stringify(partialByFlow.get("iota").openDependencies) === JSON.stringify(["eta"]),
+      "a dependency with only a partial PASS counts as landed");
+    assert(partialReady.replan === false, "a map with a partial slice available asks to replan");
+
+    await writeRun("2026-01-04-kappa-baseline-1", {
+      "flow-contract.json": contractFor("kappa", "the distances"),
+      "verification-result.json": passFor("kappa"),
+    });
+    await writeRun("2026-01-05-kappa-baseline-2", {
+      "skill-run-observations-flow-baseline.json": { artifactType: "skill-run-observations" },
+    });
+    const blockedMapPath = path.join(path.dirname(queuedMapPath), "blocked-map.json");
+    await writeFile(blockedMapPath, JSON.stringify({
+      ...queuedMap, slices: [slice("kappa", { status: "in-progress" })], recommendation: { options: [], queue: [] },
+    }));
+    const blockedKappa = (await collectContext({ ...inLab, ready: blockedMapPath })).ready.slices[0];
+    assert(blockedKappa.remainder === "the distances" && !blockedKappa.inFlight && !blockedKappa.available,
+      `a partial slice whose later run closed without a contract is offered again: ${JSON.stringify(blockedKappa)}`);
+
+    const stuckMapPath = path.join(path.dirname(queuedMapPath), "stuck-map.json");
+    await writeFile(stuckMapPath, JSON.stringify({
+      ...queuedMap,
+      slices: [slice("theta"), slice("iota", { dependsOn: ["theta"] })],
+      recommendation: { options: [], queue: [] },
+    }));
+    const stuckReady = (await collectContext({ ...inLab, ready: stuckMapPath })).ready;
+    assert(stuckReady.replan === true && stuckReady.replanReason.includes("/flow-plan"),
+      `a map with no available slice does not ask to replan: ${JSON.stringify(stuckReady)}`);
 
     const releasedBeta = await collectContext({ ...inLab, "flow-id": "beta", release: true });
     assert(releasedBeta.flow.released.length === 1 && !(await exists(claimedBeta.flow.claimed.directory)),

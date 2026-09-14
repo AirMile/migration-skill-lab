@@ -45,7 +45,8 @@ Derive everything else, state each value in one line and continue:
   It gives the product revision and status, `map.previousMap`,
   `map.nextRunDirectory` and `map.nextRunId`.
 - An invocation that names a `verification-result.json` comes from a `PASS`:
-  that slice lands in the seed step. Say so in one line.
+  the seed step lands that slice unless its contract leaves a remainder. Say
+  so in one line.
 - Read `<lab>\docs\project-constants.md` and say that you did. Its Angular
   target structure puts every prerequisite's counterpart at the `target` the
   measure records for it; never propose another place.
@@ -59,10 +60,11 @@ Derive everything else, state each value in one line and continue:
 2. **Seed.** With a previous map, run
    `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version <this skill's version> --lab-root <lab>`.
    It carries every field, lands each slice with a `PASS` verification-result
-   and moves each started candidate to `in-progress`; report both lists in one
-   line. Without one, run `--init --product-root <product>` with the same
-   `--out`, `--run-id` and `--skill-version`: one feature per folder under
-   `src\features`, no slices yet.
+   and moves each started candidate to `in-progress`; report the landed,
+   in-progress and `partial` lists in one line. Without one, run
+   `--init --product-root <product>` with the same `--out`, `--run-id` and
+   `--skill-version`: one feature per folder under `src\features`, no slices
+   yet.
 3. **Measure.** Run
    `node "<lab>\scripts\migration-map.mjs" --measure --product-root <product> --map <migration-map.json> --lab-root <lab>`.
    Run it again after every change to slices or prerequisites, and last before

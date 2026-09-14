@@ -293,24 +293,64 @@ const validateMigrationMapRules = (value, errors) => {
 
 // Pointers in a map are lab-relative, the form hash-artifact.mjs prints from
 // the lab root. Each is checked against the file it names.
+const readLabPointer = async (ownerPath, label, pointer) => {
+  const target = path.isAbsolute(pointer.path) ?
+    pointer.path :
+    path.resolve(rootDirectory, pointer.path);
+  let raw;
+  try {
+    raw = await readFile(target);
+  } catch (error) {
+    throw new Error(`${ownerPath} ${label} cannot be read at ${target}: ${error.message}`, {
+      cause: error,
+    });
+  }
+  if (createHash("sha256").update(raw).digest("hex") !== pointer.sha256) {
+    throw new Error(`${ownerPath} ${label} hash does not match ${target}.`);
+  }
+  return JSON.parse(raw.toString("utf8").replace(/^﻿/, ""));
+};
+
+// A map slice is the ceiling of a baseline chain: its paths, the tests beside
+// its files, the Angular folders they move to and the targets of the
+// prerequisites it requires.
+const validatePlanSlice = async (absolutePath, contract) => {
+  const { planSlice } = contract;
+  const map = await readLabPointer(absolutePath, "planSlice map", planSlice.map);
+  if (map.artifactType !== "migration-map" || map.runId !== planSlice.map.runId) {
+    throw new Error(`${absolutePath} planSlice map is not the migration-map of run ${planSlice.map.runId}.`);
+  }
+  const slice = (map.slices ?? []).find(entry => entry.flowId === planSlice.flowId);
+  if (!slice) {
+    throw new Error(`${absolutePath} planSlice ${planSlice.flowId} is not a slice of map ${planSlice.map.runId}.`);
+  }
+  if (!map.metrics) {
+    throw new Error(`${absolutePath} planSlice map ${planSlice.map.runId} carries no metrics pointer; measure it with migration-map.mjs.`);
+  }
+  const metrics = await readLabPointer(absolutePath, "planSlice map metrics", map.metrics);
+  const measured = (metrics.slices ?? []).find(entry => entry.flowId === slice.flowId);
+  const slicePaths = slice.paths.map(normalizeProductPath);
+  const ceiling = [...new Set([
+    ...slicePaths,
+    ...slicePaths.filter(entry => path.posix.extname(entry)).map(entry => `${path.posix.dirname(entry)}/__tests__`),
+    ...(measured?.angularTargets ?? []).map(normalizeProductPath),
+    ...(metrics.prerequisites ?? [])
+      .filter(prerequisite => slice.requires.includes(prerequisite.id) && prerequisite.target)
+      .map(prerequisite => path.posix.dirname(normalizeProductPath(prerequisite.target))),
+  ])];
+  for (const entry of contract.scope.allowedWritePaths.map(normalizeProductPath)) {
+    if (!ceiling.some(base => pathCovers(base, entry))) {
+      throw new Error(
+        `${absolutePath} $.scope.allowedWritePaths entry ${entry} is outside slice ${planSlice.flowId}; ` +
+          `the slice allows ${ceiling.join(", ")}.`,
+      );
+    }
+  }
+  return ceiling;
+};
+
 const validateMigrationMapPointers = async (absolutePath, value) => {
-  const readPointer = async (label, pointer) => {
-    const target = path.isAbsolute(pointer.path) ?
-      pointer.path :
-      path.resolve(rootDirectory, pointer.path);
-    let raw;
-    try {
-      raw = await readFile(target);
-    } catch (error) {
-      throw new Error(`${absolutePath} ${label} cannot be read at ${target}: ${error.message}`, {
-        cause: error,
-      });
-    }
-    if (createHash("sha256").update(raw).digest("hex") !== pointer.sha256) {
-      throw new Error(`${absolutePath} ${label} hash does not match ${target}.`);
-    }
-    return JSON.parse(raw.toString("utf8").replace(/^﻿/, ""));
-  };
+  const readPointer = (label, pointer) => readLabPointer(absolutePath, label, pointer);
 
   // The measured structure names the Angular root; a counterpart outside it
   // was built somewhere no later slice looks.
@@ -377,6 +417,15 @@ const validateMigrationMapPointers = async (absolutePath, value) => {
 const validateArtifactRules = (value, errors) => {
   if (value.artifactType === "flow-contract") {
     const isFinalContract = value.schemaVersion >= 6;
+
+    if (value.planSlice) {
+      if (value.planSlice.flowId !== value.flowId) {
+        errors.push(`$.planSlice.flowId ${value.planSlice.flowId} must equal $.flowId ${value.flowId}.`);
+      }
+      if (typeof value.planSlice.remainder === "string" && !value.planSlice.remainder.trim()) {
+        errors.push("$.planSlice.remainder must name what stays React, or be null when nothing does.");
+      }
+    }
 
     if (isFinalContract) {
       for (const field of ["status", "approval"]) {
@@ -1256,6 +1305,10 @@ const loadArtifact = async filePath => {
 
   if (value.artifactType === "migration-map") {
     await validateMigrationMapPointers(absolutePath, value);
+  }
+
+  if (value.artifactType === "flow-contract" && value.planSlice) {
+    await validatePlanSlice(absolutePath, value);
   }
 
   // A baseline report is optional from schemaVersion 5: the contract itself is
@@ -3658,6 +3711,116 @@ const runSelfTest = async () => {
     );
   } finally {
     await rm(predatingDirectory, { recursive: true, force: true });
+  }
+
+  const planDirectory = await mkdtemp(path.join(os.tmpdir(), "validate-handoff-plan-"));
+  try {
+    const hashed = raw => createHash("sha256").update(raw).digest("hex");
+    const metricsRaw = `${JSON.stringify({
+      slices: [{ flowId: "demo-line-drawer", angularTargets: ["src/angular/domains/demo/pages/line-drawer"] }],
+      prerequisites: [
+        { id: "line-store", target: "src/angular/core/store/line.store.ts" },
+        { id: "unrequired", target: "src/angular/shared/unrequired.component.ts" },
+        { id: "unplaced", target: null },
+      ],
+    })}\n`;
+    const metricsPath = path.join(planDirectory, "migration-metrics.json");
+    await writeFile(metricsPath, metricsRaw);
+    const mapRaw = `${JSON.stringify({
+      artifactType: "migration-map",
+      runId: "migration-map-7",
+      metrics: { path: metricsPath, sha256: hashed(metricsRaw) },
+      slices: [{
+        flowId: "demo-line-drawer",
+        paths: ["src/features/demo-line-drawer/LineDrawer.tsx"],
+        requires: ["line-store", "unplaced"],
+      }],
+    })}\n`;
+    const planMapPath = path.join(planDirectory, "migration-map.json");
+    await writeFile(planMapPath, mapRaw);
+
+    const plannedContract = () => {
+      const planned = structuredClone(
+        artifacts.find(artifact => artifact.value.artifactType === "flow-contract").value,
+      );
+      planned.planSlice = {
+        map: { path: planMapPath, sha256: hashed(mapRaw), runId: "migration-map-7" },
+        flowId: planned.flowId,
+        remainder: "the line colour picker",
+      };
+      planned.scope.allowedWritePaths = [
+        "src/features/demo-line-drawer/LineDrawer.tsx",
+        "src\\features\\demo-line-drawer\\__tests__\\",
+        "src/angular/domains/demo/pages/line-drawer/",
+        "src/angular/core/store/line.store.ts",
+      ];
+      return planned;
+    };
+
+    const planSchemaErrors = [];
+    validateNode(plannedContract(), schema, "$", planSchemaErrors);
+    validateArtifactRules(plannedContract(), planSchemaErrors);
+    if (planSchemaErrors.length > 0) {
+      throw new Error(`Handoff validator self-test rejected a valid planSlice: ${planSchemaErrors.join(", ")}`);
+    }
+    await validatePlanSlice(contractPath, plannedContract());
+
+    const expectPlanRejection = async (mutate, expectedMessage, label) => {
+      const candidate = plannedContract();
+      mutate(candidate);
+      try {
+        await validatePlanSlice(contractPath, candidate);
+      } catch (error) {
+        if (error.message.includes(expectedMessage)) return;
+        throw error;
+      }
+      throw new Error(`Handoff validator self-test did not reject ${label}.`);
+    };
+    await expectPlanRejection(
+      contract => { contract.scope.allowedWritePaths.push("src/angular/shared"); },
+      "entry src/angular/shared is outside slice demo-line-drawer",
+      "an allowlist entry outside the slice ceiling",
+    );
+    await expectPlanRejection(
+      contract => { contract.planSlice.flowId = "absent-slice"; },
+      "planSlice absent-slice is not a slice of map migration-map-7",
+      "a planSlice naming a slice the map does not hold",
+    );
+    await expectPlanRejection(
+      contract => { contract.planSlice.map.runId = "migration-map-8"; },
+      "is not the migration-map of run migration-map-8",
+      "a planSlice map pointer naming another run",
+    );
+
+    const expectPlanRuleRejection = (mutate, expectedMessage, label) => {
+      const candidate = plannedContract();
+      mutate(candidate);
+      const planErrors = [];
+      validateArtifactRules(candidate, planErrors);
+      if (!planErrors.some(error => error.includes(expectedMessage))) {
+        throw new Error(`Handoff validator self-test did not reject ${label}.`);
+      }
+    };
+    expectPlanRuleRejection(
+      contract => { contract.planSlice.flowId = "demo-charger-form"; },
+      "$.planSlice.flowId demo-charger-form must equal $.flowId",
+      "a planSlice for another flow",
+    );
+    expectPlanRuleRejection(
+      contract => { contract.planSlice.remainder = "  "; },
+      "$.planSlice.remainder must name what stays React",
+      "a blank remainder",
+    );
+
+    const unplanned = plannedContract();
+    delete unplanned.planSlice;
+    const unplannedErrors = [];
+    validateArtifactRules(unplanned, unplannedErrors);
+    if (unplannedErrors.some(error => error.includes("planSlice"))) {
+      throw new Error(`Handoff validator self-test applied planSlice rules without one: ${unplannedErrors.join(", ")}`);
+    }
+  } finally {
+    await rm(planDirectory, { recursive: true, force: true });
   }
 
   console.log(

@@ -170,14 +170,18 @@ reasoning, and the mechanical steps are already scripts.
    components and state adapters those slices import with whether an Angular
    counterpart exists. A slice lands only from a `PASS` verification-result.
    It offers up to five slices that no baseline holds yet, and the user
-   approves an ordered queue from them. A `PASS` needs a new `flow-plan` run;
-   starting the next baseline does not, while the queue holds a slice.
+   approves an ordered queue from them. A map slice is a ceiling: a chain may
+   migrate less and leave a remainder, which the next baseline on that slice
+   picks up. `flow-plan` runs again only when `run-context.mjs --ready`
+   reports `replan` or a chain without a remainder landed a slice.
 1. `flow-baseline` is read-only for the product repository. Started without a
    flow, it lists the available slices, queued first, and waits for the user
    to confirm one. It then claims the slice by creating its run directory, so
    baselines in other chats run side by side without taking the same one. It
-   surveys the selected flow's rendered surfaces, puts two or three candidate
-   boundaries to the user with what each one costs, and then creates one final
+   surveys the selected flow's rendered surfaces, chooses the largest boundary
+   that fits within a map slice or, for a flow named without a map, puts two
+   or three candidate boundaries to the user with what each one costs, and
+   then creates one final
    `flow-contract.json` carrying the chosen scope, surface inventory, target
    architecture, scenarios and open questions. It writes no report: a prose copy
    of a validated artifact drifts, and no later skill reads it.

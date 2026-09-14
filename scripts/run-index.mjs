@@ -26,8 +26,20 @@ export const listNumberedRuns = async (runsDirectory, stem) => {
   return { runs, next: (runs.at(-1)?.number ?? 0) + 1 };
 };
 
-// The newest PASS verification-result per flowId, and every flowId with a
-// flow-contract, across all run directories.
+// A contract that migrated part of its map slice names what is still React;
+// its PASS keeps the slice open.
+const readRemainder = async directoryPath => {
+  try {
+    const remainder = (await readJson(path.join(directoryPath, "flow-contract.json"))).planSlice?.remainder;
+    return typeof remainder === "string" && remainder.trim() ? remainder : null;
+  } catch {
+    return null;
+  }
+};
+
+// The newest PASS verification-result per flowId, with the remainder its
+// contract records, and every flowId with a flow-contract, across all run
+// directories.
 export const scanRuns = async labRoot => {
   const runsDirectory = path.join(path.resolve(labRoot), "runs");
   const passes = new Map();
@@ -53,7 +65,9 @@ export const scanRuns = async labRoot => {
       if (isVerification && value.artifactType === "verification-result" && value.status === "PASS") {
         const modified = (await stat(filePath)).mtimeMs;
         const previous = passes.get(value.flowId);
-        if (!previous || previous.modified < modified) passes.set(value.flowId, { filePath, modified });
+        if (!previous || previous.modified < modified) {
+          passes.set(value.flowId, { filePath, modified, remainder: await readRemainder(directoryPath) });
+        }
       }
       if (value.artifactType === "flow-contract") started.add(value.flowId);
     }
@@ -75,7 +89,18 @@ export const baselineRuns = async (labRoot, flowId) => {
     runs: await Promise.all(runs.map(async run => {
       const directory = path.join(runsDirectory, run.name);
       const files = (await readdir(directory)).sort();
-      return { directory, number: run.number, files, open: !files.some(closesBaseline) };
+      const passed = (await Promise.all(files
+        .filter(file => /^verification-result(?:-\d+)?\.json$/.test(file))
+        .map(file => readJson(path.join(directory, file)).then(value => value.status === "PASS", () => false))))
+        .some(Boolean);
+      return {
+        directory,
+        number: run.number,
+        files,
+        open: !files.some(closesBaseline),
+        contract: files.includes("flow-contract.json"),
+        pass: passed ? { remainder: await readRemainder(directory) } : null,
+      };
     })),
   };
 };
