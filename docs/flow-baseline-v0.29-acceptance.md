@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.28.0
+targetVersion: 0.29.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.28.0 acceptance criteria
+# `flow-baseline` v0.29.0 acceptance criteria
 
 ## Hard gates
 
@@ -291,3 +291,6 @@ The source is acceptable when:
     as a question.
 96. the observation sidecar is written last, after the chosen continuation
     route, so it can record a step the run skipped.
+97. every value the slice receives from outside Angular (a store subscription,
+    a socket event, a timer, a promise) has one `targetArchitecture.lifecycle`
+    rule naming its source and the signal it is written into.

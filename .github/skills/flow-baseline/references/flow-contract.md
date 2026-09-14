@@ -69,8 +69,13 @@ the contract.
   `dependencyChanges`. Transcribe the mount mechanism, compilation and
   change-detection strategy, framework version and package set from
   `docs\project-constants.md` and cite it; this run decides only the boundary,
-  adapter, lifecycle and styling of the slice. Preserve boundaries that are
-  sound; do not mirror React mechanically or redesign the app.
+  adapter, lifecycle and styling of the slice. Change detection is zoneless,
+  so give every value the slice receives from outside Angular (a store
+  subscription, a socket event, a timer, a promise) one `lifecycle` rule
+  naming its source and the signal it is written into; the survey already
+  found them, and `flow-migrate` then need not trace them again. Preserve
+  boundaries that are sound; do not mirror React mechanically or redesign the
+  app.
 - `targetArchitecture.dependencyChanges`: a boolean `required`, `packages` as
   exact `name@version` strings, `paths` repository-relative, and an optional
   `note`. Read the product's dependency manifest first and cite it. When the

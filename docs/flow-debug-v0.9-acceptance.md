@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.8.0
+targetVersion: 0.9.0
 status: experimental
-date: 2026-09-11
+date: 2026-09-14
 ---
 
-# `flow-debug` v0.8.0 acceptance criteria
+# `flow-debug` v0.9.0 acceptance criteria
 
 ## Hard gates
 
@@ -106,3 +106,6 @@ The source is acceptable when:
     `verification-result-<N>.json`, is treated as this run's continuation, and
     its own `--save` names the next verification's prompt for attempt N + 1,
     so it never collides with the prompt that started attempt N.
+28. a remaining `angularConventions` finding in the final
+    `run-context.mjs --compare --contract` output keeps the result from
+    `repaired`.

@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.8.0`.
+Skill version: `0.9.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -97,7 +97,8 @@ Report `BLOCKED` before any product write when:
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare --contract <flow-contract.json>`
    and report the delta against the frozen status without reverting unrelated
    changes. A path under `comparison.outsideAllowlist` is a write outside the
-   boundary, and the result cannot be `repaired`.
+   boundary, and the result cannot be `repaired`; neither can a remaining
+   `angularConventions` finding.
 8. **Write `debug-result.json`** in the run directory, copying the shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\debug\demo-line-drawer\debug-result.json"`
    and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,

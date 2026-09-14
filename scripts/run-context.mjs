@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { scanAngularConventions } from "./angular-conventions.mjs";
 import { baselineRuns, listNumberedRuns, scanRuns } from "./run-index.mjs";
 
 // Every phase opened by reading Git state and deriving the same values in
@@ -47,7 +48,9 @@ Options:
   --contract <file>      a flow-contract.json: list every Git-visible path
                          outside its scope.allowedWritePaths, and with
                          --compare every path that changed or was committed
-                         outside it since the saved status
+                         outside it since the saved status; also
+                         angularConventions, the project-constants rule
+                         findings in the Angular files under that allowlist
   --self-test            run the built-in checks
 `;
 
@@ -497,6 +500,7 @@ const collectContext = async options => {
       allowedWritePaths: allowed,
       outside: outsideAllowlist(state.status.flatMap(statusPaths), allowed),
     };
+    context.angularConventions = await scanAngularConventions(state.root, allowed);
   }
   const statusPath = option =>
     option === true ? defaultStatusPath(state.root) : path.resolve(option);
@@ -709,6 +713,23 @@ const runSelfTest = async () => {
     assert(JSON.stringify(checked.comparison.outsideAllowlist) ===
       JSON.stringify(["docs/committed.md", "srcfile.txt"]),
       `unexpected changes outside the allowlist ${JSON.stringify(checked.comparison.outsideAllowlist)}`);
+    assert(Array.isArray(checked.angularConventions) && checked.angularConventions.length === 0,
+      "a contract without Angular files reports convention findings");
+
+    // Only Angular files under the allowlist are checked, tests excluded.
+    await mkdir(path.join(product, "src", "angular", "__tests__"), { recursive: true });
+    await writeFile(path.join(product, "src", "angular", "line.component.ts"),
+      '@Component({ selector: "ra-line" })\nexport class LineComponent {}\n');
+    await writeFile(path.join(product, "src", "angular", "__tests__", "line.component.spec.ts"),
+      '@Component({ selector: "ra-host" })\nclass HostComponent {}\n');
+    await mkdir(path.join(product, "docs", "angular"), { recursive: true });
+    await writeFile(path.join(product, "docs", "angular", "outside.component.ts"),
+      '@Component({ selector: "ra-out" })\nexport class OutsideComponent {}\n');
+    const conventions = (await collectContext({ "product-root": product, contract: contractPath }))
+      .angularConventions;
+    assert(JSON.stringify(conventions) === JSON.stringify([
+      { path: "src/angular/line.component.ts", line: 1, rule: "on-push", constant: "Change detection" },
+    ]), `unexpected Angular convention findings ${JSON.stringify(conventions)}`);
 
     // A map queues slices and each baseline claims one, so parallel chats
     // never take the same slice.

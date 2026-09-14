@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.18.0`.
+Skill version: `0.19.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -76,7 +76,8 @@ outcome, a diagnosis and the next action.
    expand only with a reason recorded in the result. Take the allowlist check
    from `allowlist.outside` in the `run-context.mjs` output, never by hand: a
    path there is `FAIL` unless the user confirms it was dirty before the
-   migration. Check that the migration result reports failed or blocked
+   migration. Each `angularConventions` finding there is `FAIL` too, with its
+   `rule` and `constant` as the diagnosis. Check that the migration result reports failed or blocked
    validation honestly. Check coverage only for this flow,
    only through the safe measurement the contract's `testGaps` names, and
    record a figure CI measures as not retrieved; a percentage supports, never

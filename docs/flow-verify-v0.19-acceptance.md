@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.18.0
+targetVersion: 0.19.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-verify` v0.18.0 acceptance criteria
+# `flow-verify` v0.19.0 acceptance criteria
 
 ## Hard gates
 
@@ -134,3 +134,6 @@ The source is acceptable when:
 46. a `PASS` continues into a fresh `/flow-plan` that carries the
     verification result, through the same three routes, instead of waiting
     for the user to name a next flow.
+47. each `angularConventions` finding in the `run-context.mjs --contract`
+    output is a `FAIL` whose diagnosis names its `rule` and `constant`, never
+    a judgement of the Angular code made by hand.

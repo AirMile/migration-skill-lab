@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.18.0`.
+Skill version: `0.19.0`.
 
 Recommended model: Claude Sonnet 5.
 
@@ -114,7 +114,10 @@ as an established Lely standard.
     `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare --contract <flow-contract.json>`
     and report the final status and its delta. A path under
     `comparison.outsideAllowlist` is a write outside the boundary: report it,
-    and the result cannot be `completed`. Never merge, push or publish.
+    and the result cannot be `completed`. Fix every `angularConventions`
+    finding by the project-constants heading it names and run the check
+    again; one that remains keeps the result from `completed`. Never merge, push or
+    publish.
 11. **Write `migration-result.json`** in the run directory, copying the shape
     from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\migration-result.json"`,
     at schemaVersion 5, and validate it together with the contract; it never

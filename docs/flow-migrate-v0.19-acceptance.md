@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.18.0
+targetVersion: 0.19.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-migrate` v0.18.0 acceptance criteria
+# `flow-migrate` v0.19.0 acceptance criteria
 
 ## Hard gates
 
@@ -134,3 +134,5 @@ The source is acceptable when:
     `characterization` outcome per `characterizationRequired` id, the test that
     settled each confirmed or disproved one, and no `not-run` in a `completed`
     result.
+45. every `angularConventions` finding in that same output is fixed and the
+    check rerun, and one that remains keeps the result from `completed`.

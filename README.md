@@ -11,9 +11,9 @@ This lab contains:
 - experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.28.0, `flow-migrate` v0.18.0 and
-  `flow-verify` v0.18.0 source skills;
-- experimental `flow-debug` v0.8.0 source skill;
+- experimental `flow-baseline` v0.29.0, `flow-migrate` v0.19.0 and
+  `flow-verify` v0.19.0 source skills;
+- experimental `flow-debug` v0.9.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
@@ -23,8 +23,10 @@ This lab contains:
   one artifact needs to reference another;
 - the deterministic steps every flow skill used to do by hand, each with
   `--help` and `--self-test`: `run-context.mjs` (product status and its later
-  comparison, paths outside a contract's allowlist, run directory, runId,
-  saved prompts, terminating commands),
+  comparison, paths outside a contract's allowlist and the Angular convention
+  findings inside it, run directory, runId, saved prompts, terminating
+  commands), `angular-conventions.mjs` (the project-constants rules a pattern
+  can check in Angular files, which `run-context.mjs --contract` uses),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `render-user-story.mjs` (the slice's User Story from a
   validated contract, then its review facts),
@@ -45,7 +47,8 @@ This lab contains:
   skill reads instead of asking: framework version, package set, compilation
   and mount mechanism, the Angular target structure, install command, test
   location, coverage and the manual verification environment, with
-  `docs\angular-structure.json` holding that structure as rules;
+  `docs\angular-structure.json` holding that structure as rules and
+  `docs\project-constants-history.md` the reasoning no run needs;
 - a dependency-free renderer for a standalone, read-only HTML backlog;
 - an approved report contract for confidential analyses outside the product
   repository.
