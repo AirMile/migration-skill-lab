@@ -1,6 +1,6 @@
 ---
 name: flow-migrate
-description: Migrate one React-to-Angular flow within the write scope its Flow Contract declares. Requires a high-capability coding model; avoid Auto and low-cost models for contract-grade migration work. Use only with /flow-migrate.
+description: Migrate one React-to-Angular flow within the write scope its Flow Contract declares. Requires a high-capability coding model. Use only with /flow-migrate.
 ---
 
 # Flow Migrate

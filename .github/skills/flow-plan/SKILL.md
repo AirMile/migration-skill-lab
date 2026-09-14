@@ -1,6 +1,6 @@
 ---
 name: flow-plan
-description: Keep the migration map of features, candidate slices and the shared components and state adapters they depend on, and queue the next React-to-Angular slices for flow-baseline. Requires a high-capability reasoning model; avoid Auto and low-cost models for contract-grade migration planning. Use only with /flow-plan.
+description: Keep the migration map of features, candidate slices and the shared components and state adapters they depend on, and queue the next React-to-Angular slices for flow-baseline. Requires a high-capability reasoning model. Use only with /flow-plan.
 ---
 
 # Flow Plan
