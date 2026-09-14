@@ -1,22 +1,25 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkStructure, createResolver, loadStructure } from "./angular-structure.mjs";
+import { scanRuns } from "./run-index.mjs";
 
 // Which slices to cut is judgement; which files a slice leans on is not. This
 // script owns the second half, so flow-plan counts the same way on every run
 // and flow-baseline starts from numbers nobody retyped.
 
 const labDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const mapSchemaVersion = 2;
 
 const usage = `Usage:
   node scripts/migration-map.mjs --init --product-root <dir> --out <map.json> --run-id <id> --skill-version <x.y.z>
   node scripts/migration-map.mjs --seed --previous <map.json> --out <map.json> --run-id <id> --skill-version <x.y.z> --lab-root <dir>
   node scripts/migration-map.mjs --measure --product-root <dir> --map <map.json> [--lab-root <dir>] [--out <metrics.json>] [--structure <angular-structure.json>] [--threshold <n>] [--react-packages <a,b>]
+  node scripts/migration-map.mjs --land --map <map.json> --lab-root <dir>
 
 Init writes a first migration-map.json with one feature per folder under
 src/features that holds source other than tests and stories, and no slices.
@@ -26,21 +29,25 @@ supersedes pointing at the previous map, the recommendation emptied and the
 metrics pointer removed until --measure runs. A slice with a PASS
 verification-result for its flowId under <lab-root>\\runs becomes landed with
 that file as evidence; a candidate with a flow-contract there becomes
-in-progress.
+in-progress. Init and seed write schemaVersion ${mapSchemaVersion}.
+
+Land applies the same run evidence to the map in place, for slices cut after
+the seed, which could not know them.
 
 Measure reads the product once, value imports only, tests and stories left
 out. It writes migration-metrics.json beside the map, or --out: per unit the
 file counts and framework-agnostic share, every file with --threshold (10) or
 more importers from other units and whether it is React-bound, and per mapped
 slice the React-bound files outside its paths that it imports, each with the
-prerequisite and Angular counterpart the map records for it, and every file
-under an angular folder. It applies the Angular target structure, by default
+prerequisite and Angular counterpart the map records for it, the prerequisites
+those imports imply, and every file under an angular folder. It applies the Angular target structure, by default
 docs\\angular-structure.json in this lab, to every file under src, tests
 included, and records the structure file, the files no rule matches and the
 targets two or more files move to; per prerequisite its target and whether a
 built counterpart drifted from it; per slice the Angular folders its files move
 to. It then points the map's metrics and repository at what it measured, and
 prints the unmapped feature folders, the slices whose paths match nothing, the
+slices whose requires differ from the prerequisites they import, the
 React-bound files two or more slices share that the map records as no
 prerequisite and no slice owns, the Angular files, the count of unmatched files
 and collisions, and the drifted prerequisites.
@@ -370,6 +377,7 @@ const buildMetrics = (graph, map, options) => {
         !sourceFiles.some(file => covers(base, productPath(file)))),
       angularTargets: angularTargets(sliceBases),
       reactBoundImports,
+      impliedRequires: [...new Set(reactBoundImports.map(entry => entry.prerequisite).filter(Boolean))].sort(),
     };
   });
 
@@ -488,7 +496,7 @@ const initMap = async options => {
     }))
     .filter(feature => feature.id);
   await writeNew(options.out, serializeMap({
-    schemaVersion: 1,
+    schemaVersion: mapSchemaVersion,
     artifactType: "migration-map",
     skill: "flow-plan",
     skillVersion: options["skill-version"],
@@ -497,44 +505,35 @@ const initMap = async options => {
     features,
     slices: [],
     prerequisites: [],
-    recommendation: { options: [] },
+    recommendation: { options: [], queue: [] },
     decisions: [],
     openQuestions: [],
   }));
   return { out: path.resolve(options.out), features: features.map(feature => feature.id) };
 };
 
-const scanRuns = async labRoot => {
-  const runsDirectory = path.join(path.resolve(labRoot), "runs");
-  const passes = new Map();
-  const started = new Set();
-  let directories = [];
-  try {
-    directories = (await readdir(runsDirectory, { withFileTypes: true })).filter(entry => entry.isDirectory());
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
-  for (const directory of directories) {
-    const directoryPath = path.join(runsDirectory, directory.name);
-    for (const file of await readdir(directoryPath)) {
-      const isVerification = /^verification-result(?:-\d+)?\.json$/.test(file);
-      if (!isVerification && file !== "flow-contract.json") continue;
-      const filePath = path.join(directoryPath, file);
-      let value;
-      try {
-        value = await readJsonFile(filePath);
-      } catch {
-        continue;
-      }
-      if (isVerification && value.artifactType === "verification-result" && value.status === "PASS") {
-        const modified = (await stat(filePath)).mtimeMs;
-        const previous = passes.get(value.flowId);
-        if (!previous || previous.modified < modified) passes.set(value.flowId, { filePath, modified });
-      }
-      if (value.artifactType === "flow-contract") started.add(value.flowId);
+// Only a PASS lands a slice and only a flow-contract starts one, so seed and
+// land share this and nothing else changes a status.
+const applyRunEvidence = async (slices, labRoot) => {
+  const { passes, started } = await scanRuns(labRoot);
+  const landed = [];
+  const inProgress = [];
+  for (const slice of slices) {
+    if (slice.status === "landed") continue;
+    const pass = passes.get(slice.flowId);
+    if (pass) {
+      slice.status = "landed";
+      slice.evidence = {
+        path: pointerPath(pass.filePath, labRoot),
+        sha256: sha256(await readFile(pass.filePath)),
+      };
+      landed.push(slice.flowId);
+    } else if (slice.status === "candidate" && started.has(slice.flowId)) {
+      slice.status = "in-progress";
+      inProgress.push(slice.flowId);
     }
   }
-  return { passes, started };
+  return { landed, inProgress };
 };
 
 const seedMap = async options => {
@@ -550,6 +549,7 @@ const seedMap = async options => {
   if (previous.runId === options["run-id"]) throw new Error("--run-id must differ from the previous map's.");
 
   const next = structuredClone(previous);
+  next.schemaVersion = mapSchemaVersion;
   next.skillVersion = options["skill-version"];
   next.runId = options["run-id"];
   next.supersedes = {
@@ -558,29 +558,59 @@ const seedMap = async options => {
     runId: previous.runId,
   };
   delete next.metrics;
-  next.recommendation = { options: [] };
+  next.recommendation = { options: [], queue: [] };
 
-  const { passes, started } = await scanRuns(options["lab-root"]);
-  const landed = [];
-  const inProgress = [];
-  for (const slice of next.slices) {
-    if (slice.status === "landed") continue;
-    const pass = passes.get(slice.flowId);
-    if (pass) {
-      slice.status = "landed";
-      slice.evidence = {
-        path: pointerPath(pass.filePath, options["lab-root"]),
-        sha256: sha256(await readFile(pass.filePath)),
-      };
-      landed.push(slice.flowId);
-    } else if (slice.status === "candidate" && started.has(slice.flowId)) {
-      slice.status = "in-progress";
-      inProgress.push(slice.flowId);
-    }
-  }
+  const { landed, inProgress } = await applyRunEvidence(next.slices, options["lab-root"]);
 
   await writeNew(options.out, serializeMap(next));
   return { out: path.resolve(options.out), landed, inProgress };
+};
+
+const landMap = async options => {
+  for (const name of ["map", "lab-root"]) {
+    if (!options[name]) throw new Error(`--${name} is required.\n\n${usage}`);
+  }
+  const mapPath = path.resolve(options.map);
+  const map = await readJsonFile(mapPath);
+  if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
+  const { landed, inProgress } = await applyRunEvidence(map.slices, options["lab-root"]);
+  if (landed.length > 0 || inProgress.length > 0) await writeFile(mapPath, serializeMap(map));
+  return { map: mapPath, landed, inProgress };
+};
+
+// A hand-written block missing a field would otherwise surface as a bare
+// TypeError deep inside the measure.
+const requireMeasurableShape = map => {
+  const problems = [];
+  for (const [index, slice] of (map.slices ?? []).entries()) {
+    const missing = [];
+    if (typeof slice.flowId !== "string") missing.push("flowId");
+    if (!Array.isArray(slice.paths)) missing.push("paths");
+    if (!Array.isArray(slice.requires)) missing.push("requires");
+    if (missing.length > 0) problems.push(`slices[${index}] ${slice.flowId ?? ""} has no ${missing.join(", ")}`);
+  }
+  for (const [index, prerequisite] of (map.prerequisites ?? []).entries()) {
+    const missing = [];
+    if (typeof prerequisite.reactSource !== "string") missing.push("reactSource");
+    if (typeof prerequisite.angular?.status !== "string") missing.push("angular.status");
+    if (!Array.isArray(prerequisite.copies)) missing.push("copies");
+    if (missing.length > 0) problems.push(`prerequisites[${index}] ${prerequisite.id ?? ""} has no ${missing.join(", ")}`);
+  }
+  if (problems.length > 0) {
+    throw new Error(`The map cannot be measured; copy each block's shape from print-shape.mjs:\n- ${problems.join("\n- ")}`);
+  }
+};
+
+// requires is what the measure finds a slice importing, not a list typed by
+// hand; the recommendation ranks on its length.
+const requiresMismatches = (map, metrics) => {
+  const implied = new Map(metrics.slices.map(slice => [slice.flowId, slice.impliedRequires]));
+  return map.slices.flatMap(slice => {
+    const expected = implied.get(slice.flowId) ?? [];
+    const missing = expected.filter(id => !slice.requires.includes(id));
+    const extra = slice.requires.filter(id => !expected.includes(id));
+    return missing.length > 0 || extra.length > 0 ? [{ flowId: slice.flowId, missing, extra }] : [];
+  });
 };
 
 const measureMap = async options => {
@@ -591,6 +621,7 @@ const measureMap = async options => {
   const mapPath = path.resolve(options.map);
   const map = await readJsonFile(mapPath);
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
+  requireMeasurableShape(map);
   const threshold = options.threshold === undefined ? 10 : Number(options.threshold);
   if (!Number.isInteger(threshold) || threshold < 1) throw new Error("--threshold must be a positive integer.");
   const reactPackages = options["react-packages"] ?
@@ -622,6 +653,7 @@ const measureMap = async options => {
     metrics: metricsPath,
     featureDirectoriesNotInMap: metrics.featureDirectoriesNotInMap,
     slicesWithMissingPaths: metrics.slices.filter(slice => slice.missingPaths.length > 0).map(slice => slice.flowId),
+    slicesWithIncompleteRequires: requiresMismatches(map, metrics),
     unmappedShared: metrics.sharedAcrossSlices
       .filter(entry => !entry.prerequisite && !entry.ownedBy)
       .map(({ file, sliceCount, slices }) => ({ file, sliceCount, slices })),
@@ -636,7 +668,7 @@ const measureMap = async options => {
 
 const parseArguments = argumentsList => {
   const options = {};
-  const flags = new Set(["init", "seed", "measure", "self-test", "help"]);
+  const flags = new Set(["init", "seed", "measure", "land", "self-test", "help"]);
   const valued = new Set([
     "product-root", "out", "run-id", "skill-version", "previous", "lab-root", "map",
     "threshold", "react-packages", "structure",
@@ -816,6 +848,25 @@ const runSelfTest = async () => {
       "state two domains use is not targeted at core");
     assert(JSON.stringify(measured.driftedPrerequisites) === JSON.stringify(["text"]),
       "the drifted prerequisites are not printed");
+    assert(JSON.stringify(alpha.impliedRequires) === JSON.stringify(["line-store", "shared-state", "text"]),
+      `the alpha slice's implied requires are ${JSON.stringify(alpha.impliedRequires)}`);
+    assert(JSON.stringify(measured.slicesWithIncompleteRequires) === JSON.stringify([
+      { flowId: "alpha-form", missing: ["line-store", "shared-state"], extra: [] },
+      { flowId: "beta-form", missing: ["shared-state"], extra: [] },
+    ]), `the incomplete requires are ${JSON.stringify(measured.slicesWithIncompleteRequires)}`);
+
+    const shapeless = structuredClone(first);
+    delete shapeless.prerequisites[0].copies;
+    const shapelessMap = path.join(lab, "runs", "2026-01-01-shapeless", "migration-map.json");
+    await write(lab, "runs/2026-01-01-shapeless/migration-map.json", JSON.stringify(shapeless));
+    let shapeError = "";
+    try {
+      await measureMap({ "product-root": product, map: shapelessMap, "lab-root": lab, structure: structurePath });
+    } catch (error) {
+      shapeError = error.message;
+    }
+    assert(shapeError.includes("prerequisites[0] text has no copies"),
+      `a prerequisite without copies did not name the field: ${shapeError}`);
     assert(JSON.stringify(alpha.angularTargets) === JSON.stringify(["src/angular/domains/north/pages/alpha"]),
       `the alpha slice's Angular folders are ${JSON.stringify(alpha.angularTargets)}`);
     const measuredMap = await readJsonFile(firstMap);
@@ -845,6 +896,19 @@ const runSelfTest = async () => {
     assert(!second.metrics && second.recommendation.options.length === 0,
       "a stale metrics pointer or recommendation was carried into the new map");
     assert(JSON.stringify(seeded.landed) === JSON.stringify(["alpha-form"]), "the landed slices were not reported");
+    assert(second.schemaVersion === mapSchemaVersion, "the seed did not write the current schemaVersion");
+
+    // A slice cut after the seed has a PASS the seed could not see.
+    second.slices.push({ flowId: "gamma-form", featureId: "alpha", title: "Gamma", paths: ["src/features/gamma"],
+      dependsOn: [], requires: [], criteria, status: "candidate" });
+    await writeFile(secondMap, serializeMap(second));
+    await write(lab, "runs/2026-01-05-gamma-form-baseline-1/verification-result.json",
+      JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "gamma-form" }));
+    const landedLater = await landMap({ map: secondMap, "lab-root": lab });
+    const gamma = (await readJsonFile(secondMap)).slices.find(slice => slice.flowId === "gamma-form");
+    assert(JSON.stringify(landedLater.landed) === JSON.stringify(["gamma-form"]) &&
+      gamma.status === "landed" && gamma.evidence?.sha256,
+      "a slice cut after the seed did not land from its PASS");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
@@ -858,13 +922,13 @@ const main = async () => {
     await runSelfTest();
     return;
   }
-  const modes = ["init", "seed", "measure"].filter(mode => options[mode]);
+  const modes = ["init", "seed", "measure", "land"].filter(mode => options[mode]);
   if (options.help || modes.length !== 1) {
     process.stdout.write(usage);
     process.exitCode = options.help ? 0 : 1;
     return;
   }
-  const run = { init: initMap, seed: seedMap, measure: measureMap }[modes[0]];
+  const run = { init: initMap, seed: seedMap, measure: measureMap, land: landMap }[modes[0]];
   console.log(JSON.stringify(await run(options), null, 2));
 };
 

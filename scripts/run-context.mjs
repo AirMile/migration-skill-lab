@@ -1,8 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { baselineRuns, listNumberedRuns, scanRuns } from "./run-index.mjs";
 
 // Every phase opened by reading Git state and deriving the same values in
 // prose: the run directory, the runId, which package scripts terminate, which
@@ -20,6 +21,19 @@ Options:
                          continuation prompts
   --map                  the latest earlier migration-map.json and the next
                          map run directory and runId; needs --lab-root
+  --ready [map]          the slices of a migration map, the latest without a
+                         file, that a new baseline may take: candidates whose
+                         dependencies landed, in the map or by a PASS not yet
+                         seeded, and that no baseline run has claimed; queued
+                         ones first, each with its reason and the unbuilt
+                         prerequisites it shares with slices a baseline is
+                         already working on, plus each unbuilt prerequisite
+                         two or more available slices share; needs --lab-root
+  --claim                create the next baseline run directory for --flow-id,
+                         refused while the flow has an open run; mkdir is
+                         atomic, so two chats cannot claim one run
+  --release              remove the flow's open baseline run directory, only
+                         when it is empty: an abandoned claim
   --run-dir <dir>        the files and saved prompts in one run directory
   --commands             classify the product's package.json scripts and
                          suggest terminating test, typecheck and build commands
@@ -238,25 +252,6 @@ const exists = async filePath => {
   }
 };
 
-const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-// The run directories named <date>-<stem>-<N>, oldest first, and the next N.
-const listNumberedRuns = async (runsDirectory, stem) => {
-  let directories = [];
-  try {
-    directories = (await readdir(runsDirectory, { withFileTypes: true }))
-      .filter(entry => entry.isDirectory());
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
-  const pattern = new RegExp(`^\\d{4}-\\d{2}-\\d{2}-${escapeRegex(stem)}-(\\d+)$`);
-  const runs = directories
-    .filter(entry => pattern.test(entry.name))
-    .map(entry => ({ name: entry.name, number: Number(pattern.exec(entry.name)[1]) }))
-    .sort((left, right) => left.number - right.number);
-  return { runs, next: (runs.at(-1)?.number ?? 0) + 1 };
-};
-
 const readMap = async labRoot => {
   const runsDirectory = path.resolve(labRoot, "runs");
   const { runs, next } = await listNumberedRuns(runsDirectory, "migration-map");
@@ -317,6 +312,129 @@ const readFlow = async (labRoot, flowId) => {
   };
 };
 
+const readReady = async (labRoot, mapFile, productHead) => {
+  const mapPath = mapFile ? path.resolve(mapFile) : (await readMap(labRoot)).previousMap;
+  if (!mapPath) return { map: null, queue: [], slices: [] };
+  const map = JSON.parse((await readFile(mapPath, "utf8")).replace(/^﻿/, ""));
+  if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
+
+  const { passes } = await scanRuns(labRoot);
+  const landed = new Set(map.slices
+    .filter(slice => slice.status === "landed" || passes.has(slice.flowId))
+    .map(slice => slice.flowId));
+  const unbuilt = new Set(map.prerequisites
+    .filter(prerequisite => prerequisite.angular?.status !== "built")
+    .map(prerequisite => prerequisite.id));
+  const runCounts = new Map();
+  for (const slice of map.slices) {
+    runCounts.set(slice.flowId, (await baselineRuns(labRoot, slice.flowId)).runs.length);
+  }
+  // Queued slices, from schemaVersion 2; before it the one chosen slice.
+  const queue = map.schemaVersion >= 2 ?
+    map.recommendation?.queue ?? [] :
+    map.recommendation?.chosen ? [map.recommendation.chosen] : [];
+  const options = map.recommendation?.options ?? [];
+
+  const sharedUnbuilt = (slice, others) => others
+    .filter(other => other.flowId !== slice.flowId)
+    .map(other => ({
+      flowId: other.flowId,
+      prerequisites: slice.requires.filter(id => unbuilt.has(id) && other.requires.includes(id)),
+    }))
+    .filter(entry => entry.prerequisites.length > 0);
+
+  const active = map.slices.filter(slice => !landed.has(slice.flowId) && runCounts.get(slice.flowId) > 0);
+  const candidates = map.slices.filter(slice => slice.status === "candidate").map(slice => {
+    const openDependencies = slice.dependsOn.filter(id => !landed.has(id));
+    return {
+      slice,
+      openDependencies,
+      available: openDependencies.length === 0 && runCounts.get(slice.flowId) === 0,
+    };
+  });
+  const available = candidates.filter(entry => entry.available).map(entry => entry.slice);
+
+  const rank = flowId => {
+    const queued = queue.indexOf(flowId);
+    if (queued !== -1) return queued;
+    const offered = options.findIndex(option => option.flowId === flowId);
+    return offered !== -1 ? queue.length + offered : queue.length + options.length;
+  };
+  const slices = candidates
+    .map((entry, order) => ({ ...entry, order }))
+    .sort((left, right) => rank(left.slice.flowId) - rank(right.slice.flowId) || left.order - right.order)
+    .map(({ slice, openDependencies, available: isAvailable }) => ({
+      flowId: slice.flowId,
+      title: slice.title,
+      queuePosition: queue.includes(slice.flowId) ? queue.indexOf(slice.flowId) + 1 : null,
+      reason: options.find(option => option.flowId === slice.flowId)?.reason ?? null,
+      openDependencies,
+      baselineRuns: runCounts.get(slice.flowId),
+      available: isAvailable,
+      ...(isAvailable ? { sharesUnbuiltWithActive: sharedUnbuilt(slice, active) } : {}),
+    }));
+
+  // Per prerequisite rather than per pair: within one feature most slices
+  // share the same few, and a pairwise list grows with the square.
+  const unbuiltSharedByAvailable = [...unbuilt]
+    .map(id => ({ prerequisite: id, slices: available.filter(slice => slice.requires.includes(id)).map(slice => slice.flowId) }))
+    .filter(entry => entry.slices.length >= 2)
+    .sort((left, right) => right.slices.length - left.slices.length || left.prerequisite.localeCompare(right.prerequisite));
+
+  return {
+    map: {
+      path: mapPath,
+      runId: map.runId,
+      schemaVersion: map.schemaVersion,
+      revision: map.repository?.revision ?? null,
+      productMoved: Boolean(map.repository?.revision) && map.repository.revision !== productHead,
+    },
+    queue,
+    active: active.map(slice => slice.flowId),
+    slices,
+    unbuiltSharedByAvailable,
+  };
+};
+
+// Claimed at the start of a baseline, so a second chat never takes the same
+// slice. The empty directory is the claim; the contract closes it.
+const claimRun = async (labRoot, flowId) => {
+  const { runs } = await baselineRuns(labRoot, flowId);
+  const open = runs.filter(run => run.open);
+  if (open.length > 0) {
+    throw new Error(
+      `${flowId} already has an open baseline run at ${open.map(run => run.directory).join(", ")}: ` +
+        "another chat holds it, or an abandoned claim can be removed with --release.",
+    );
+  }
+  const flow = await readFlow(labRoot, flowId);
+  await mkdir(path.dirname(flow.nextRunDirectory), { recursive: true });
+  try {
+    await mkdir(flow.nextRunDirectory);
+  } catch (error) {
+    if (error.code === "EEXIST") {
+      throw new Error(`${flow.nextRunDirectory} was claimed by another chat a moment ago.`);
+    }
+    throw error;
+  }
+  return { directory: flow.nextRunDirectory, runId: flow.nextRunId };
+};
+
+const releaseRun = async (labRoot, flowId) => {
+  const open = (await baselineRuns(labRoot, flowId)).runs.filter(run => run.open);
+  if (open.length === 0) throw new Error(`${flowId} has no open baseline run to release.`);
+  const holding = open.filter(run => run.files.length > 0);
+  if (holding.length > 0) {
+    throw new Error(
+      holding.map(run => `${run.directory} holds ${run.files.join(", ")}`).join("; ") +
+        "; a run that wrote something is not an abandoned claim and is not removed.",
+    );
+  }
+  // rmdir refuses a directory that is not empty, even if one fills meanwhile.
+  for (const run of open) await rmdir(run.directory);
+  return open.map(run => run.directory);
+};
+
 const readRunDirectory = async directory => {
   const absolute = path.resolve(directory);
   const files = (await readdir(absolute, { withFileTypes: true }))
@@ -338,18 +456,31 @@ const defaultStatusPath = productRoot =>
 
 const collectContext = async options => {
   if (!options["product-root"]) throw new Error(`--product-root is required.\n\n${usage}`);
-  for (const name of ["flow-id", "map"]) {
+  for (const name of ["flow-id", "map", "ready"]) {
     if (options[name] && !options["lab-root"]) {
       throw new Error(`--${name} needs --lab-root, where the runs directory lives.`);
     }
   }
+  for (const name of ["claim", "release"]) {
+    if (options[name] && !options["flow-id"]) throw new Error(`--${name} needs --flow-id.`);
+  }
+  if (options.claim && options.release) throw new Error("--claim and --release cannot be combined.");
 
   const state = readProductState(options["product-root"]);
   const { blobs, ...product } = state;
   const context = { product };
 
-  if (options["flow-id"]) context.flow = await readFlow(options["lab-root"], options["flow-id"]);
+  const claimed = options.claim ? await claimRun(options["lab-root"], options["flow-id"]) : null;
+  const released = options.release ? await releaseRun(options["lab-root"], options["flow-id"]) : null;
+  if (options["flow-id"]) {
+    context.flow = await readFlow(options["lab-root"], options["flow-id"]);
+    if (claimed) context.flow.claimed = claimed;
+    if (released) context.flow.released = released;
+  }
   if (options.map) context.map = await readMap(options["lab-root"]);
+  if (options.ready) {
+    context.ready = await readReady(options["lab-root"], options.ready === true ? null : options.ready, state.head);
+  }
   if (options["run-dir"]) context.runDirectory = await readRunDirectory(options["run-dir"]);
   if (options.commands) context.commands = await readCommands(state.root);
   const allowed = options.contract ? await readAllowlist(options.contract) : null;
@@ -388,12 +519,12 @@ const parseArguments = argumentsList => {
   const options = {};
   const valued = new Set([
     "product-root", "lab-root", "flow-id", "run-dir", "save-status", "compare",
-    "contract",
+    "contract", "ready",
   ]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
     const name = argument.slice(2);
-    if (["--self-test", "--help", "--commands", "--map"].includes(argument)) {
+    if (["--self-test", "--help", "--commands", "--map", "--claim", "--release"].includes(argument)) {
       options[name] = true;
       continue;
     }
@@ -402,7 +533,7 @@ const parseArguments = argumentsList => {
     }
     const value = argumentsList[index + 1];
     if (value === undefined || value.startsWith("--")) {
-      if (name === "save-status" || name === "compare") {
+      if (name === "save-status" || name === "compare" || name === "ready") {
         options[name] = true;
         continue;
       }
@@ -548,6 +679,110 @@ const runSelfTest = async () => {
     assert(JSON.stringify(checked.comparison.outsideAllowlist) ===
       JSON.stringify(["docs/committed.md", "srcfile.txt"]),
       `unexpected changes outside the allowlist ${JSON.stringify(checked.comparison.outsideAllowlist)}`);
+
+    // A map queues slices and each baseline claims one, so parallel chats
+    // never take the same slice.
+    const queuedMapPath = path.join(lab, "runs", "2026-01-03-migration-map-3", "migration-map.json");
+    await mkdir(path.dirname(queuedMapPath), { recursive: true });
+    const slice = (flowId, extra = {}) => ({
+      flowId, featureId: "demo", title: flowId, paths: [`src/${flowId}`],
+      dependsOn: [], requires: [], criteria: {}, status: "candidate", ...extra,
+    });
+    const queuedMap = {
+      schemaVersion: 2,
+      artifactType: "migration-map",
+      runId: "migration-map-3",
+      repository: { root: product, revision: "0".repeat(40) },
+      slices: [
+        slice("alpha", { requires: ["p1", "p2"] }),
+        slice("beta", { requires: ["p1"] }),
+        slice("gamma", { dependsOn: ["delta"] }),
+        slice("delta", { status: "in-progress" }),
+        slice("epsilon", { dependsOn: ["zeta"], requires: ["p1"] }),
+        slice("zeta", { requires: ["p1"] }),
+      ],
+      prerequisites: [
+        { id: "p1", angular: { status: "none" } },
+        { id: "p2", angular: { status: "built" } },
+      ],
+      recommendation: {
+        options: [
+          { flowId: "alpha", reason: "First." },
+          { flowId: "beta", reason: "Second." },
+          { flowId: "gamma", reason: "Third." },
+        ],
+        queue: ["alpha", "beta"],
+      },
+    };
+    await writeFile(queuedMapPath, JSON.stringify(queuedMap));
+    const deltaRun = path.join(lab, "runs", "2026-01-03-delta-baseline-1");
+    await mkdir(deltaRun);
+    await writeFile(path.join(deltaRun, "verification-result.json"),
+      JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "delta" }));
+
+    const expectRefusal = async (options, text, message) => {
+      try {
+        await collectContext(options);
+      } catch (error) {
+        assert(error.message.includes(text), `${message}: ${error.message}`);
+        return;
+      }
+      assert(false, message);
+    };
+    const inLab = { "product-root": product, "lab-root": lab };
+
+    const claimedBeta = await collectContext({ ...inLab, "flow-id": "beta", claim: true });
+    assert(claimedBeta.flow.claimed.runId === "beta-baseline-1" &&
+      (await stat(claimedBeta.flow.claimed.directory)).isDirectory(),
+      "a claim did not create the flow's next baseline run directory");
+    await expectRefusal({ ...inLab, "flow-id": "beta", claim: true }, "already has an open baseline run",
+      "a second claim on an open run was not refused");
+
+    const { ready } = await collectContext({ ...inLab, ready: queuedMapPath });
+    const byFlow = new Map(ready.slices.map(entry => [entry.flowId, entry]));
+    assert(JSON.stringify(ready.slices.map(entry => entry.flowId)) ===
+      JSON.stringify(["alpha", "beta", "gamma", "epsilon", "zeta"]),
+      `ready slices are not ordered queue, options, map: ${ready.slices.map(entry => entry.flowId)}`);
+    assert(byFlow.get("alpha").available && byFlow.get("alpha").queuePosition === 1,
+      "a queued, unclaimed slice is not available first");
+    assert(!byFlow.get("beta").available && byFlow.get("beta").baselineRuns === 1,
+      "a claimed slice is still offered");
+    assert(byFlow.get("gamma").available,
+      "a dependency landed by a PASS the map has not seeded still blocks its parent");
+    assert(!byFlow.get("epsilon").available &&
+      JSON.stringify(byFlow.get("epsilon").openDependencies) === JSON.stringify(["zeta"]),
+      "an open dependency does not block a slice");
+    assert(JSON.stringify(ready.active) === JSON.stringify(["beta"]),
+      `active slices are ${JSON.stringify(ready.active)}`);
+    assert(JSON.stringify(byFlow.get("alpha").sharesUnbuiltWithActive) ===
+      JSON.stringify([{ flowId: "beta", prerequisites: ["p1"] }]),
+      `alpha's overlap with active slices is ${JSON.stringify(byFlow.get("alpha").sharesUnbuiltWithActive)}`);
+    assert(JSON.stringify(ready.unbuiltSharedByAvailable) ===
+      JSON.stringify([{ prerequisite: "p1", slices: ["alpha", "zeta"] }]),
+      `unbuilt prerequisites shared by available slices are ${JSON.stringify(ready.unbuiltSharedByAvailable)}`);
+    assert((await collectContext({ ...inLab, ready: true })).ready.map.path === queuedMapPath,
+      "--ready without a file does not read the latest map");
+
+    const v1Path = path.join(path.dirname(queuedMapPath), "v1-map.json");
+    await writeFile(v1Path, JSON.stringify({
+      ...queuedMap,
+      schemaVersion: 1,
+      recommendation: { options: queuedMap.recommendation.options, chosen: "gamma" },
+    }));
+    assert(JSON.stringify((await collectContext({ ...inLab, ready: v1Path })).ready.queue) === JSON.stringify(["gamma"]),
+      "a schemaVersion 1 map's chosen slice is not read as its queue");
+
+    const releasedBeta = await collectContext({ ...inLab, "flow-id": "beta", release: true });
+    assert(releasedBeta.flow.released.length === 1 && !(await exists(claimedBeta.flow.claimed.directory)),
+      "an abandoned, empty claim was not released");
+    const reclaimed = await collectContext({ ...inLab, "flow-id": "beta", claim: true });
+    await writeFile(path.join(reclaimed.flow.claimed.directory, "notes.txt"), "draft\n");
+    await expectRefusal({ ...inLab, "flow-id": "beta", release: true }, "is not an abandoned claim",
+      "a run that wrote a file was released");
+    assert(await exists(reclaimed.flow.claimed.directory), "a refused release removed the run anyway");
+    await writeFile(path.join(reclaimed.flow.claimed.directory, "flow-contract.json"), "{}\n");
+    assert((await collectContext({ ...inLab, "flow-id": "beta", claim: true })).flow.claimed.runId === "beta-baseline-2",
+      "a finished baseline run blocked a rerun's claim");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

@@ -142,6 +142,11 @@
           "prerequisite": "line-store",
           "angular": "built"
         }
+      ],
+      "impliedRequires": [
+        "line-store",
+        "radio-button-group",
+        "text"
       ]
     },
     {
@@ -170,6 +175,11 @@
           "prerequisite": "line-store",
           "angular": "built"
         }
+      ],
+      "impliedRequires": [
+        "line-store",
+        "radio-button-group",
+        "text"
       ]
     },
     {
@@ -192,7 +202,8 @@
           "prerequisite": null,
           "angular": null
         }
-      ]
+      ],
+      "impliedRequires": []
     },
     {
       "flowId": "demo-route-list-item",
@@ -208,6 +219,9 @@
           "prerequisite": "text",
           "angular": "none"
         }
+      ],
+      "impliedRequires": [
+        "text"
       ]
     }
   ],

@@ -8,10 +8,10 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-plan` v0.2.0 source skill, which keeps the migration map
-  of features, candidate slices and shared prerequisites and proposes the next
-  slice;
-- experimental `flow-baseline` v0.23.0, `flow-migrate` v0.16.0 and
+- experimental `flow-plan` v0.3.0 source skill, which keeps the migration map
+  of features, candidate slices and shared prerequisites and queues the next
+  slices;
+- experimental `flow-baseline` v0.24.0, `flow-migrate` v0.16.0 and
   `flow-verify` v0.16.0 source skills;
 - experimental `flow-debug` v0.7.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
@@ -169,11 +169,15 @@ reasoning, and the mechanical steps are already scripts.
    the candidate slices in each with their dependencies, and the shared
    components and state adapters those slices import with whether an Angular
    counterpart exists. A slice lands only from a `PASS` verification-result.
-   It offers two or three next slices, and the chosen one continues into a
-   fresh `flow-baseline` chat carrying the map.
-1. `flow-baseline` is read-only for the product repository. It surveys the
-   selected flow's rendered surfaces, puts two or three candidate boundaries to
-   the user with what each one costs, and then creates one final
+   It offers up to five slices that no baseline holds yet, and the user
+   approves an ordered queue from them. A `PASS` needs a new `flow-plan` run;
+   starting the next baseline does not, while the queue holds a slice.
+1. `flow-baseline` is read-only for the product repository. Started without a
+   flow, it lists the available slices, queued first, and waits for the user
+   to confirm one. It then claims the slice by creating its run directory, so
+   baselines in other chats run side by side without taking the same one. It
+   surveys the selected flow's rendered surfaces, puts two or three candidate
+   boundaries to the user with what each one costs, and then creates one final
    `flow-contract.json` carrying the chosen scope, surface inventory, target
    architecture, scenarios and open questions. It writes no report: a prose copy
    of a validated artifact drifts, and no later skill reads it.

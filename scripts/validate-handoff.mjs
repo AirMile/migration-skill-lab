@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -262,10 +263,31 @@ const validateMigrationMapRules = (value, errors) => {
     if (!slice) errors.push(`$.recommendation.options names ${flowId}, which is not in $.slices.`);
     else if (slice.status === "landed") {
       errors.push(`$.recommendation.options names ${flowId}, which has already landed.`);
+    } else if (slice.status !== "candidate") {
+      errors.push(`$.recommendation.options names ${flowId}, which is ${slice.status}; only a candidate can be offered.`);
     }
   }
-  if (value.recommendation.chosen && !optionIds.includes(value.recommendation.chosen)) {
-    errors.push("$.recommendation.chosen must be one of $.recommendation.options.");
+  // From schemaVersion 2 the user approves an ordered queue that parallel
+  // baselines claim from; before it one slice was chosen.
+  if (value.schemaVersion >= 2) {
+    if (Object.hasOwn(value.recommendation, "chosen")) {
+      errors.push("$.recommendation.chosen is not used from schemaVersion 2; record the approved slices, in order, in $.recommendation.queue.");
+    }
+    if (!Array.isArray(value.recommendation.queue)) {
+      errors.push("$.recommendation.queue is required from schemaVersion 2.");
+    }
+    for (const flowId of value.recommendation.queue ?? []) {
+      if (!optionIds.includes(flowId)) {
+        errors.push(`$.recommendation.queue names ${flowId}, which is not one of $.recommendation.options.`);
+      }
+    }
+  } else {
+    if (Object.hasOwn(value.recommendation, "queue")) {
+      errors.push("$.recommendation.queue requires schemaVersion 2.");
+    }
+    if (value.recommendation.chosen && !optionIds.includes(value.recommendation.chosen)) {
+      errors.push("$.recommendation.chosen must be one of $.recommendation.options.");
+    }
   }
 };
 
@@ -303,6 +325,29 @@ const validateMigrationMapPointers = async (absolutePath, value) => {
       throw new Error(
         `${absolutePath} prerequisite ${prerequisite.id} is built at ${prerequisite.angular.path}, ` +
           `outside the Angular root ${root}.`,
+      );
+    }
+  }
+
+  // From schemaVersion 2 requires is what the measure found a slice importing.
+  // Typed by hand it dropped prerequisites, and the recommendation ranks on it.
+  if (value.schemaVersion >= 2) {
+    const implied = new Map((metrics.slices ?? []).map(slice => [slice.flowId, slice.impliedRequires]));
+    const problems = [];
+    for (const slice of value.slices) {
+      const expected = implied.get(slice.flowId);
+      if (!Array.isArray(expected)) {
+        problems.push(`${slice.flowId} has no impliedRequires in the metrics`);
+        continue;
+      }
+      const missing = expected.filter(id => !slice.requires.includes(id));
+      const extra = slice.requires.filter(id => !expected.includes(id));
+      if (missing.length > 0) problems.push(`${slice.flowId} requires is missing ${missing.join(", ")}`);
+      if (extra.length > 0) problems.push(`${slice.flowId} requires names ${extra.join(", ")}, which it does not import`);
+    }
+    if (problems.length > 0) {
+      throw new Error(
+        `${absolutePath} requires does not match the measured imports; measure again with migration-map.mjs and take requires from slicesWithIncompleteRequires:\n- ${problems.join("\n- ")}`,
       );
     }
   }
@@ -3502,9 +3547,33 @@ const runSelfTest = async () => {
     "a recommendation of a landed slice",
   );
   expectMapRejection(
-    map => { map.recommendation.chosen = "demo-line-drawer-parent"; },
+    map => { map.slices[1].status = "in-progress"; },
+    "only a candidate can be offered",
+    "a recommendation of a slice already in progress",
+  );
+  expectMapRejection(
+    map => { map.recommendation.queue.push("demo-line-drawer-parent"); },
+    "is not one of $.recommendation.options",
+    "a queued slice that was never offered",
+  );
+  expectMapRejection(
+    map => { map.recommendation.chosen = "demo-charger-form"; },
+    "$.recommendation.chosen is not used from schemaVersion 2",
+    "a schemaVersion 2 map that still records one chosen slice",
+  );
+  expectMapRejection(
+    map => { delete map.recommendation.queue; },
+    "$.recommendation.queue is required from schemaVersion 2",
+    "a schemaVersion 2 map without a queue",
+  );
+  expectMapRejection(
+    map => {
+      map.schemaVersion = 1;
+      delete map.recommendation.queue;
+      map.recommendation.chosen = "demo-line-drawer-parent";
+    },
     "$.recommendation.chosen must be one of",
-    "a chosen slice that was never offered",
+    "a schemaVersion 1 chosen slice that was never offered",
   );
   expectMapRejection(
     map => { map.slices[1].paths = ["C:\\Project\\demo-product\\src"]; },
@@ -3556,6 +3625,40 @@ const runSelfTest = async () => {
     "is not a PASS verification-result",
     "a landed slice whose evidence is a failed verification",
   );
+  await expectMapPointerRejection(
+    map => { map.slices[1].requires = map.slices[1].requires.filter(id => id !== "text"); },
+    "demo-charger-form requires is missing text",
+    "a slice whose requires drops a prerequisite it imports",
+  );
+  await expectMapPointerRejection(
+    map => { map.slices[3].requires.push("line-store"); },
+    "which it does not import",
+    "a slice whose requires names a prerequisite it does not import",
+  );
+  const olderRequires = structuredClone(mapArtifact.value);
+  olderRequires.schemaVersion = 1;
+  olderRequires.slices[1].requires = olderRequires.slices[1].requires.filter(id => id !== "text");
+  await validateMigrationMapPointers(mapExamplePath, olderRequires);
+
+  const predatingDirectory = await mkdtemp(path.join(os.tmpdir(), "validate-handoff-map-"));
+  try {
+    await expectMapPointerRejection(
+      async map => {
+        const metrics = JSON.parse(
+          (await readFile(path.resolve(rootDirectory, map.metrics.path), "utf8")).replace(/^﻿/, ""),
+        );
+        for (const slice of metrics.slices) delete slice.impliedRequires;
+        const raw = `${JSON.stringify(metrics, null, 2)}\n`;
+        const metricsPath = path.join(predatingDirectory, "migration-metrics.json");
+        await writeFile(metricsPath, raw);
+        map.metrics = { path: metricsPath, sha256: createHash("sha256").update(raw).digest("hex") };
+      },
+      "has no impliedRequires in the metrics",
+      "a schemaVersion 2 map whose metrics predate impliedRequires",
+    );
+  } finally {
+    await rm(predatingDirectory, { recursive: true, force: true });
+  }
 
   console.log(
     "Handoff validator self-test passed " +

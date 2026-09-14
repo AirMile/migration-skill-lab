@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.23.0
+targetVersion: 0.24.0
 status: experimental
-date: 2026-09-11
+date: 2026-09-14
 ---
 
-# `flow-baseline` v0.23.0 acceptance criteria
+# `flow-baseline` v0.24.0 acceptance criteria
 
 ## Hard gates
 
@@ -31,7 +31,8 @@ allowlist the slice does not need, or stores sensitive content.
   handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`,
   with no `status`, no `approval` and no `targetArchitecture.status`.
 - No analysis report, no rendered work-item Markdown and no other file beyond
-  the contract, the work-item snapshot and the observation artifact.
+  the contract, the work-item snapshot and the observation artifact, in the
+  run directory `run-context.mjs --claim` created at the start.
 - A before/after Git-visible product worktree comparison.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
@@ -62,7 +63,9 @@ allowlist the slice does not need, or stores sensitive content.
 The source is acceptable when:
 
 1. it requires a human-selected flow and the migration-skill-lab root, and
-   derives the run location instead of asking for it;
+   derives the run location instead of asking for it; a flow is human-selected
+   when the invocation names it or the user confirms it from the slices
+   `run-context.mjs --ready` marks available;
 2. it cannot write product code or tests;
 3. it produces a final Flow Contract that is never self-approved and carries no
    approval state;
@@ -236,7 +239,8 @@ The source is acceptable when:
     line and resumed from, not treated as a second run.
 77. the flowId, run directory, runId, earlier handoffs, saved prompts, product
     status and terminating commands come from `run-context.mjs`, not from hand
-    derivation;
+    derivation, and the run directory and runId are the `flow.claimed` ones
+    `--claim` returns;
 78. artifact shapes come from `print-shape.mjs` on the example chain; no whole
     example file and no schema is read to learn a shape;
 79. `references/flow-contract.md` is read when the contract content is recorded,
@@ -263,4 +267,15 @@ The source is acceptable when:
     does, so the contract and the map count the same way;
 87. when a migration map proposed the slice, the allowlist's folders for the
     new Angular code are the slice's measured `angularTargets`, taken from the
-    map's metrics rather than derived from the structure's rules by hand.
+    map's metrics rather than derived from the structure's rules by hand;
+88. an invocation that names no flow runs `run-context.mjs --ready` and puts
+    the available slices to the user, queued ones first, with each one's
+    reason, the unbuilt prerequisites it shares with an active slice and
+    whether the product moved since the map, and waits for a choice even when
+    one slice is queued; with none available it names `/flow-plan` and stops;
+89. every run claims its slice with `run-context.mjs --claim` after the user
+    confirmed it and before the survey, a flow the user named included, so two
+    chats never baseline one slice; a refused claim offers the next available
+    slice rather than taking the held one;
+90. a run abandoned before it wrote anything frees its slice with `--release`,
+    which removes only an empty run directory.

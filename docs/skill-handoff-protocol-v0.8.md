@@ -65,6 +65,16 @@ is the human decision this pipeline actually needs, and it is taken with the
 evidence rather than before it; asking for it up front is what let two runs over
 the same route produce different cuts.
 
+Which slice a baseline takes is the decision before that one. `flow-plan`
+records the slices the user approved as an ordered `queue` in the migration
+map. A `flow-baseline` started without a flow lists what
+`run-context.mjs --ready` marks available, queued first, and waits for the
+user to confirm one; it never takes a slice on its own. It then claims the
+slice with `run-context.mjs --claim`, which creates the run directory
+atomically, so baselines in separate chats run side by side and never share a
+slice. A contract or a sidecar in that directory closes the claim; an empty one
+left behind is freed with `--release`.
+
 There is no approval gate. From schemaVersion 6 a Flow Contract has no `status`
 and no `approval`: it is final when it is written, and the validator rejects
 those fields. A lab with one operator gained nothing from a draft state, a

@@ -1,6 +1,6 @@
 ---
 name: flow-plan
-description: Keep the migration map of features, candidate slices and the shared components and state adapters they depend on, and propose the next React-to-Angular slice for flow-baseline. Use only with /flow-plan.
+description: Keep the migration map of features, candidate slices and the shared components and state adapters they depend on, and queue the next React-to-Angular slices for flow-baseline. Use only with /flow-plan.
 ---
 
 # Flow Plan
@@ -9,9 +9,9 @@ Pipeline: `/flow-plan` -> `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`,
 with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill holds the overview: it decides nothing about one slice's behavior,
-only which slice goes next and what it can build on.
+only which slices go next and what they can build on.
 
-Skill version: `0.2.0`.
+Skill version: `0.3.0`.
 
 Recommended model: Claude Opus 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.
@@ -19,8 +19,8 @@ judgement every later chain inherits.
 Keep one `migration-map.json`: the features, the candidate slices in each with
 their dependencies and the four slice criteria, and the shared components and
 state adapters those slices import, with whether an Angular counterpart exists.
-Then let the user choose the next slice and hand it to `flow-baseline`. The
-product stays read-only.
+Then let the user queue the next slices for `flow-baseline`, where each chat
+claims one, so baselines can run side by side. The product stays read-only.
 
 The map is the only durable artifact. Write no prose report: a second copy
 drifts, and no later skill reads it.
@@ -32,8 +32,8 @@ deterministic steps; never do one of them by hand.
 
 Ask the user only for what nobody else holds:
 
-- which slice goes next, from the options this run proposes. A flow the user
-  names instead joins the map as a slice;
+- which slices to queue, in order, from the options this run proposes. A flow
+  the user names instead joins the map as a slice and the queue;
 - which feature to cut into slices, when no mapped candidate is workable;
 - a feature's Targetprocess ID when no baseline work-item snapshot under
   `<lab>\runs\` carries it.
@@ -57,7 +57,7 @@ Derive everything else, state each value in one line and continue:
 1. Take the product revision and status from `run-context.mjs`. A dirty
    worktree is evidence, not permission to change it.
 2. **Seed.** With a previous map, run
-   `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version 0.2.0 --lab-root <lab>`.
+   `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version <this skill's version> --lab-root <lab>`.
    It carries every field, lands each slice with a `PASS` verification-result
    and moves each started candidate to `in-progress`; report both lists in one
    line. Without one, run `--init --product-root <product>` with the same
@@ -67,10 +67,11 @@ Derive everything else, state each value in one line and continue:
    `node "<lab>\scripts\migration-map.mjs" --measure --product-root <product> --map <migration-map.json> --lab-root <lab>`.
    Run it again after every change to slices or prerequisites, and last before
    validating, since the metrics describe the map as it stood when measured.
-   When its `structure` counts an unmatched file or a collision, stop and
-   report the metrics' `structure.unmatched` and `structure.collisions`: a
-   missing or clashing rule is a project decision for
-   `<lab>\docs\angular-structure.json`, not for this run.
+   When its `structure` counts an unmatched file or a collision, report the
+   metrics' `structure.unmatched` and `structure.collisions` and wait: a
+   missing or clashing rule, or a product file that clashes, is a project
+   decision made outside this run. Once the user says it is settled, measure
+   again and go on; the run is `blocked` only when it ends without a map.
 4. **Features.** Add one for each `featureDirectoriesNotInMap` entry. Take a
    feature's `externalId` from a baseline work-item snapshot that names it, or
    from the user; never invent one.
@@ -84,48 +85,66 @@ Derive everything else, state each value in one line and continue:
    `flowId` that stays its name for good, since `flow-baseline` names its runs
    after it, and judge all four criteria with a one-line note; `unknown` is
    the honest verdict where only `flow-baseline`'s survey can tell. Fix every
-   slice the measure lists under `slicesWithMissingPaths`.
+   slice the measure lists under `slicesWithMissingPaths`. Then run
+   `node "<lab>\scripts\migration-map.mjs" --land --map <migration-map.json> --lab-root <lab>`:
+   a slice cut now may already have a `PASS` the seed could not see.
 6. **Prerequisites.** Every `unmappedShared` file from the measure becomes a
    prerequisite: `shared-component` when it renders, `adapter` when a slice
    reads or writes state, a context or a host bridge through it. Match the
    measure's `angularFiles` against each prerequisite's `target` in the
    metrics: a counterpart at its target is `built`, with the slice that built
    it; one anywhere else, a `driftedPrerequisites` entry included, is a
-   `copies` entry, since no later slice looks for it there. Add each
-   prerequisite to the `requires` of every slice that imports it. A
-   classification carries forward; judge only new files.
-7. **Recommend.** Offer two or three candidates whose `dependsOn` have all
-   landed, ranked in this order: reuses `built` counterparts; leaves the
-   fewest prerequisites to build, naming each one it would build, a `copies`
-   entry included; smaller, by the measured file count; lower risk, naming
-   any drawlib, history or host-boundary contact. Put them to the user as
-   plain text and record `options` and `chosen`. A flow the user names
-   instead is added as a slice and becomes `chosen`.
+   `copies` entry, since no later slice looks for it there. Measure, then make
+   each slice's `requires` match `slicesWithIncompleteRequires`: add every
+   `missing`, drop every `extra`, and never type it from your own reading,
+   because step 7 ranks on it. A classification carries forward; judge only
+   new files. Record a choice that shapes the map, such as a boundary or a
+   copy left for later, as a `decisions` entry.
+7. **Queue.** Run
+   `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --ready <migration-map.json>`
+   and offer only slices it marks `available`: a baseline in another chat may
+   already hold one, and its dependencies may have landed since the seed. Rank
+   them in this order: reuses `built` counterparts; leaves the fewest
+   prerequisites to build, naming each one it would build, a `copies` entry
+   included; smaller, by the measured file count; lower risk, naming any
+   drawlib, history or host-boundary contact. Put up to five to the user as
+   plain text, each with the unbuilt prerequisites it shares with an `active`
+   slice or, from `unbuiltSharedByAvailable`, with another one offered, since
+   two baselines that build one counterpart side by side collide at its
+   target. The user approves an ordered queue of one or more; record
+   `options` and `queue`. A flow the user names instead is added as a slice
+   and joins the queue.
 8. **Write and validate.** Copy any block's shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\migration-map\demo\migration-map.json" [--block <name>]`
-   and read `references/migration-map.md` for what each field carries. Measure
-   once more, then run `node "<lab>\scripts\validate-handoff.mjs" <migration-map.json>`.
+   and read `references/migration-map.md` for what each field carries. Measure,
+   then run `node "<lab>\scripts\validate-handoff.mjs" <migration-map.json>`.
 9. **Worktree check.** Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`.
-   If anything changed, stop and report the delta; do not revert it.
+   Report any delta and never revert it. A change the user made outside this
+   run to settle step 3 is named as that and the run goes on; any other change
+   stops it.
 10. **Summary.** Render one screen from the validated map, never from memory:
     what landed since the previous map; per worked feature, its slices with
-    status; each prerequisite with its counterpart status and how many slices
-    need it, from the metrics; the chosen slice with its `requires`; open
+    status; each prerequisite with its counterpart status and how many slices'
+    `requires` name it; the queue, each slice with its `requires`; open
     questions. It is not a gate and asks for nothing.
 11. **Continuation.** Build the invocation with
-    `node "<lab>\scripts\continuation.mjs" --next flow-baseline --flow "<chosen title>" --flow-id <chosen flowId> --lab-root <lab> --product-root <product> --run-dir <run-dir> <migration-map.json>`,
-    then offer exactly three routes and perform only the chosen one:
-    1. a fresh chat opened now through the host's own mechanism, carrying only
-       the invocation. Never start a second terminal window;
-    2. the invocation shown here, to paste into a chat the user opens;
-    3. the same command with `--save`, a checkpoint rather than an
-       abandonment, since every phase reads only artifacts.
+    `node "<lab>\scripts\continuation.mjs" --next flow-baseline --lab-root <lab> --product-root <product> --run-dir <run-dir> <migration-map.json>`.
+    It names no slice: each chat it starts offers the queue and claims the
+    slice the user confirms, so the same invocation opens one baseline per
+    queued slice. Offer exactly three routes and perform only the chosen one:
+    1. fresh chats opened now through the host's own mechanism, as many as the
+       user asks for, each carrying only the invocation. Never start a second
+       terminal window;
+    2. the invocation shown here, to paste into chats the user opens;
+    3. the same command with `--save --flow-id <map runId>`, a checkpoint
+       rather than an abandonment, since every phase reads only artifacts.
     Never start the baseline in this chat or delegate it to a background
     agent, which cannot ask the user what it needs.
 12. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
-    it with `--primary <migration-map.json> --status mapped`, or `failed` or
-    `blocked` when no map could be written.
+    it once, at the end, with `--primary <migration-map.json> --status mapped`,
+    or `failed` or `blocked` when no map could be written. A wait at step 3 is
+    not an end.
 
 ## Safety boundary
 
@@ -135,9 +154,9 @@ Never:
   files, install anything, or start a persistent service;
 - write a file other than the map, its metrics and the observation sidecar in
   the run directory;
-- choose the next slice for the user, or cut slices for a feature nobody is
+- choose or queue a slice for the user, or cut slices for a feature nobody is
   working on;
-- mark a slice `landed` by hand: only the seed does, from a `PASS`;
+- mark a slice `landed` by hand: only `--seed` or `--land` does, from a `PASS`;
 - change the Angular target structure, or place a counterpart anywhere but
   its measured target;
 - update Targetprocess, or invent an external ID;

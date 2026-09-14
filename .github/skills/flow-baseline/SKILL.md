@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.23.0`.
+Skill version: `0.24.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -34,7 +34,15 @@ deterministic steps; never do one of them by hand.
 Ask the user only for what nobody else holds:
 
 - the flow and its user-visible goal. Never choose it yourself; when the scope
-  is materially ambiguous, ask one focused question and stop;
+  is materially ambiguous, ask one focused question and stop. When the
+  invocation names no flow, run
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --ready [<migration-map.json>]`,
+  the map only when the invocation names one, and put its `available` slices
+  to the user, queued ones first, each with its `reason`, the unbuilt
+  prerequisites in `sharesUnbuiltWithActive`, since a baseline in another
+  chat builds those too, and whether `productMoved`. Wait for the choice even
+  when one slice is queued. With none available, say `/flow-plan` runs first
+  and stop;
 - whether a new Epic, Feature or User Story is requested, and the real external
   ID of any that already exists on the board;
 - the current external board state and progress, kept separate from the
@@ -45,15 +53,20 @@ whose answer is in the product repository, this skill or the lab costs the user
 a turn to tell you something you knew; it is the failure this skill is asked
 about most.
 
-- Run
-  `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --commands --save-status`.
+- Once the flow is settled and before the survey, run
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --claim --commands --save-status`.
   The `flowId` is the flow as a slug; reuse an earlier artifact's exact
-  `flowId` so `supersedes` and `--since` still match. The output gives the
-  product revision and status, `flow.nextRunDirectory` and `flow.nextRunId`,
+  `flowId` so `supersedes` and `--since` still match. Ask only when the flow
+  maps to more than one plausible id. `--claim` creates this run's directory
+  so no other chat takes the same slice: `flow.claimed.directory` and
+  `flow.claimed.runId` are this run's, and `flow.nextRunDirectory` then points
+  past it. A refused claim means another chat holds the flow; offer the next
+  available slice. The output also gives the product revision and status,
   this flow's earlier work-item handoffs and saved prompts, and the package
-  scripts. Ask only when the flow maps to more than one plausible id.
+  scripts.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
-  where the user chose this slice: take its `flowId` and read only that
+  where the user queued this slice: take the `flowId` the invocation names or
+  the user confirmed from `--ready`, and read only that
   slice's entry and the prerequisites in its `requires`, and from the metrics
   it points to that slice's `angularTargets` and those prerequisites'
   `target`. Its `paths` and criteria verdicts are the planning view, not the
@@ -192,7 +205,10 @@ rejects, no command the safety boundary forbids, no value the run can derive.
     agent, which cannot ask the user what it needs.
 12. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
     it with `--primary <flow-contract.json> --status draft`, or `failed` or
-    `blocked` when no contract could be written.
+    `blocked` when no contract could be written. Either sidecar closes the
+    claim. A run left before it wrote anything frees its slice with
+    `run-context.mjs --product-root <product> --lab-root <lab> --flow-id <flowId> --release`,
+    which removes only an empty run directory.
 
 ## Safety boundary
 
@@ -203,7 +219,10 @@ Never:
   configuration or environment files; start persistent services; or create any
   checkpoint commit in this read-only phase;
 - write a file other than the contract, the work-item snapshot and the
-  observation sidecar in the run directory;
+  observation sidecar in the run directory, which `--claim` creates at the
+  start;
+- take a slice the user did not confirm, or survey one before its claim
+  succeeded;
 - store source copies, credentials, tokens, private URLs or unnecessary
   personal data;
 - edit this skill, its references or an installed snapshot during a run;

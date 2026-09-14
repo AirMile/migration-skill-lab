@@ -17,6 +17,8 @@ measured again on every run.
 
 ## Fields
 
+- `schemaVersion`: written by `--init` and `--seed`, always the newest; a map
+  written under an older version stays valid at it.
 - `repository` and `metrics`: written by `--measure`, never by hand.
 - `supersedes`: written by `--seed`; it chains every map to the one before.
 - `features`: one per folder under `src\features` that holds source, with a
@@ -29,13 +31,17 @@ measured again on every run.
   - `paths` are product-relative, a folder or single files, and bound what the
     measure counts as the slice's own.
   - `dependsOn` names the child slices a parent waits for; `requires` names
-    the prerequisites the slice imports.
+    exactly the prerequisites the measure finds the slice importing, its
+    `impliedRequires` in the metrics. From schemaVersion 2 the validator
+    rejects a `requires` that differs, because the recommendation ranks on it.
   - `criteria` hold the four `flow-baseline` criteria. A verdict is the
     planning view; `flow-baseline` decides the boundary and records a
     correction in its contract's `decisions`.
   - `status`: `candidate` until a flow-contract exists, `in-progress` after,
     `landed` only from a `PASS`, with `evidence` pointing at it, and
     `blocked` when a chain ended without one and needs a human decision.
+    Only `--seed` and `--land` move a slice to `in-progress` or `landed`; only
+    a `candidate` may be offered in `recommendation`.
 - `prerequisites`: a React file that two or more slices import and no slice
   owns.
   - `kind` is `shared-component` for UI and `adapter` for state, a context or
@@ -48,9 +54,12 @@ measured again on every run.
     first slice's local rebuild. A slice that builds the shared counterpart
     leaves each copy for a later consolidation, so no landed slice changes
     without its own verification.
-- `recommendation`: the options this run put to the user, with a reason each,
-  and the `chosen` one. `--seed` empties it, because a ranking describes the
-  map it was made from.
+- `recommendation`: the options this run put to the user, up to five with a
+  reason each, and the `queue` the user approved from them, in order. Each
+  `flow-baseline` chat claims the first queued slice still available, so a
+  queue lets baselines run side by side. `--seed` empties both, because a
+  ranking describes the map it was made from. Before schemaVersion 2 one
+  `chosen` slice stood where the queue is.
 - `decisions`: a choice that shapes the map, such as why a boundary was cut
   where it was or why a copy is left for later.
 - `openQuestions`: only what this run could not settle.
