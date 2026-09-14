@@ -12,7 +12,7 @@ every later stage reads.
 
 Skill version: `0.28.0`.
 
-Recommended model: Claude Opus 5. This phase writes the contract that every
+Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
 
 Analyze one explicitly selected flow: survey its rendered surfaces, settle a

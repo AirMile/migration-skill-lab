@@ -13,7 +13,7 @@ only which slices go next and what they can build on.
 
 Skill version: `0.4.0`.
 
-Recommended model: Claude Opus 5. Cutting candidate slices and weighing them is
+Recommended model: Claude Sonnet 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.
 
 Keep one `migration-map.json`: the features, the candidate slices in each with

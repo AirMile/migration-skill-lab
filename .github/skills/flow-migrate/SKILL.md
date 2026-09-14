@@ -11,8 +11,7 @@ This skill is the second stage and the only one that writes product code.
 
 Skill version: `0.18.0`.
 
-Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
-drawlib, history or the host boundary.
+Recommended model: Claude Sonnet 5.
 
 Implement one bounded Angular migration inside the paths its Flow Contract
 allows. That allowlist is the boundary: write no file outside it, and stop

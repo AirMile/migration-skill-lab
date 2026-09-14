@@ -144,12 +144,12 @@ that chat.
 
 | Skill | Model | Why |
 |---|---|---|
-| `flow-plan` | Claude Opus 5 | Cuts candidate slices from a component tree and weighs them against each other; every later chain inherits the cut. The counting is a script. |
-| `flow-baseline` | Claude Opus 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
-| `flow-migrate` | Claude Sonnet 5; Opus 5 for a risky slice | Code generation inside a tight allowlist plus test authoring. Use Opus 5 when the slice touches drawlib, history or the host boundary. |
+| `flow-plan` | Claude Sonnet 5 | Cuts candidate slices from a component tree and weighs them against each other; every later chain inherits the cut. The counting is a script. |
+| `flow-baseline` | Claude Sonnet 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
+| `flow-migrate` | Claude Sonnet 5 | Code generation inside a tight allowlist plus test authoring. |
 | `flow-verify` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `flow-migrate` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
 | `flow-debug` | Claude Sonnet 5 or GPT-5.3-Codex | A bounded tier machine: reproduce, hypothesize, smallest patch. |
-| `migration-skill-audit` | Claude Opus 5 | Meta-reasoning over instruction text and spotting structural gaps, which is what produced M1 and V1. |
+| `migration-skill-audit` | Claude Sonnet 5 | Meta-reasoning over instruction text and spotting structural gaps, which is what produced M1 and V1. |
 
 Do not use Haiku 4.5, Gemini Flash, GPT-5 mini, GPT-5.4 mini or
 MAI-Code-1.1-Flash for any flow skill. They are too light for contract-grade
