@@ -1,11 +1,11 @@
 ---
 document: skill-handoff-protocol
-version: 0.8.0
+version: 0.9.0
 status: experimental
-date: 2026-09-08
+date: 2026-09-14
 ---
 
-# Migration handoff protocol v0.8.0
+# Migration handoff protocol v0.9.0
 
 ## Purpose
 
@@ -19,15 +19,13 @@ between runs.
 flow-baseline
   -> boundary choice from surveyed candidates
   -> flow-contract.json
-  -> work-item-baseline.json
+  -> User Story in chat, from render-user-story.mjs
   -> review summary
   -> user-chosen fresh flow-migrate chat
   -> flow-migrate
   -> migration-result.json
-  -> work-item-migration.json
   -> flow-verify
   -> verification-result.json (PASS)
-     -> work-item-verification.json
 
   OR
 
@@ -38,17 +36,19 @@ flow-baseline
   -> user-confirmed fresh independent flow-verify chat
 ```
 
-The work-item artifacts form a supporting immutable sidechain. They produce
-copy/paste Epic, Feature, Story, Task and standup updates but never prove that
-Targetprocess was changed.
+The board gets one User Story per slice, rendered from the validated contract
+and shown in the baseline chat. No phase tracks Epics, Features, Tasks, board
+IDs, state or progress, and none updates Targetprocess. The work-item snapshots
+earlier runs wrote stay in `runs\` as historical evidence and are no longer
+validated.
 
 ## Storage and confidentiality
 
 - No phase writes a prose report. Each one's JSON artifact is durable and its
   inline summary is where a human checks it; a second copy in Markdown drifts
   the moment either side is edited. A report can be rendered from the validated
-  JSON whenever one is wanted, the way `render-work-item-handoff.mjs` renders a
-  work-item handoff.
+  JSON whenever one is wanted, the way `render-user-story.mjs` renders the
+  User Story.
 - Put only compact, non-sensitive JSON artifacts in a run directory. New flow
   runs use
   `C:\Project\migration-skill-lab\runs\flows\<flowId>\<run-id>`; existing
@@ -123,10 +123,8 @@ Verification is manual. The contract records the scenarios a person walks
 through; it does not propose a browser runner, an automation command or an owner
 to assign one to.
 
-An Epic, Feature or Story that is not on the board yet is omitted from
-`workItemContext` and proposed with `create`. A placeholder that satisfies a
-required field while naming something that does not exist is never acceptable,
-because a validated artifact is read as fact.
+A placeholder that satisfies a required field while naming something that does
+not exist is never acceptable, because a validated artifact is read as fact.
 
 `flow-baseline` ends at one review summary. It renders scope, partial mount, the
 rendered-surface inventory, the target architecture, scenario summaries,
@@ -152,33 +150,19 @@ questions `flow-migrate` needs answered.
 | `verification-result.json` | `flow-verify` | Human reviewer | Independent decision evidence |
 | `debug-handoff.json` | `flow-verify` | `flow-debug` | Reproducible failure dossier and repairability |
 | `debug-result.json` | `flow-debug` | Fresh `flow-verify` | Finite repair attempt ledger |
-| `work-item-baseline.json` | `flow-baseline` | `flow-migrate`, human | Initial Epic-to-Task and standup proposal |
-| `work-item-migration.json` | `flow-migrate` | `flow-verify`, human | Factual Task/checkpoint progress |
-| `work-item-verification.json` | `flow-verify` | Human | Verified final backlog and standup proposal |
 
 Every artifact has `schemaVersion`, `skillVersion`, `runId`, `flowId` and
 revision or content-hash pointers. A consumer rejects an incompatible version,
 a mismatched flow, missing artifact or unknown status.
 
 A schema accepts more than one `schemaVersion` at a time: `flow-contract`
-accepts 3 to 6, `verification-result` accepts 3 and 4, `migration-result`
+accepts 3 to 7, `verification-result` accepts 3 and 4, `migration-result`
 accepts 2 to 5, and `debug-handoff` accepts 1 and 2. The JSON Schema keeps a newly required field
 optional and the validator's rule layer makes it mandatory for the newer
 version. Completed runs stay valid at the version they were written under,
 which matters because a run's artifacts are immutable
 historical evidence. Skills always write the newest version, so a new run
 cannot opt out of the newer rules by staying behind.
-
-Each work-item handoff points to its phase's primary artifact. Migration and
-verification handoffs also point to the exact previous work-item snapshot.
-They record the human-confirmed applied/not-applied outcome of that previous
-snapshot in `previousApplication`. JSON is canonical; rendered Markdown is
-generated and must match it.
-
-Tasks carry stakeholder-visible delivery progress. Checkpoint commits are
-evidence for an implementation Task, not separate board Tasks. Story progress
-is validated from Task contribution weights, and each phase produces a short
-daily standup block with the same percentage.
 
 ## Diagnostic observation sidecars
 
@@ -278,20 +262,6 @@ declared surface cannot pass unnoticed. It closes the case where a verifier
 recorded a visible deviation as a styling limitation rather than a failure,
 and the case where the appearance defect had no field to live in and was
 repaired outside the consumed handoff.
-
-## Work-item application loop
-
-`copy-ready` means the generated content is ready for review and manual
-application. It is not an external-write result. A later snapshot may use
-`confirmed-applied` only after a human confirms what Targetprocess actually
-shows. Create proposals never invent an external ID; the next snapshot records
-the ID only after the item exists, through
-`previousApplication.createdExternalIds`.
-
-Each phase shows its handoff inline in the chat through
-`render-work-item-handoff.mjs --inline ... --since <previous snapshot>`, which
-reports only what moved. The full Markdown render is available on demand from
-the validated snapshot; a run does not write it. See `docs\work-item-handoff-protocol-v0.5.md`.
 
 ## Improvement loop
 

@@ -108,9 +108,14 @@ the contract.
   put to the user instead. The mount mechanism is an open question only when
   the project-constants page is missing, and then the missing page is the
   question.
-- `workItemContext`: the existing Epic, Feature and Story IDs, from this flow's
-  earlier handoff or `flow.board`. Omit an item that is not on the board yet,
-  so its work-item entry proposes `create`.
+- `userStory`: the prose `render-user-story.mjs` cannot derive, in plain words
+  a stakeholder reads, without citations: a `title` naming the slice, a
+  `userValue` as "As ... I want ... so that ...", the `currentBehavior` React
+  gives today and the `desiredBehavior` once Angular owns the slice. Acceptance
+  criteria and attention points come from `scenarios`, `visualParity`,
+  `characterizationRequired`, `openQuestions`, `planSlice` and the manual
+  validation environment, so none of them is repeated here. Record no board
+  IDs.
 - `checkpointPolicy`: `mode: disabled` with `pushPolicy: never`. Only a user who
   asks for `auto-local` unprompted changes that, and supplies
   `expectedBranch`, `externalRef` and `milestones`; `authorizedByRole` and

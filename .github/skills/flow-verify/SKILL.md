@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.17.0`.
+Skill version: `0.18.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -25,12 +25,12 @@ deterministic steps; never do one of them by hand.
 
 ## Inputs
 
-The invocation names `flow-contract.json`, `migration-result.json`, both
-work-item snapshots, `<lab>`, the product root and the run directory, and on
-every attempt after a repair also `debug-result.json`.
+The invocation names `flow-contract.json`, `migration-result.json`, `<lab>`,
+the product root and the run directory, and on every attempt after a repair
+also `debug-result.json`.
 
 - Validate first:
-  `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json>`,
+  `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <migration-result.json>`,
   adding `debug-result.json` when there is one. Stop with `BLOCKED` when an
   artifact is missing, incompatible, inconsistent or outside the declared flow.
 - Run
@@ -45,15 +45,13 @@ every attempt after a repair also `debug-result.json`.
   the environment it runs in and the route through them, with the concrete
   test data. There is no owner to look for: the person in this chat is the
   tester, and this skill leads them.
-- The previous proposal's outcome is already in `work-item-migration.json`:
-  quote it and ask whether it still holds, as a confirmation.
 - **Attempt.** Without a debug result this is attempt 1, with the file names
   used below. After a repair it is one more than the attempt the debug result
   answers: `debug-result.json` answers 1, `debug-result-<N>.json` answers N.
   Attempt N from 2 on records `verificationAttempt` N and adds `-<N>` to every
-  file it writes, such as `verification-result-2.json`, `debug-handoff-2.json`
-  and `work-item-verification-2.json`, because the debug artifacts hash the
-  earlier attempt's files.
+  file it writes, such as `verification-result-2.json` and
+  `debug-handoff-2.json`, because the debug artifacts hash the earlier
+  attempt's files.
 
 ## Criterion status
 
@@ -145,23 +143,13 @@ outcome, a diagnosis and the next action.
    has `not-run`, not `not-applicable`. Write no prose report: the JSON is
    canonical. In the chat, show one line per scenario and per visual criterion
    and the overall status.
-9. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
-   it for `work-item-verification.json`, putting criterion, browser, host and
-   push evidence on the verification Task. Propose Story `Done` only for an
-   overall `PASS` with passed required host validation and every Task `Done`;
-   keep the Feature and Epic open while their other Stories remain. This is a
-   Targetprocess delta handoff, not a second board setup: show only changed
-   fields, state/progress movement, evidence, standup text and IDs the user
-   must report back for items Targetprocess just created.
-10. Validate the complete chain, debug artifacts included, with
-    `validate-handoff.mjs`. Run
-    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`
-    and report any delta.
-11. **Continuation.** A `FAIL` or repairable `BLOCKED` goes to a fresh
+9. Validate the complete chain, debug artifacts included, with
+   `validate-handoff.mjs`. Run
+   `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`
+   and report any delta.
+10. **Continuation.** A `FAIL` or repairable `BLOCKED` goes to a fresh
     `/flow-debug`:
-    `node "<lab>\scripts\continuation.mjs" --next flow-debug --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json> <work-item-baseline.json> <work-item-migration.json>`.
-    The work-item snapshots travel along so `flow-debug` can hand the repaired
-    chain back here complete.
+    `node "<lab>\scripts\continuation.mjs" --next flow-debug --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
     A `PASS` leads to a fresh `/flow-plan`, which lands this slice on the
     migration map and proposes the next:
     `node "<lab>\scripts\continuation.mjs" --next flow-plan --lab-root <lab> --product-root <product> --run-dir <run-dir> <verification-result.json>`.
@@ -174,7 +162,7 @@ outcome, a diagnosis and the next action.
     Never continue in this chat, spawn a debug subagent or delegate to a
     background agent. A repaired result always returns to a new independent
     verification chat; debug context is never proof.
-12. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
+11. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
     it with `--primary <verification-result.json> --status PASS`, `FAIL` or
     `BLOCKED`.
 
@@ -190,9 +178,7 @@ Never:
 - publish, merge, create a pull request, force-push, push tags, push any branch
   but the contract's `expectedBranch`, or push without every condition in
   `references/push.md`;
-- update Targetprocess or mark a proposal applied without the user's
-  confirmation, mark a Story `Done` while a Task is incomplete, or derive
-  progress from commit count;
+- update Targetprocess;
 - edit product code, choose a debug tier or treat a repair candidate as
   `PASS`;
 - store source copies, credentials, tokens, private URLs or unnecessary

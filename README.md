@@ -8,14 +8,14 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-plan` v0.3.0 source skill, which keeps the migration map
+- experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.26.0, `flow-migrate` v0.17.0 and
-  `flow-verify` v0.17.0 source skills;
-- experimental `flow-debug` v0.7.0 source skill;
+- experimental `flow-baseline` v0.27.0, `flow-migrate` v0.18.0 and
+  `flow-verify` v0.18.0 source skills;
+- experimental `flow-debug` v0.8.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
-- versioned functional and work-item handoff schemas, examples and a
+- versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
   a complete chain from a run that passed end to end, at the versions in force,
   which is the shape reference every skill copies from;
@@ -24,18 +24,18 @@ This lab contains:
 - the deterministic steps every flow skill used to do by hand, each with
   `--help` and `--self-test`: `run-context.mjs` (product status and its later
   comparison, paths outside a contract's allowlist, run directory, runId,
-  earlier handoffs, terminating commands),
+  saved prompts, terminating commands),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
-  whole file), `seed-work-item.mjs` (the next work-item snapshot from the
-  previous one, and `--finalize` for progress and actions),
+  whole file), `render-user-story.mjs` (the slice's User Story from a
+  validated contract),
   `continuation.mjs` (the next phase's invocation, refused when its artifacts
   are not the set that phase validates), `new-observations.mjs`
   (the observation sidecar), `migration-map.mjs` (a first or seeded
   migration map, and the product's value-import graph measured against it)
   and `angular-structure.mjs` (the library that applies the Angular target
   structure, which `migration-map.mjs --measure` uses);
-- `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`, the
-  steps the flow skills share and read only when they reach them;
+- `docs\flow-observation-capture.md`, the step the flow skills share and read
+  only when they reach it;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
   preflight;
 - schema-valid post-run observation sidecars for later skill audits;
@@ -92,19 +92,12 @@ Validate a handoff chain:
 node .\scripts\validate-handoff.mjs `
   .\examples\handoff\demo-line-drawer\flow-contract.json `
   .\examples\handoff\demo-line-drawer\migration-result.json `
-  .\examples\handoff\demo-line-drawer\verification-result.json `
-  .\examples\handoff\demo-line-drawer\work-item-baseline.json `
-  .\examples\handoff\demo-line-drawer\work-item-migration.json `
-  .\examples\handoff\demo-line-drawer\work-item-verification.json
+  .\examples\handoff\demo-line-drawer\verification-result.json
 node .\scripts\validate-handoff.mjs `
   .\examples\observations\demo-line-drawer\migrate-flow-observations.json
 node .\scripts\validate-handoff.mjs --self-test
 node .\scripts\verify-checkpoint.mjs --self-test
-node .\scripts\render-work-item-handoff.mjs --self-test
-node .\scripts\render-work-item-handoff.mjs --check `
-  .\examples\handoff\demo-line-drawer\work-item-baseline.json `
-  .\examples\handoff\demo-line-drawer\work-item-migration.json `
-  .\examples\handoff\demo-line-drawer\work-item-verification.json
+node .\scripts\render-user-story.mjs --self-test
 ```
 
 Validate the repair and independent re-verification examples:
@@ -213,21 +206,16 @@ reasoning, and the mechanical steps are already scripts.
    `scripts\new-observations.mjs`. An empty observation list proves that
    capture ran without inventing feedback.
 
-Each phase of a slice's chain also writes an immutable work-item snapshot for
-manual Targetprocess updates; `flow-plan` moves no board item and writes none.
-`flow-baseline` is the initial board setup handoff, with deterministic
-copy/paste content for the Epic, Feature, User Story, stakeholder-readable
-Tasks and the first daily standup update. `flow-migrate` and `flow-verify`
-then show only Targetprocess deltas for changed fields, state/progress,
-evidence, standup text and newly assigned IDs to report back. The work tracker
-is Targetprocess at `lely.tpondemand.com`; run artifacts created before
-2026-09-08 still name it "TopDesk" and are left unchanged as historical
-evidence. Story progress is validated from weighted Task progress; checkpoint
-commits are evidence for the implementation Task, not separate Tasks. The
-skills never update Targetprocess directly or claim that copy-ready content was
-applied.
+For the board, `flow-baseline` shows one User Story per slice, printed by
+`render-user-story.mjs` from the validated contract: title, user value, current
+and desired behavior, acceptance criteria from the scenarios and visual parity
+entries, and attention points. The user places it on the board and moves it;
+no skill tracks Epics, Features, Tasks, board IDs, state or progress, and none
+updates Targetprocess at `lely.tpondemand.com`. Until flow-baseline v0.27.0
+every phase wrote a work-item snapshot; the snapshots in `runs\` are kept as
+historical evidence and are no longer validated.
 
-See `docs\skill-handoff-protocol-v0.8.md`. Skills exchange artifacts through
+See `docs\skill-handoff-protocol-v0.9.md`. Skills exchange artifacts through
 the ignored `runs\` directory; they must not rely on prior chat context.
 
 ## Improvement lifecycle

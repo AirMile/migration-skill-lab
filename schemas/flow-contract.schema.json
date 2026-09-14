@@ -16,13 +16,12 @@
     "scenarios",
     "testGaps",
     "openQuestions",
-    "workItemContext",
     "checkpointPolicy",
     "validationPlan",
     "rollback"
   ],
   "properties": {
-    "schemaVersion": { "enum": [3, 4, 5, 6] },
+    "schemaVersion": { "enum": [3, 4, 5, 6, 7] },
     "artifactType": { "const": "flow-contract" },
     "skill": { "const": "flow-baseline" },
     "skillVersion": {
@@ -377,6 +376,22 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 }
         }
+      }
+    },
+    "userStory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "userValue",
+        "currentBehavior",
+        "desiredBehavior"
+      ],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "userValue": { "type": "string", "minLength": 1 },
+        "currentBehavior": { "type": "string", "minLength": 1 },
+        "desiredBehavior": { "type": "string", "minLength": 1 }
       }
     },
     "workItemContext": {

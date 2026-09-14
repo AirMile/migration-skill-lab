@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.17.0`.
+Skill version: `0.18.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -25,11 +25,11 @@ deterministic steps; never do one of them by hand.
 
 ## Inputs
 
-The invocation names `flow-contract.json`, `work-item-baseline.json`, `<lab>`,
-the product root and the run directory. Everything else comes from those:
+The invocation names `flow-contract.json`, `<lab>`, the product root and the
+run directory. Everything else comes from those:
 
 - Validate first:
-  `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <work-item-baseline.json>`.
+  `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json>`.
 - Run
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --run-dir <run-dir> --save-status`.
   A saved `<flowId>-flow-migrate-prompt.md` in the run directory means an
@@ -130,14 +130,8 @@ as an established Lely standard.
     visual verdict is `flow-verify`'s, and jsdom evidence is disqualified for a
     nested mount. A `completed` result cannot skip a surface or leave one
     `not-addressed`. Use `completed`, `failed` or `blocked` honestly.
-12. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
-    it for `work-item-migration.json`, putting the checkpoint milestones and
-    the actual work on the implementation Task. This is a Targetprocess delta
-    handoff, not a second board setup: show only changed fields,
-    state/progress movement, evidence, standup text and IDs the user must
-    report back for items Targetprocess just created.
-13. **Continuation.** Build the invocation with
-    `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json>`,
+12. **Continuation.** Build the invocation with
+    `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
        the invocation. Never start a second terminal window;
@@ -147,7 +141,7 @@ as an established Lely standard.
     A declined verification is pending verification, not a verified migration.
     Never verify in this chat, spawn a verifier subagent or delegate to a
     background agent.
-14. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
+13. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
     it with `--primary <migration-result.json> --status completed`, `failed` or
     `blocked`.
 
@@ -172,8 +166,7 @@ Never:
 - make an unapproved Angular convention a target rule;
 - edit this skill, its references or an installed snapshot during a run;
 - hide a failed validation or return a success-shaped result after an error;
-- update Targetprocess, claim a proposal was applied without confirmation, or
-  derive progress from anything but the Task contribution model;
+- update Targetprocess;
 - repair failures returned by `flow-verify`, which belong to `flow-debug`, or
   treat browser or Maui-WebView confirmation as verification.
 

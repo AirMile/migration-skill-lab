@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.7.0
+targetVersion: 0.8.0
 status: experimental
 date: 2026-09-11
 ---
 
-# `flow-debug` v0.7.0 acceptance criteria
+# `flow-debug` v0.8.0 acceptance criteria
 
 ## Hard gates
 
@@ -89,8 +89,8 @@ The source is acceptable when:
 21. the run freezes its starting status with `run-context.mjs --save-status`
     and reports its delta with `--compare`, never by hand;
 22. the continuation comes from `continuation.mjs` and carries every artifact
-    re-verification validates: the contract, the migration result, both
-    work-item snapshots and `debug-result.json`;
+    re-verification validates: the contract, the migration result and
+    `debug-result.json`;
 23. every script, `verify-checkpoint.mjs` included, is invoked from
     `<lab>\scripts\`, never relative to the working directory;
 24. artifact pointers in `debug-result.json` come from `hash-artifact.mjs`,

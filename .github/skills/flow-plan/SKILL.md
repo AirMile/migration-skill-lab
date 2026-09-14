@@ -11,7 +11,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 This skill holds the overview: it decides nothing about one slice's behavior,
 only which slices go next and what they can build on.
 
-Skill version: `0.3.0`.
+Skill version: `0.4.0`.
 
 Recommended model: Claude Opus 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.
@@ -34,9 +34,7 @@ Ask the user only for what nobody else holds:
 
 - which slices to queue, in order, from the options this run proposes. A flow
   the user names instead joins the map as a slice and the queue;
-- which feature to cut into slices, when no mapped candidate is workable;
-- a feature's Targetprocess ID when no baseline work-item snapshot under the
-  run directories `run-context.mjs` discovers carries it.
+- which feature to cut into slices, when no mapped candidate is workable.
 
 Derive everything else, state each value in one line and continue:
 
@@ -74,9 +72,8 @@ Derive everything else, state each value in one line and continue:
    missing or clashing rule, or a product file that clashes, is a project
    decision made outside this run. Once the user says it is settled, measure
    again and go on; the run is `blocked` only when it ends without a map.
-4. **Features.** Add one for each `featureDirectoriesNotInMap` entry. Take a
-   feature's `externalId` from a baseline work-item snapshot that names it, or
-   from the user; never invent one.
+4. **Features.** Add one for each `featureDirectoriesNotInMap` entry, with no
+   board ID.
 5. **Slices.** Cut new candidates only for the feature being worked on: the
    one whose slice just landed, or the one the user names. Leave a feature
    alone while it still holds two workable candidates. Read its component tree
@@ -161,7 +158,7 @@ Never:
 - mark a slice `landed` by hand: only `--seed` or `--land` does, from a `PASS`;
 - change the Angular target structure, or place a counterpart anywhere but
   its measured target;
-- update Targetprocess, or invent an external ID;
+- update Targetprocess;
 - store source copies, credentials, tokens, private URLs or unnecessary
   personal data;
 - edit this skill, its references or an installed snapshot during a run;

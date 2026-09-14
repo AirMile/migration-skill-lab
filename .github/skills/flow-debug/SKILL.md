@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.7.0`.
+Skill version: `0.8.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -24,9 +24,8 @@ deterministic steps; never do one of them by hand.
 ## Inputs
 
 The invocation names `flow-contract.json`, `migration-result.json`,
-`verification-result.json`, `debug-handoff.json`, both work-item snapshots,
-`<lab>`, the product root and the run directory. Everything else comes from
-those:
+`verification-result.json`, `debug-handoff.json`, `<lab>`, the product root and
+the run directory. Everything else comes from those:
 
 - Validate first:
   `node "<lab>\scripts\validate-handoff.mjs" <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
@@ -40,8 +39,6 @@ those:
   from the artifacts it names. Another attempt's prompt is spent.
 - From the contract: `scope.allowedWritePaths`, the test, typecheck and build
   commands, `rollback`, `checkpointPolicy` and `visualParity`.
-- The work-item snapshots travel only so the repaired chain reaches the next
-  `flow-verify` complete; this skill does not change them.
 
 Report `BLOCKED` before any product write when:
 
@@ -118,7 +115,7 @@ Report `BLOCKED` before any product write when:
 9. **Continuation.** A `repaired` result always goes to a fresh, independent
    `/flow-verify`; this skill never declares `PASS` or closes the loop itself.
    Build the invocation with
-   `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json> <debug-result.json>`,
+   `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <debug-result.json>`,
    then offer exactly three routes and perform only the chosen one:
    1. a fresh chat opened now through the host's own mechanism, carrying only
       the invocation. Never start a second terminal window;

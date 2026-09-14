@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-plan
-targetVersion: 0.3.0
+targetVersion: 0.4.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-plan` v0.3.0 acceptance criteria
+# `flow-plan` v0.4.0 acceptance criteria
 
 ## Hard gates
 
@@ -57,8 +57,7 @@ The source is acceptable when:
    and every unbuilt one it shares with an active or another offered slice;
 8. a flow the user names instead of an offered one joins the map as a slice
    and the queue;
-9. a feature's external ID comes from a baseline work-item snapshot or the
-   user, never from invention;
+9. it records no board ID for a feature and asks for none;
 10. the worktree comparison is `run-context.mjs --compare`, and a delta stops
     the run without a revert, unless it is the user's change that settled a
     structure collision;

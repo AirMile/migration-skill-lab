@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.26.0
+targetVersion: 0.27.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.26.0 acceptance criteria
+# `flow-baseline` v0.27.0 acceptance criteria
 
 ## Hard gates
 
@@ -28,22 +28,18 @@ allowlist the slice does not need, or stores sensitive content.
   and cleanup behavior.
 - A cited evidence ledger with `Confirmed`, `Inference` and `Open question`.
 - Existing relevant tests, their proved behavior and prioritized evidence gaps.
-- One `flow-contract.json` at schemaVersion 6 that validates against the
-  handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`,
-  with no `status`, no `approval` and no `targetArchitecture.status`.
-- No analysis report, no rendered work-item Markdown file and no other file
-  beyond the contract, the work-item snapshot and the observation artifact, in
+- One `flow-contract.json` at schemaVersion 7 that validates against the
+  handoff schema, carrying `renderedSurfaceInventory`, `targetArchitecture`
+  and `userStory`, with no `status`, no `approval`, no
+  `targetArchitecture.status` and no `workItemContext`.
+- No analysis report, no User Story file and no other file beyond the
+  contract and the observation artifact, in
   the run directory `run-context.mjs --claim` created at the start.
 - A before/after Git-visible product worktree comparison.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
-- A schema-valid baseline work-item snapshot with Epic/Feature/Story/Task
-  identity, fields, state and progress, shown inline as the initial
-  Targetprocess setup handoff rather than written twice.
-- Items that did not move marked `no-change` with their previous field text
-  copied verbatim, rendered as an identification line rather than restated.
-- Task contribution weights totaling 100, calculated Story progress and a
-  concise daily standup block with separate current/proposed percentages.
+- The slice's User Story, printed by `render-user-story.mjs` from the
+  validated contract and shown in the chat.
 - A bounded Detail Drawer target-architecture proposal that does not mirror
   React mechanically or redesign the full frontend.
 - A disabled or explicitly human-approved checkpoint policy with exact branch,
@@ -78,10 +74,9 @@ The source is acceptable when:
    unproven causality from skill observations;
 8. an observation-capture failure is visible but does not rewrite the Flow
    Contract status.
-9. it never updates Targetprocess or presents `copy-ready` as externally
-   applied;
-10. it proposes a new story only after explicit request or evidence-backed
-    scope splitting and never invents an external ID;
+9. it never updates Targetprocess;
+10. it records no board ID, Epic, Feature, Task, board state or progress, and
+    asks for none;
 11. it creates no product or empty checkpoint commit in the read-only phase;
 12. it builds the review summary from validated contract fields rather than
     from prose;
@@ -89,15 +84,18 @@ The source is acceptable when:
     writes until plan mode is exited when the session already runs in it;
 14. it opens a `flow-migrate` chat only on the user's explicit route choice and
     never continues or delegates the migration itself.
-15. it groups technical checkpoints under stakeholder-readable Tasks instead
-    of creating one Task per commit;
-16. Story progress is derived from Task contributions, never guessed.
-17. current board progress is never overwritten by a copy-ready proposal;
+15. it proposes one User Story per slice and no Tasks, so technical
+    checkpoints never reach the board;
+16. the User Story's acceptance criteria come from the contract's scenarios
+    and visual parity entries, never typed separately;
+17. the User Story's attention points come from the characterization
+    hypotheses, open questions, the slice remainder and the manual
+    verification environment;
 18. browser automation and Maui host smoke validation stay separate.
 19. a possible behavior improvement triggers one explicit preserve/include/
     follow-up choice and remains open until answered.
 20. it never edits an earlier run's artifacts; a changed boundary, allowlist or
-    scenario is a new run that declares `supersedes`.
+    scenario is a new run.
 21. it records visual parity requirements, including drawer insets and input
     containment, for independent browser verification.
 22. it ends by offering a user-confirmed fresh `/flow-migrate` chat rather than
@@ -108,16 +106,14 @@ The source is acceptable when:
     `siblingSections` whenever the proposed slice mounts inside a retained
     React parent, because both downstream skills read that flag to decide
     whether real-host evidence is mandatory.
-25. it shows the generated `--inline` handoff verbatim in the chat rather than
-    a paraphrase, so the copy/paste content comes from the validated snapshot;
+25. it shows `render-user-story.mjs` output verbatim in the chat rather than a
+    paraphrase, so the Story comes from the validated contract;
 26. it declares `scope.partialMount` explicitly from schemaVersion 4, including
     a deliberate `nested: false`, rather than omitting the field;
-27. it copies unchanged Epic, Feature, Story and Task field text from the
-    previous handoff for this flow byte for byte and marks those items
-    `no-change`, so a rerun reports what moved instead of a reworded copy of
-    what did not;
-28. it declares `supersedes` when an earlier baseline for this flow exists, and
-    never carries `currentState` or `currentProgress` forward from it;
+27. `userStory` holds only the prose the script cannot derive: a title, the
+    user value, and the current and desired behavior, without citations;
+28. a rerun for the same flow writes a new contract with its own `userStory`
+    rather than editing the earlier run's;
 29. it declares one `visualParity` entry per migrated surface with the retained
     counterpart, the concrete appearance requirements and the layout
     requirements against the retained sibling sections;
@@ -130,11 +126,9 @@ The source is acceptable when:
 32. observation capture evaluates the countable checks against this run's own
     tool history, and an empty list means every check was evaluated and none
     fired rather than that none was looked for;
-33. `richReleaseNotes` is refreshed only on an item the run actually moved,
-    so per-run narrative cannot force an unchanged Epic or Feature into
-    `update`.
-34. it writes the contract, the work-item snapshot and the observation
-    artifact and nothing else, and never a prose document that duplicates a
+33. the User Story describes the slice, not the run: what this run did belongs
+    in the review summary.
+34. it writes the contract and the observation artifact and nothing else, and never a prose document that duplicates a
     validated artifact;
 35. the target architecture reaches `flow-migrate` inside the contract rather
     than being re-elicited from the user;
@@ -144,8 +138,7 @@ The source is acceptable when:
     never recorded as a test command;
 38. `scope.allowedWritePaths` contains a location for the new Angular code, and
     every existing path in it was checked for consumers outside this flow;
-39. an item that is not on the board uses `create` with no external ID on
-    either side, and no placeholder ID is ever written;
+39. the contract carries no `workItemContext` and no board ID of any kind;
 40. `checkpointPolicy` records only what is assigned: a draft carries `mode`
     and `pushPolicy`, and never a placeholder branch, reference or milestone;
 41. every question it asks has answerable options, and it offers no route the
@@ -168,8 +161,8 @@ The source is acceptable when:
 48. an unresolved mount or embedding mechanism is recorded as an open question
     that `flow-migrate` reports `BLOCKED` on, and is never described away as
     covering only the behavior baseline;
-49. the baseline Task is complete when the analysis is, because no gate is left
-    for it to hold open;
+49. the baseline is complete when the analysis is, because no gate is left to
+    hold it open;
 50. `pushPolicy` is `never` whenever the checkpoint mode is `disabled`.
 51. the contract is final when written: no `status`, no `approval`, no
     `targetArchitecture.status`, and no successor pair;
@@ -236,23 +229,21 @@ The source is acceptable when:
     terminal window;
 74. a scenario names concrete values a tester can act on, never a category such
     as "a robot with FeedPush capability" that a later phase has to resolve;
-75. artifact pointers come from a script (`seed-work-item.mjs`,
-    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
-    by hand;
+75. artifact pointers come from a script (`new-observations.mjs` or
+    `hash-artifact.mjs`), never from digests computed by hand;
 76. a saved continuation prompt found in the run directory is reported in one
     line and resumed from, not treated as a second run.
-77. the flowId, run directory, runId, earlier handoffs, saved prompts, product
+77. the flowId, run directory, runId, saved prompts, product
     status and terminating commands come from `run-context.mjs`, not from hand
     derivation, and the run directory and runId are the `flow.claimed` ones
     `--claim` returns;
 78. artifact shapes come from `print-shape.mjs` on the example chain; no whole
     example file and no schema is read to learn a shape;
 79. `references/flow-contract.md` is read when the contract content is recorded,
-    and `docs\flow-work-item-steps.md` and `docs\flow-observation-capture.md`
-    at their own steps, never all at the start;
-80. a rerun's work-item snapshot is seeded with `seed-work-item.mjs` and
-    finalized with its `--finalize`, so settled text is never retyped and
-    actions and Story progress are never set by hand;
+    and `docs\flow-observation-capture.md` at its own step, never both at the
+    start;
+80. the User Story comes from `render-user-story.mjs`, so its acceptance
+    criteria and attention points are never typed by hand;
 81. the continuation invocation comes from `continuation.mjs` and the
     observation sidecar from `new-observations.mjs`;
 82. the worktree comparison is `run-context.mjs --compare`, which also catches a
@@ -293,9 +284,5 @@ The source is acceptable when:
     `remainder` is `null` only when the whole slice migrates;
 94. a run on a slice whose `--ready` entry carries a `remainder` cuts from
     that remainder;
-95. no Epic, Feature or Story ID and no board state or progress reaches the
-    user as a question: a first baseline for a new flow takes the Epic, and
-    the Feature when the map puts both flows in one feature, from
-    `run-context.mjs`'s `flow.board`, seeds them with
-    `seed-work-item.mjs --inherit` and names that source and those IDs in one
-    line.
+95. no board ID, Epic, Feature, Task, board state or progress reaches the user
+    as a question.

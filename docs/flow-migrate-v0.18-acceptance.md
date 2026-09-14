@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.17.0
+targetVersion: 0.18.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-migrate` v0.17.0 acceptance criteria
+# `flow-migrate` v0.18.0 acceptance criteria
 
 ## Hard gates
 
@@ -29,12 +29,8 @@ during its own run.
 - Before/after product Git-visible worktree evidence.
 - A schema-valid observation artifact written after `migration-result.json`,
   including an empty observation list when no concrete skill signal occurred.
-- A checkpoint record for every eligible milestone and a schema-valid
-  Epic/Feature/Story/Task progress snapshot plus a deterministic inline delta
-  handoff for changed Targetprocess fields, progress, evidence and standup
-  text.
-- Checkpoints linked to the implementation Task, calculated Story progress and
-  a daily standup block with the same percentage.
+- A checkpoint record for every eligible milestone.
+- No work-item snapshot and no board update or progress proposal.
 
 ## Acceptance check
 
@@ -61,8 +57,9 @@ The source is acceptable when:
 10. it never uses `git add -A`, bypasses hooks, amends, pushes or includes an
     unproven pre-existing dirty delta;
 11. checkpoint SHA, subject, paths and validation evidence are recorded;
-12. it never updates Targetprocess or treats copy-ready progress as applied.
-13. it never equates commit count with progress or creates one Task per commit.
+12. it never updates Targetprocess.
+13. it proposes nothing for the board: checkpoints are evidence in
+    `migration-result.json`, never board items.
 14. repair attempts from verification belong to `flow-debug`, not this skill.
 15. it leaves manual browser-flow and Maui-WebView scenario verification to a
     fresh independent `flow-verify` chat.
@@ -76,9 +73,7 @@ The source is acceptable when:
     the retained sibling sections compared against and concrete style and
     layout observations whenever the contract declares a nested partial mount;
     a completed result without it is rejected.
-20. it shows the generated `--inline` handoff verbatim in the chat and records
-    `createdExternalIds` for every item the user confirmed creating, so the
-    same Tasks are not re-proposed as `create` in a later phase;
+20. it asks nothing about the board, such as whether a proposal was applied;
 21. it records one `renderedSurfaceComparison.surfaces` verdict per surface the
     contract declares in `visualParity`, with concrete observations;
 22. a `completed` result never skips a declared surface and never leaves one on
@@ -109,11 +104,9 @@ The source is acceptable when:
 31. `validationPlan.installCommand` runs after any manifest or configuration
     change and before the test, typecheck and build commands, and is recorded
     in `validation` like any other command;
-32. an item stays action `create` while `previousApplication.status` is
-    `not-applied`, because `no-change` and `update` both require an
-    `externalId`;
-33. `migration-result.json` and the work-item handoff are validated in the same
-    invocation as the Flow Contract, never alone;
+32. the invocation it accepts names the contract and no work-item snapshot;
+33. `migration-result.json` is validated in the same invocation as the Flow
+    Contract, never alone;
 34. the observation sidecar is named `skill-run-observations-flow-migrate.json`
     so it cannot overwrite the baseline's in a shared run directory;
 35. typecheck and build run once at the end of a coherent milestone, not after
@@ -125,17 +118,15 @@ The source is acceptable when:
     using the host's own mechanism, show the invocation to paste, or save it in
     the run directory as a resumable checkpoint — and never opens a second
     terminal window;
-38. artifact pointers come from a script (`seed-work-item.mjs`,
-    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
-    by hand;
+38. artifact pointers come from a script (`new-observations.mjs` or
+    `hash-artifact.mjs`), never from digests computed by hand;
 39. `references/checkpoints.md` is read only under `auto-local`, and nothing is
     committed under `disabled`;
 40. the run starts from `run-context.mjs --save-status` and ends with its
     `--compare`;
-41. the work-item snapshot is seeded from the baseline snapshot with
-    `seed-work-item.mjs` and finalized with its `--finalize`;
+41. it writes no work-item snapshot;
 42. the continuation passes every artifact `flow-verify` validates: the
-    contract, the migration result and both work-item snapshots;
+    contract and the migration result;
 43. `run-context.mjs --compare --contract` runs before `migration-result.json`
     is written, and a path under `comparison.outsideAllowlist` keeps the
     result from `completed`;

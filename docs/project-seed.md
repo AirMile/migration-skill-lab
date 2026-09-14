@@ -118,8 +118,8 @@ Every skill version declares:
 
 `migration-analyze` v0.1.0 remains preserved as a reviewed read-only benchmark
 reference. The source repository also contains experimental `flow-plan`
-v0.3.0, `flow-baseline` v0.26.0, `flow-migrate` v0.17.0, `flow-verify` v0.17.0,
-`flow-debug` v0.7.0 and `migration-skill-audit` v0.1.0, with versioned functional and work-item
+v0.4.0, `flow-baseline` v0.27.0, `flow-migrate` v0.18.0, `flow-verify` v0.18.0,
+`flow-debug` v0.8.0 and `migration-skill-audit` v0.1.0, with versioned
 handoff schemas, scoped checkpoint preflight, examples and the scripts that
 perform the deterministic steps of a run. The flow skills are installed as
 personal runtime snapshots under `~\.copilot\skills`.
@@ -248,9 +248,8 @@ board item.
 
 Read-only for the product repository. It establishes a behavior baseline and
 draft Flow Contract for one human-selected flow. `migration-analyze` v0.1.0 is
-retained as the earlier benchmark reference. It also produces the first
-copy/paste Epic/Feature/Story/Task and standup handoff and records any
-explicitly approved checkpoint policy.
+retained as the earlier benchmark reference. It also shows the slice's User
+Story for the board and records any explicitly approved checkpoint policy.
 
 ### 2. `flow-migrate`
 
@@ -268,9 +267,8 @@ Read-only independent verification of the same Flow Contract. It reports
 `PASS`, `FAIL` or `BLOCKED` per criterion and returns diagnoses to
 `flow-migrate`; it never repairs product code itself. After complete PASS and
 required host validation, it may offer one explicitly confirmed push of the
-approved featurebranch and produces the final copy/paste work-item handoff.
-The three phases derive Story progress from weighted Tasks and keep technical
-checkpoints as Task evidence.
+approved featurebranch. No phase tracks board state or progress; the user
+moves the Story.
 
 ### 4. `flow-debug`
 

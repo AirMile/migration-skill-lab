@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.17.0
+targetVersion: 0.18.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-verify` v0.17.0 acceptance criteria
+# `flow-verify` v0.18.0 acceptance criteria
 
 ## Hard gates
 
@@ -28,12 +28,8 @@ run.
 - A concrete repair diagnosis for every `FAIL` or repairable `BLOCKED`.
 - A schema-valid observation artifact written after the verification outputs,
   including an empty observation list when no concrete skill signal occurred.
-- Reconciled checkpoint SHAs, an explicit push outcome and a schema-valid
-  Epic/Feature/Story/Task verification snapshot plus a deterministic inline
-  delta handoff for changed Targetprocess fields, progress, evidence and
-  standup text.
-- Verification Task evidence, calculated Story progress and a daily standup
-  block with separate current/proposed percentages.
+- Reconciled checkpoint SHAs and an explicit push outcome.
+- No work-item snapshot and no board update or progress proposal.
 - A schema-valid debug handoff for every non-PASS result, classified as local
   repairable or external-blocked.
 
@@ -54,10 +50,10 @@ The source is acceptable when:
    matching checkpoint SHAs, the contract's expected branch and explicit
    confirmation;
 9. it never force-pushes, pushes tags or pushes another branch;
-10. `Done` is not proposed for FAIL, BLOCKED or missing host evidence;
-11. it never updates Targetprocess or treats copy-ready output as applied.
-12. a Story cannot be Done while any child Task is incomplete;
-13. one completed Story does not imply its parent Feature or Epic is done.
+10. it proposes no board state, `Done` included, for any outcome;
+11. it never updates Targetprocess.
+12. it asks nothing about the board, such as whether a proposal was applied;
+13. the invocation it accepts names no work-item snapshot.
 14. regular-browser automation and required Maui host validation are reported
     separately and both pass before overall PASS when required;
 15. repairable failures offer a user-confirmed fresh `/flow-debug` chat and external
@@ -106,27 +102,23 @@ The source is acceptable when:
     using the host's own mechanism, show the invocation to paste, or save it in
     the run directory as a resumable checkpoint — and never opens a second
     terminal window;
-34. the applied/not-applied question is a confirmation of what the migration
-    handoff already recorded, not an open question asked afresh;
-35. artifact pointers come from a script (`seed-work-item.mjs`,
-    `new-observations.mjs` or `hash-artifact.mjs`), never from digests computed
-    by hand;
+34. it writes no work-item snapshot;
+35. artifact pointers come from a script (`new-observations.mjs` or
+    `hash-artifact.mjs`), never from digests computed by hand;
 36. `references/debug-handoff.md` is read only for a non-PASS result, and
     `references/push.md` only when checkpoints were committed or the push policy
     is `confirm-after-pass`;
 37. the manual verification environment comes from the contract's
     `validationPlan`, not from a separate read of the project constants;
-38. the work-item snapshot is seeded from the migration snapshot with
-    `seed-work-item.mjs`, with the application outcome passed as a
-    confirmation of what that snapshot recorded;
+38. the chain it validates is the contract, the migration result and, after a
+    repair, the debug result;
 39. a `FAIL` or repairable `BLOCKED` hands off to `flow-debug`, which owns the
     repair; nothing is returned to `flow-migrate`.
 40. every walkthrough item is built from its own `scenarios` or `visualParity`
     entry; `manualValidation` supplies the environment and the route through
     them, never a second description of the scenarios;
-41. the continuation to `flow-debug` carries both work-item snapshots, so the
-    repaired chain comes back to a fresh verification with every artifact it
-    validates;
+41. the continuation to `flow-debug` carries the contract, the migration and
+    verification results and the debug handoff, every artifact it validates;
 42. the allowlist check comes from `allowlist.outside` in the
     `run-context.mjs --contract` output, never from a comparison made by hand;
 43. every scenario a `disproved` hypothesis names in `proveBefore` is tested

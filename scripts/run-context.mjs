@@ -3,11 +3,11 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { baselineRuns, listNumberedRuns, scanRuns, workItemSnapshots } from "./run-index.mjs";
+import { baselineRuns, listNumberedRuns, scanRuns } from "./run-index.mjs";
 
 // Every phase opened by reading Git state and deriving the same values in
 // prose: the run directory, the runId, which package scripts terminate, which
-// earlier handoff to build on. They are facts about the file system.
+// saved prompt to resume from. They are facts about the file system.
 
 const usage = `Usage: node scripts/run-context.mjs --product-root <dir> [options]
 
@@ -17,11 +17,7 @@ Git-visible status, plus whatever the options ask for.
 Options:
   --lab-root <dir>       migration-skill-lab root; needed with --flow-id
   --flow-id <id>         the next baseline run directory and runId, and this
-                         flow's earlier runs, work-item handoffs and saved
-                         continuation prompts; without an earlier handoff,
-                         board names the sibling snapshot whose Epic, and
-                         Feature when the map puts both flows in one feature,
-                         a first baseline inherits
+                         flow's earlier runs and saved continuation prompts
   --map                  the latest earlier migration-map.json and the next
                          map run directory and runId; needs --lab-root
   --ready [map]          the slices of a migration map, the latest without a
@@ -276,82 +272,21 @@ const readMap = async labRoot => {
   };
 };
 
-// A first baseline asked for the Epic and Feature IDs every time, although a
-// sibling flow's snapshot already records them. The newest snapshot of a flow
-// in the same map feature, or naming that feature's externalId, supplies both;
-// failing that, the newest snapshot of any flow supplies the Epic alone.
-const readBoard = async (labRoot, flowId) => {
-  const snapshots = (await workItemSnapshots(labRoot)).filter(snapshot => snapshot.value.epic);
-  if (snapshots.length === 0) return null;
-
-  let featureOf = () => null;
-  let mapFeature = null;
-  const mapPath = (await readMap(labRoot)).previousMap;
-  if (mapPath) {
-    try {
-      const map = JSON.parse((await readFile(mapPath, "utf8")).replace(/^﻿/, ""));
-      const featureIds = new Map((map.slices ?? []).map(slice => [slice.flowId, slice.featureId]));
-      featureOf = id => featureIds.get(id) ?? null;
-      mapFeature = (map.features ?? []).find(feature => feature.id === featureOf(flowId)) ?? null;
-    } catch {
-      // An unreadable map only loses the Feature match; the Epic still holds.
-    }
-  }
-
-  const sameFeature = mapFeature && snapshots.find(snapshot =>
-    snapshot.value.feature &&
-    (featureOf(snapshot.value.flowId) === mapFeature.id ||
-      (mapFeature.externalId && snapshot.value.feature.externalId === mapFeature.externalId)));
-  const source = sameFeature || snapshots[0];
-  const identity = item => item && {
-    localId: item.localId,
-    ...(Object.hasOwn(item, "externalId") ? { externalId: item.externalId } : {}),
-    title: item.title,
-  };
-  return {
-    snapshot: source.path,
-    flowId: source.value.flowId,
-    handoffPhase: source.value.handoffPhase,
-    inherits: sameFeature ? "epic-and-feature" : "epic",
-    epic: identity(source.value.epic),
-    feature: sameFeature ? identity(source.value.feature) : null,
-  };
-};
-
 const readFlow = async (labRoot, flowId) => {
   const runsDirectory = path.resolve(labRoot, "runs");
   const { runs, next } = await baselineRuns(labRoot, flowId);
 
-  const handoffs = [];
   const promptFiles = [];
   for (const run of runs) {
-    const directory = run.directory;
-    for (const file of await readdir(directory)) {
-      const filePath = path.join(directory, file);
-      if (/^work-item-.*\.json$/.test(file)) {
-        try {
-          const value = JSON.parse(await readFile(filePath, "utf8"));
-          if (value.artifactType === "work-item-handoff" && value.flowId === flowId) {
-            handoffs.push({
-              path: filePath,
-              handoffPhase: value.handoffPhase,
-              runId: value.runId,
-              modified: (await stat(filePath)).mtime.toISOString(),
-            });
-          }
-        } catch {
-          handoffs.push({ path: filePath, unreadable: true });
-        }
-      } else if (file.startsWith(`${flowId}-`) && promptFilePattern.test(file)) {
-        promptFiles.push(filePath);
+    for (const file of await readdir(run.directory)) {
+      if (file.startsWith(`${flowId}-`) && promptFilePattern.test(file)) {
+        promptFiles.push(path.join(run.directory, file));
       }
     }
   }
-  handoffs.sort((left, right) => (right.modified ?? "").localeCompare(left.modified ?? ""));
 
   return {
     flowId,
-    board: handoffs.length > 0 ? null : await readBoard(labRoot, flowId),
     runs: runs.map(run => run.directory),
     nextRunDirectory: path.join(
       runsDirectory,
@@ -360,7 +295,6 @@ const readFlow = async (labRoot, flowId) => {
       `${localDate()}-${flowId}-baseline-${next}`,
     ),
     nextRunId: `${flowId}-baseline-${next}`,
-    handoffs,
     promptFiles,
   };
 };
@@ -655,12 +589,6 @@ const runSelfTest = async () => {
     const firstRun = path.join(lab, "runs", "2026-01-01-demo-flow-baseline-1");
     await mkdir(firstRun, { recursive: true });
     await mkdir(path.join(lab, "runs", "2026-01-02-demo-flow-extra-baseline-4"));
-    await writeFile(path.join(firstRun, "work-item-baseline.json"), JSON.stringify({
-      artifactType: "work-item-handoff",
-      handoffPhase: "baseline",
-      runId: "demo-flow-baseline-1",
-      flowId: "demo-flow",
-    }));
     await writeFile(path.join(firstRun, "demo-flow-flow-migrate-prompt.md"), "/flow-migrate\n");
     await writeFile(path.join(firstRun, "demo-flow-flow-verify-prompt-2.md"), "/flow-verify\n");
 
@@ -679,8 +607,8 @@ const runSelfTest = async () => {
     assert(!Object.hasOwn(context.product, "blobs"), "content hashes leak into the output");
     assert(context.flow.nextRunId === "demo-flow-baseline-2",
       `the next runId is ${context.flow.nextRunId}; another flow's runs were counted`);
-    assert(context.flow.handoffs.length === 1 && context.flow.promptFiles.length === 2,
-      "the flow's earlier handoff or a saved prompt, attempt-numbered ones included, was not found");
+    assert(context.flow.promptFiles.length === 2,
+      "a saved prompt, attempt-numbered ones included, was not found");
     assert(context.runDirectory.promptFiles.length === 2, "the run directory's prompts were not listed");
 
     const nestedLegacyRun = path.join(lab, "runs", "flows", "demo-flow", "2026-01-02-demo-flow-baseline-2");
@@ -953,31 +881,6 @@ const runSelfTest = async () => {
     await writeFile(path.join(reclaimed.flow.claimed.directory, "flow-contract.json"), "{}\n");
     assert((await collectContext({ ...inLab, "flow-id": "beta", claim: true })).flow.claimed.runId === "beta-baseline-2",
       "a finished baseline run blocked a rerun's claim");
-
-    // A new slice inherits the board identity its siblings already recorded
-    // instead of asking for it again.
-    await writeFile(queuedMapPath, JSON.stringify({ ...queuedMap, features: [{ id: "demo", title: "Demo" }] }));
-    const epic = { localId: "epic", externalId: "100", title: "Epic" };
-    await writeFile(path.join(deltaRun, "work-item-verification.json"), JSON.stringify({
-      artifactType: "work-item-handoff", handoffPhase: "verification", flowId: "delta",
-      epic, feature: { localId: "demo-feature", externalId: "200", title: "Demo feature" }, stories: [],
-    }));
-    await writeRun("2026-01-06-omega-baseline-1", {
-      "work-item-baseline.json": {
-        artifactType: "work-item-handoff", handoffPhase: "baseline", flowId: "omega",
-        epic, feature: { localId: "other-feature", externalId: "300", title: "Other feature" }, stories: [],
-      },
-    });
-    const alphaBoard = (await collectContext({ ...inLab, "flow-id": "alpha" })).flow.board;
-    assert(alphaBoard?.inherits === "epic-and-feature" && alphaBoard.flowId === "delta" &&
-      alphaBoard.feature.externalId === "200" && alphaBoard.epic.externalId === "100",
-      `a slice does not inherit its map feature's Epic and Feature: ${JSON.stringify(alphaBoard)}`);
-    const unmappedBoard = (await collectContext({ ...inLab, "flow-id": "lambda" })).flow.board;
-    assert(unmappedBoard?.inherits === "epic" && unmappedBoard.feature === null &&
-      unmappedBoard.epic.externalId === "100",
-      `a flow outside the map inherits a Feature it may not belong to: ${JSON.stringify(unmappedBoard)}`);
-    assert((await collectContext({ ...inLab, "flow-id": "demo-flow" })).flow.board === null,
-      "a flow with its own handoff still looks for a sibling's");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

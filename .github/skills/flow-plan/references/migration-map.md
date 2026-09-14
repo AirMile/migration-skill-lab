@@ -22,8 +22,8 @@ measured again on every run.
 - `repository` and `metrics`: written by `--measure`, never by hand.
 - `supersedes`: written by `--seed`; it chains every map to the one before.
 - `features`: one per folder under `src\features` that holds source, with a
-  readable `title`. `externalId` is the Targetprocess Feature, only when a
-  baseline work-item snapshot or the user supplies it.
+  readable `title`. `externalId` is left out: the flow skills track no board
+  IDs, and an older map that carries one stays valid.
 - `slices`: one per candidate, each a Story-sized
   baseline-migrate-verify chain.
   - `flowId` is the slice's name for good: `flow-baseline` names its runs and

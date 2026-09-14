@@ -15,7 +15,6 @@ const schemaByArtifactType = {
   "verification-result": "verification-result.schema.json",
   "debug-handoff": "debug-handoff.schema.json",
   "debug-result": "debug-result.schema.json",
-  "work-item-handoff": "work-item-handoff.schema.json",
   "skill-run-observations": "skill-run-observations.schema.json",
   "migration-map": "migration-map.schema.json",
 };
@@ -684,6 +683,23 @@ const validateArtifactRules = (value, errors) => {
       }
     }
 
+    // From schemaVersion 7 a baseline hands the board one User Story instead
+    // of tracking Epic, Feature, Story and Task IDs through every phase.
+    if (value.schemaVersion >= 7) {
+      if (!value.userStory) {
+        errors.push(
+          "$.userStory is required from schemaVersion 7; render-user-story.mjs prints the board's User Story from it.",
+        );
+      }
+      if (Object.hasOwn(value, "workItemContext")) {
+        errors.push(
+          "$.workItemContext is not used from schemaVersion 7; the flow skills no longer track board IDs.",
+        );
+      }
+    } else if (!Object.hasOwn(value, "workItemContext")) {
+      errors.push("$.workItemContext is required below schemaVersion 7.");
+    }
+
     if (value.targetArchitecture &&
       !isFinalContract &&
       value.status === "approved" &&
@@ -961,290 +977,6 @@ const validateArtifactRules = (value, errors) => {
     return;
   }
 
-  if (value.artifactType === "work-item-handoff") {
-    const expectedByPhase = {
-      baseline: {
-        skill: "flow-baseline",
-        primaryArtifactType: "flow-contract",
-      },
-      migration: {
-        skill: "flow-migrate",
-        primaryArtifactType: "migration-result",
-      },
-      verification: {
-        skill: "flow-verify",
-        primaryArtifactType: "verification-result",
-      },
-    };
-    const expected = expectedByPhase[value.handoffPhase];
-
-    if (expected && canonicalSkill(value.skill) !== expected.skill) {
-      errors.push(`$.skill must equal ${expected.skill} for ${value.handoffPhase}.`);
-    }
-
-    if (expected &&
-      value.primaryArtifact.artifactType !== expected.primaryArtifactType) {
-      errors.push(
-        "$.primaryArtifact.artifactType does not match $.handoffPhase.",
-      );
-    }
-
-    if (value.handoffPhase === "baseline" &&
-      Object.hasOwn(value, "previousHandoff")) {
-      errors.push("$.previousHandoff is not allowed for a baseline handoff.");
-    }
-    if (value.handoffPhase === "baseline" &&
-      Object.hasOwn(value, "previousApplication")) {
-      errors.push("$.previousApplication is not allowed for a baseline handoff.");
-    }
-
-    if (value.handoffPhase !== "baseline" &&
-      !Object.hasOwn(value, "previousHandoff")) {
-      errors.push("$.previousHandoff is required after the baseline phase.");
-    }
-    if (value.handoffPhase !== "baseline" &&
-      !Object.hasOwn(value, "previousApplication")) {
-      errors.push("$.previousApplication is required after the baseline phase.");
-    }
-    if (value.previousHandoff && value.previousApplication &&
-      value.previousApplication.handoffSha256 !==
-        value.previousHandoff.sha256) {
-      errors.push(
-        "$.previousApplication.handoffSha256 must match $.previousHandoff.sha256.",
-      );
-    }
-
-    if (Object.hasOwn(value, "supersedes")) {
-      if (value.schemaVersion < 4) {
-        errors.push("$.supersedes requires schemaVersion 4.");
-      }
-      if (value.handoffPhase !== "baseline") {
-        errors.push(
-          "$.supersedes is only for a baseline rerun; later phases use $.previousHandoff.",
-        );
-      }
-      if (value.supersedes.runId === value.runId) {
-        errors.push("$.supersedes.runId must differ from $.runId.");
-      }
-    }
-
-    const manualApplication = value.manualApplication;
-    const hasConfirmation =
-      Object.hasOwn(manualApplication, "confirmedByRole") ||
-      Object.hasOwn(manualApplication, "confirmedAt");
-
-    if (manualApplication.status === "confirmed-applied") {
-      if (!manualApplication.confirmedByRole || !manualApplication.confirmedAt) {
-        errors.push(
-          "$.manualApplication confirmation fields are required when confirmed-applied.",
-        );
-      }
-    } else if (hasConfirmation) {
-      errors.push(
-        "$.manualApplication confirmation fields are allowed only when confirmed-applied.",
-      );
-    }
-
-    const epic = value.epic;
-    const epicHasExternalId = Object.hasOwn(epic, "externalId");
-    if (epic.action === "create" && epicHasExternalId) {
-      errors.push("$.epic.externalId is not allowed for a create proposal.");
-    }
-    if (epic.action !== "create" && !epicHasExternalId) {
-      errors.push("$.epic.externalId is required for update or no-change.");
-    }
-
-    const feature = value.feature;
-    const featureHasExternalId = Object.hasOwn(feature, "externalId");
-    if (feature.action === "create" && featureHasExternalId) {
-      errors.push("$.feature.externalId is not allowed for a create proposal.");
-    }
-    if (feature.action !== "create" && !featureHasExternalId) {
-      errors.push("$.feature.externalId is required for update or no-change.");
-    }
-    if (feature.parentEpicLocalId !== epic.localId) {
-      errors.push("$.feature.parentEpicLocalId must match $.epic.localId.");
-    }
-    if (epicHasExternalId &&
-      feature.parentEpicExternalId !== epic.externalId) {
-      errors.push(
-        "$.feature.parentEpicExternalId must match $.epic.externalId.",
-      );
-    }
-    if (!epicHasExternalId &&
-      Object.hasOwn(feature, "parentEpicExternalId")) {
-      errors.push(
-        "$.feature.parentEpicExternalId is not allowed for a new Epic.",
-      );
-    }
-
-    const storyLocalIds = [];
-    const storyExternalIds = [];
-    const taskLocalIds = [];
-    const taskExternalIds = [];
-    for (const [index, story] of value.stories.entries()) {
-      const location = `$.stories[${index}]`;
-      const hasExternalId = Object.hasOwn(story, "externalId");
-      const hasParentExternalId =
-        Object.hasOwn(story, "parentFeatureExternalId");
-      storyLocalIds.push(story.localId);
-      if (hasExternalId) storyExternalIds.push(story.externalId);
-
-      if (story.action === "create" && hasExternalId) {
-        errors.push(`${location}.externalId is not allowed for a create proposal.`);
-      }
-      if (story.action !== "create" && !hasExternalId) {
-        errors.push(
-          `${location}.externalId is required for update or no-change.`,
-        );
-      }
-      if (story.parentFeatureLocalId !== feature.localId) {
-        errors.push(`${location}.parentFeatureLocalId must match $.feature.localId.`);
-      }
-      if (featureHasExternalId &&
-        story.parentFeatureExternalId !== feature.externalId) {
-        errors.push(
-          `${location}.parentFeatureExternalId must match $.feature.externalId.`,
-        );
-      }
-      if (!featureHasExternalId && hasParentExternalId) {
-        errors.push(
-          `${location}.parentFeatureExternalId is not allowed for a new feature.`,
-        );
-      }
-
-      let contributionTotal = 0;
-      let weightedProgress = 0;
-      const taskKinds = [];
-      for (const [taskIndex, task] of story.tasks.entries()) {
-        const taskLocation = `${location}.tasks[${taskIndex}]`;
-        const taskHasExternalId = Object.hasOwn(task, "externalId");
-        const taskHasParentExternalId =
-          Object.hasOwn(task, "parentStoryExternalId");
-        taskLocalIds.push(task.localId);
-        taskKinds.push(task.kind);
-        if (taskHasExternalId) taskExternalIds.push(task.externalId);
-
-        if (task.action === "create" && taskHasExternalId) {
-          errors.push(
-            `${taskLocation}.externalId is not allowed for a create proposal.`,
-          );
-        }
-        if (task.action !== "create" && !taskHasExternalId) {
-          errors.push(
-            `${taskLocation}.externalId is required for update or no-change.`,
-          );
-        }
-        if (task.parentStoryLocalId !== story.localId) {
-          errors.push(
-            `${taskLocation}.parentStoryLocalId must match ${location}.localId.`,
-          );
-        }
-        if (hasExternalId &&
-          task.parentStoryExternalId !== story.externalId) {
-          errors.push(
-            `${taskLocation}.parentStoryExternalId must match ${location}.externalId.`,
-          );
-        }
-        if (!hasExternalId && taskHasParentExternalId) {
-          errors.push(
-            `${taskLocation}.parentStoryExternalId is not allowed for a new story.`,
-          );
-        }
-
-        const taskIsDone = task.proposedState.toLowerCase() === "done";
-        if (taskIsDone !== (task.proposedProgress === 100)) {
-          errors.push(
-            `${taskLocation} must use state Done exactly when progress is 100.`,
-          );
-        }
-        if (task.kind !== "implementation" &&
-          task.checkpointMilestones.length > 0) {
-          errors.push(
-            `${taskLocation}.checkpointMilestones are allowed only for the implementation Task.`,
-          );
-        }
-        contributionTotal += task.contributionPercent;
-        weightedProgress +=
-          task.contributionPercent * task.proposedProgress;
-      }
-
-      if (contributionTotal !== 100) {
-        errors.push(
-          `${location}.tasks contributionPercent values must total 100.`,
-        );
-      }
-      const expectedTaskKinds = ["baseline", "implementation", "verification"];
-      if (taskKinds.length !== expectedTaskKinds.length ||
-        expectedTaskKinds.some(kind =>
-          taskKinds.filter(taskKind => taskKind === kind).length !== 1)) {
-        errors.push(
-          `${location}.tasks must contain exactly one baseline, implementation and verification Task.`,
-        );
-      }
-      const calculatedProgress = Math.round(weightedProgress / 100);
-      if (story.proposedProgress !== calculatedProgress) {
-        errors.push(
-          `${location}.proposedProgress must equal task-weighted progress ${calculatedProgress}.`,
-        );
-      }
-      if (story.proposedState.toLowerCase() === "done" &&
-        story.tasks.some(task => task.proposedState.toLowerCase() !== "done")) {
-        errors.push(
-          `${location} cannot be Done while one or more Tasks are not Done.`,
-        );
-      }
-    }
-
-    if (new Set(storyLocalIds).size !== storyLocalIds.length) {
-      errors.push("$.stories must use unique localId values.");
-    }
-    if (new Set(storyExternalIds).size !== storyExternalIds.length) {
-      errors.push("$.stories must use unique externalId values.");
-    }
-    if (new Set(taskLocalIds).size !== taskLocalIds.length) {
-      errors.push("$.stories tasks must use unique localId values.");
-    }
-    if (new Set(taskExternalIds).size !== taskExternalIds.length) {
-      errors.push("$.stories tasks must use unique externalId values.");
-    }
-
-    const standupStory = value.stories.find(
-      story => story.localId === value.standup.storyLocalId,
-    );
-    if (!standupStory) {
-      errors.push("$.standup.storyLocalId must identify a handoff story.");
-    } else {
-      if (standupStory.externalId !== value.standup.storyExternalId) {
-        errors.push(
-          standupStory.action === "create"
-            ? "$.standup.storyExternalId must be omitted while its Story is still a create proposal."
-            : `$.standup.storyExternalId ${JSON.stringify(value.standup.storyExternalId)} must match the selected story externalId ${JSON.stringify(standupStory.externalId)}.`,
-        );
-      }
-      if (standupStory.currentProgress !==
-        value.standup.currentBoardProgress) {
-        errors.push(
-          "$.standup.currentBoardProgress must match the selected story currentProgress.",
-        );
-      }
-      if (standupStory.proposedProgress !==
-        value.standup.proposedBoardProgress) {
-        errors.push(
-          "$.standup.proposedBoardProgress must match the selected story proposedProgress.",
-        );
-      }
-    }
-
-    const proposesDone = [epic, feature, ...value.stories].some(
-      item => item.proposedState.toLowerCase() === "done",
-    );
-    if (proposesDone && value.handoffPhase !== "verification") {
-      errors.push("Only a verification handoff may propose state Done.");
-    }
-    return;
-  }
-
   if (value.artifactType === "migration-map") {
     validateMigrationMapRules(value, errors);
     return;
@@ -1289,6 +1021,13 @@ const loadArtifact = async filePath => {
   const { raw, value } = await readJson(absolutePath);
   const schemaFile = schemaByArtifactType[value.artifactType];
 
+  // The flow skills stopped tracking the board phase by phase; a baseline now
+  // prints one User Story. Archived snapshots remain evidence, not input.
+  if (value.artifactType === "work-item-handoff") {
+    throw new Error(
+      `${absolutePath} is a retired work-item-handoff snapshot; validate the chain without it.`,
+    );
+  }
   if (!schemaFile) {
     throw new Error(`${absolutePath} has an unknown artifactType.`);
   }
@@ -1340,52 +1079,6 @@ const loadArtifact = async filePath => {
   };
 };
 
-const collectWorkItemsByLocalId = snapshot => {
-  const items = new Map();
-  const add = (item, kind) => items.set(item.localId, { item, kind });
-  add(snapshot.epic, "Epic");
-  add(snapshot.feature, "Feature");
-  for (const story of snapshot.stories) {
-    add(story, "User Story");
-    for (const task of story.tasks) add(task, "Task");
-  }
-  return items;
-};
-
-const workItemContentEquals = (current, previous) =>
-  current.proposedState === previous.proposedState &&
-  current.proposedProgress === previous.proposedProgress &&
-  JSON.stringify(current.fields ?? null) ===
-    JSON.stringify(previous.fields ?? null);
-
-// An item that did not move must say so, and an item that says it did not move
-// must really be unchanged. Without both directions a reader either re-reads
-// text that never changed or misses a change hidden behind no-change.
-const validateWorkItemActions = (label, currentItems, previousItems) => {
-  for (const [localId, entry] of currentItems) {
-    const previousEntry = previousItems.get(localId);
-    if (!previousEntry) continue;
-
-    if (entry.item.action === "update") {
-      if (previousEntry.item.action === "create") continue;
-      if (workItemContentEquals(entry.item, previousEntry.item)) {
-        throw new Error(
-          `${label} work-item ${entry.kind} ${localId} is unchanged and must use action no-change.`,
-        );
-      }
-      continue;
-    }
-
-    if (entry.item.action === "no-change" &&
-      previousEntry.item.action !== "create" &&
-      !workItemContentEquals(entry.item, previousEntry.item)) {
-      throw new Error(
-        `${label} work-item ${entry.kind} ${localId} declares no-change but its fields, state or progress moved.`,
-      );
-    }
-  }
-};
-
 // A later verification attempt and the repair that answers it add -<N> to
 // every file they write, so no attempt overwrites a file an earlier pointer
 // hashes. Names outside that family, such as the examples', are not checked.
@@ -1418,9 +1111,6 @@ const validateArtifactLinks = artifacts => {
   // not one answering it, beside this attempt's own debug-handoff.
   const debugResultIsPrevious = Boolean(debugResult) &&
     verification?.value.debugResult?.sha256 === debugResult.sha256;
-  const workItemHandoffs = artifacts.filter(
-    artifact => artifact.value.artifactType === "work-item-handoff",
-  );
 
   if (migration && !contract) {
     throw new Error("A migration-result requires a flow-contract artifact.");
@@ -1925,252 +1615,6 @@ const validateArtifactLinks = artifacts => {
         debugResultIsPrevious ? attempt - 1 : attempt,
       );
     }
-    for (const handoff of workItemHandoffs) {
-      if (handoff.value.handoffPhase === "verification") {
-        requireAttemptName(handoff, "work-item-verification", attempt);
-      }
-    }
-  }
-
-  if (workItemHandoffs.length > 0) {
-    const handoffByPhase = new Map();
-    const primaryArtifactByType = new Map(
-      artifacts
-        .filter(artifact => handoffArtifactTypes.has(artifact.value.artifactType))
-        .map(artifact => [artifact.value.artifactType, artifact]),
-    );
-
-    const baselineHandoffs = workItemHandoffs.filter(
-      handoff => handoff.value.handoffPhase === "baseline",
-    );
-    const supersedingBaseline = baselineHandoffs.find(handoff =>
-      Object.hasOwn(handoff.value, "supersedes"));
-    let supersededBaseline;
-
-    if (baselineHandoffs.length > 1) {
-      if (!supersedingBaseline || baselineHandoffs.length > 2) {
-        throw new Error(
-          "Only one baseline work-item handoff is allowed unless a later baseline supersedes exactly one earlier baseline.",
-        );
-      }
-      supersededBaseline = baselineHandoffs.find(
-        handoff => handoff !== supersedingBaseline,
-      );
-      if (supersedingBaseline.value.supersedes.sha256 !==
-        supersededBaseline.sha256) {
-        throw new Error(
-          "baseline work-item supersedes hash does not match the earlier baseline handoff.",
-        );
-      }
-      if (supersedingBaseline.value.supersedes.runId !==
-        supersededBaseline.value.runId) {
-        throw new Error(
-          "baseline work-item supersedes runId does not match the earlier baseline handoff.",
-        );
-      }
-      if (supersedingBaseline.value.flowId !== supersededBaseline.value.flowId) {
-        throw new Error(
-          "baseline work-item supersedes a handoff for a different flow.",
-        );
-      }
-    }
-
-    for (const handoff of workItemHandoffs) {
-      if (handoff === supersededBaseline) continue;
-      const phase = handoff.value.handoffPhase;
-      if (handoffByPhase.has(phase)) {
-        throw new Error(`Only one ${phase} work-item handoff is allowed.`);
-      }
-      handoffByPhase.set(phase, handoff);
-
-      const primary = primaryArtifactByType.get(
-        handoff.value.primaryArtifact.artifactType,
-      );
-      if (!primary) {
-        throw new Error(
-          `${phase} work-item handoff requires its primary artifact.`,
-        );
-      }
-      if (handoff.value.primaryArtifact.sha256 !== primary.sha256) {
-        throw new Error(`${phase} work-item primary artifact hash does not match.`);
-      }
-      if (handoff.value.flowId !== primary.value.flowId) {
-        throw new Error(`${phase} work-item flowId does not match its primary artifact.`);
-      }
-      if (handoff.value.skillVersion !== primary.value.skillVersion) {
-        throw new Error(
-          `${phase} work-item skillVersion does not match its primary artifact.`,
-        );
-      }
-
-      if (phase === "baseline") {
-        // An item that is not on the board yet has no ID on either side. The
-        // contract omits it and the handoff proposes a create; inventing a
-        // placeholder ID to satisfy an equality check would put a value in the
-        // artifact that reads like a real Targetprocess reference.
-        const context = primary.value.workItemContext;
-        const requireIdentity = (item, contextId, kind) => {
-          if (contextId === undefined) {
-            if (item.action !== "create") {
-              throw new Error(
-                `baseline work-item ${kind} has no ID in flow-contract workItemContext, so it must use action create (found ${item.action}); add the external ID to the contract or propose a create.`,
-              );
-            }
-            return;
-          }
-          if (item.action === "create") {
-            throw new Error(
-              `baseline work-item ${kind} proposes create while flow-contract workItemContext already names ${contextId}; remove the ID from the contract or use update.`,
-            );
-          }
-          if (item.externalId !== contextId) {
-            throw new Error(
-              `baseline work-item ${kind} ID ${item.externalId} does not match flow-contract workItemContext ${contextId}.`,
-            );
-          }
-        };
-
-        // While a contract still carried an approval gate, the baseline Task
-        // held it: calling that Task complete put progress on the board for a
-        // gate nobody had passed. A schemaVersion 6 contract has no gate, so a
-        // finished baseline really is finished.
-        for (const story of handoff.value.stories) {
-          const baselineTask = story.tasks.find(task => task.kind === "baseline");
-          if (baselineTask && baselineTask.proposedProgress === 100 &&
-            primary.value.approval &&
-            primary.value.approval.status !== "approved") {
-            throw new Error(
-              `baseline work-item Task ${baselineTask.localId} proposes 100% while the flow-contract approval is ${primary.value.approval.status}; the approval gate belongs to that Task.`,
-            );
-          }
-        }
-
-        requireIdentity(handoff.value.epic, context.epicExternalId, "Epic");
-        requireIdentity(
-          handoff.value.feature,
-          context.featureExternalId,
-          "Feature",
-        );
-
-        const contextStoryIds = context.storyExternalIds;
-        if (contextStoryIds === undefined) {
-          for (const story of handoff.value.stories) {
-            requireIdentity(story, undefined, `User Story ${story.localId}`);
-          }
-        } else {
-          const storyIds = handoff.value.stories.map(story => story.externalId);
-          if (storyIds.length !== contextStoryIds.length ||
-            storyIds.some(storyId => !contextStoryIds.includes(storyId))) {
-            throw new Error(
-              `baseline work-item Story IDs ${JSON.stringify(storyIds)} do not match flow-contract workItemContext ${JSON.stringify(contextStoryIds)}.`,
-            );
-          }
-        }
-      }
-    }
-
-    const phaseOrder = ["baseline", "migration", "verification"];
-    for (let index = 1; index < phaseOrder.length; index += 1) {
-      const current = handoffByPhase.get(phaseOrder[index]);
-      const previous = handoffByPhase.get(phaseOrder[index - 1]);
-      if (!current) continue;
-      if (!previous) {
-        throw new Error(
-          `${phaseOrder[index]} work-item handoff requires the previous phase handoff.`,
-        );
-      }
-      if (current.value.previousHandoff.sha256 !== previous.sha256) {
-        throw new Error(
-          `${phaseOrder[index]} work-item previous handoff hash does not match.`,
-        );
-      }
-
-      const phase = phaseOrder[index];
-      const currentItems = collectWorkItemsByLocalId(current.value);
-      const previousItems = collectWorkItemsByLocalId(previous.value);
-      const application = current.value.previousApplication;
-      const createdExternalIds = application.createdExternalIds ?? [];
-
-      if (createdExternalIds.length > 0 &&
-        application.status !== "confirmed-applied") {
-        throw new Error(
-          `${phase} work-item createdExternalIds requires a confirmed-applied previous application.`,
-        );
-      }
-
-      for (const created of createdExternalIds) {
-        const previousEntry = previousItems.get(created.localId);
-        if (!previousEntry) {
-          throw new Error(
-            `${phase} work-item createdExternalIds names unknown local ID ${created.localId}.`,
-          );
-        }
-        if (previousEntry.item.action !== "create") {
-          throw new Error(
-            `${phase} work-item createdExternalIds names ${created.localId}, which the previous snapshot did not propose to create.`,
-          );
-        }
-        const currentEntry = currentItems.get(created.localId);
-        if (!currentEntry) {
-          throw new Error(
-            `${phase} work-item snapshot no longer contains created item ${created.localId}.`,
-          );
-        }
-        if (currentEntry.item.action === "create") {
-          throw new Error(
-            `${phase} work-item ${created.localId} already exists externally and must not be proposed as create again.`,
-          );
-        }
-        if (currentEntry.item.externalId !== created.externalId) {
-          throw new Error(
-            `${phase} work-item ${created.localId} does not carry the confirmed external ID ${created.externalId}.`,
-          );
-        }
-      }
-
-      validateWorkItemActions(phase, currentItems, previousItems);
-    }
-
-    if (supersededBaseline) {
-      validateWorkItemActions(
-        "baseline rerun",
-        collectWorkItemsByLocalId(supersedingBaseline.value),
-        collectWorkItemsByLocalId(supersededBaseline.value),
-      );
-    }
-
-    const verificationHandoff = handoffByPhase.get("verification");
-    if (verificationHandoff && verification) {
-      const proposesDone = [
-        verificationHandoff.value.epic,
-        verificationHandoff.value.feature,
-        ...verificationHandoff.value.stories,
-      ].some(item => item.proposedState.toLowerCase() === "done");
-      if (proposesDone &&
-        (verification.value.status !== "PASS" ||
-          verification.value.manualValidation.status !== "passed")) {
-        throw new Error(
-          "A Done proposal requires overall PASS and passed manual validation.",
-        );
-      }
-    }
-
-    const migrationHandoff = handoffByPhase.get("migration");
-    if (migrationHandoff && migration) {
-      const taskMilestones = new Set(
-        migrationHandoff.value.stories.flatMap(story =>
-          story.tasks
-            .filter(task => task.kind === "implementation")
-            .flatMap(task => task.checkpointMilestones)),
-      );
-      for (const checkpoint of migration.value.checkpoints) {
-        if (!taskMilestones.has(checkpoint.milestone)) {
-          throw new Error(
-            `migration checkpoint ${checkpoint.milestone} is not assigned to a work-item Task.`,
-          );
-        }
-      }
-    }
   }
 };
 
@@ -2190,9 +1634,6 @@ const exampleFiles = [
   path.join(exampleDirectory, "flow-contract.json"),
   path.join(exampleDirectory, "migration-result.json"),
   path.join(exampleDirectory, "verification-result.json"),
-  path.join(exampleDirectory, "work-item-baseline.json"),
-  path.join(exampleDirectory, "work-item-migration.json"),
-  path.join(exampleDirectory, "work-item-verification.json"),
 ];
 const debugExampleDirectory = path.join(
   rootDirectory,
@@ -2259,49 +1700,6 @@ const runSelfTest = async () => {
 
   if (!linkValidationFailed) {
     throw new Error("Handoff validator self-test did not reject a mismatched hash.");
-  }
-
-  const invalidWorkItemLinks = structuredClone(artifacts);
-  const migrationWorkItem = invalidWorkItemLinks.find(
-    artifact =>
-      artifact.value.artifactType === "work-item-handoff" &&
-      artifact.value.handoffPhase === "migration",
-  );
-  migrationWorkItem.value.previousHandoff.sha256 = "0".repeat(64);
-
-  let workItemLinkValidationFailed = false;
-  try {
-    validateArtifactLinks(invalidWorkItemLinks);
-  } catch (error) {
-    workItemLinkValidationFailed = error.message.includes(
-      "migration work-item previous handoff hash does not match",
-    );
-  }
-
-  if (!workItemLinkValidationFailed) {
-    throw new Error(
-      "Handoff validator self-test did not reject a mismatched work-item hash.",
-    );
-  }
-
-  const verificationWorkItemOnly = artifacts.filter(
-    artifact =>
-      artifact.value.artifactType === "work-item-handoff" &&
-      artifact.value.handoffPhase === "verification",
-  );
-  let missingCompanionFailed = false;
-  try {
-    validateArtifactLinks(verificationWorkItemOnly);
-  } catch (error) {
-    missingCompanionFailed = error.message.includes(
-      "verification work-item handoff requires its primary artifact",
-    );
-  }
-
-  if (!missingCompanionFailed) {
-    throw new Error(
-      "Handoff validator self-test did not reject a missing companion artifact.",
-    );
   }
 
   const invalidCompletedMigration = structuredClone(artifacts);
@@ -2374,176 +1772,6 @@ const runSelfTest = async () => {
     );
   }
 
-  const workItemSchemaPath = path.join(
-    rootDirectory,
-    "schemas",
-    "work-item-handoff.schema.json",
-  );
-  const { value: workItemSchema } = await readJson(workItemSchemaPath);
-  const invalidCreateProposal = structuredClone(migrationWorkItem.value);
-  invalidCreateProposal.stories[0].action = "create";
-  const invalidCreateErrors = [];
-  validateNode(invalidCreateProposal, workItemSchema, "$", invalidCreateErrors);
-  validateArtifactRules(invalidCreateProposal, invalidCreateErrors);
-
-  if (!invalidCreateErrors.some(error =>
-    error.includes("externalId is not allowed for a create proposal"))) {
-    throw new Error(
-      "Handoff validator self-test did not reject a create proposal with external ID.",
-    );
-  }
-
-  const invalidConfirmation = structuredClone(migrationWorkItem.value);
-  invalidConfirmation.manualApplication.status = "confirmed-applied";
-  const invalidConfirmationErrors = [];
-  validateNode(
-    invalidConfirmation,
-    workItemSchema,
-    "$",
-    invalidConfirmationErrors,
-  );
-  validateArtifactRules(invalidConfirmation, invalidConfirmationErrors);
-
-  if (!invalidConfirmationErrors.some(error =>
-    error.includes("confirmation fields are required"))) {
-    throw new Error(
-      "Handoff validator self-test did not reject unproven manual application.",
-    );
-  }
-
-  const invalidWeightedProgress = structuredClone(migrationWorkItem.value);
-  invalidWeightedProgress.stories[0].proposedProgress -= 1;
-  const invalidWeightedProgressErrors = [];
-  validateNode(
-    invalidWeightedProgress,
-    workItemSchema,
-    "$",
-    invalidWeightedProgressErrors,
-  );
-  validateArtifactRules(
-    invalidWeightedProgress,
-    invalidWeightedProgressErrors,
-  );
-
-  if (!invalidWeightedProgressErrors.some(error =>
-    error.includes("proposedProgress must equal task-weighted progress"))) {
-    throw new Error(
-      "Handoff validator self-test did not reject guessed Story progress.",
-    );
-  }
-
-  const invalidCurrentBoardProgress = structuredClone(
-    migrationWorkItem.value,
-  );
-  invalidCurrentBoardProgress.standup.currentBoardProgress += 1;
-  const invalidCurrentBoardProgressErrors = [];
-  validateNode(
-    invalidCurrentBoardProgress,
-    workItemSchema,
-    "$",
-    invalidCurrentBoardProgressErrors,
-  );
-  validateArtifactRules(
-    invalidCurrentBoardProgress,
-    invalidCurrentBoardProgressErrors,
-  );
-  if (!invalidCurrentBoardProgressErrors.some(error =>
-    error.includes(
-      "currentBoardProgress must match the selected story currentProgress",
-    ))) {
-    throw new Error(
-      "Handoff validator self-test did not reject mismatched current board progress.",
-    );
-  }
-
-  const incompleteDoneStory = structuredClone(migrationWorkItem.value);
-  incompleteDoneStory.stories[0].proposedState = "Done";
-  const incompleteDoneStoryErrors = [];
-  validateNode(
-    incompleteDoneStory,
-    workItemSchema,
-    "$",
-    incompleteDoneStoryErrors,
-  );
-  validateArtifactRules(incompleteDoneStory, incompleteDoneStoryErrors);
-
-  if (!incompleteDoneStoryErrors.some(error =>
-    error.includes("cannot be Done while one or more Tasks are not Done"))) {
-    throw new Error(
-      "Handoff validator self-test did not reject Done with incomplete Tasks.",
-    );
-  }
-
-  const invalidCheckpointTask = structuredClone(migrationWorkItem.value);
-  const implementationTask = invalidCheckpointTask.stories[0].tasks.find(
-    task => task.kind === "implementation",
-  );
-  const verificationTask = invalidCheckpointTask.stories[0].tasks.find(
-    task => task.kind === "verification",
-  );
-  verificationTask.checkpointMilestones =
-    implementationTask.checkpointMilestones;
-  implementationTask.checkpointMilestones = [];
-  const invalidCheckpointTaskErrors = [];
-  validateNode(
-    invalidCheckpointTask,
-    workItemSchema,
-    "$",
-    invalidCheckpointTaskErrors,
-  );
-  validateArtifactRules(invalidCheckpointTask, invalidCheckpointTaskErrors);
-
-  if (!invalidCheckpointTaskErrors.some(error =>
-    error.includes(
-      "checkpointMilestones are allowed only for the implementation Task",
-    ))) {
-    throw new Error(
-      "Handoff validator self-test did not reject checkpoints on the wrong Task.",
-    );
-  }
-
-  const invalidDoneLinks = structuredClone(artifacts);
-  const invalidDoneVerification = invalidDoneLinks.find(
-    artifact => artifact.value.artifactType === "verification-result",
-  );
-  invalidDoneVerification.value.status = "BLOCKED";
-  invalidDoneVerification.value.criteria[0].status = "BLOCKED";
-  invalidDoneVerification.value.manualValidation.status = "blocked";
-  invalidDoneVerification.value.push.status = "not-requested";
-  invalidDoneVerification.value.push.commitShas = [];
-  invalidDoneVerification.value.push.upstreamSet = false;
-  delete invalidDoneVerification.value.push.confirmedByRole;
-  delete invalidDoneVerification.value.push.confirmedAt;
-  const invalidDoneDebugHandoff = structuredClone(debugArtifacts.find(
-    artifact => artifact.value.artifactType === "debug-handoff",
-  ));
-  invalidDoneDebugHandoff.value.verificationResult.sha256 =
-    invalidDoneVerification.sha256;
-  invalidDoneLinks.push(invalidDoneDebugHandoff);
-  const invalidDoneWorkItem = invalidDoneLinks.find(
-    artifact =>
-      artifact.value.artifactType === "work-item-handoff" &&
-      artifact.value.handoffPhase === "verification",
-  );
-  invalidDoneWorkItem.value.epic.proposedState = "Done";
-  invalidDoneWorkItem.value.feature.proposedState = "In Progress";
-  invalidDoneWorkItem.value.stories[0].proposedState = "In development";
-
-  let doneValidationFailed = false;
-  try {
-    validateArtifactLinks(invalidDoneLinks);
-  } catch (error) {
-    doneValidationFailed = error.message.includes(
-      "A Done proposal requires overall PASS and passed manual validation",
-    );
-  }
-
-  if (!doneValidationFailed) {
-    throw new Error(
-      "Handoff validator self-test did not reject Done without host validation.",
-    );
-  }
-
   // A failed second attempt validates with the debug-result it consumed beside
   // its own debug-handoff, and every per-attempt file is named for its attempt.
   const linkError = set => {
@@ -2587,12 +1815,6 @@ const runSelfTest = async () => {
       replaceAt(reverifyArtifacts, 3, renamed(reverifyArtifacts[3], "verification-result.json")),
       "name it verification-result-2.json",
       "a re-verification that takes attempt 1's name",
-    ],
-    [
-      artifacts.map(artifact => (artifact.value.handoffPhase === "verification" ?
-        renamed(artifact, "work-item-verification-2.json") : artifact)),
-      "name it work-item-verification.json",
-      "an attempt 1 snapshot with an attempt suffix",
     ],
   ]) {
     if (!linkError(set).includes(expected)) {
@@ -2689,11 +1911,6 @@ const runSelfTest = async () => {
       verification: mutated.find(
         artifact => artifact.value.artifactType === "verification-result",
       ).value,
-      handoffs: Object.fromEntries(
-        mutated
-          .filter(artifact => artifact.value.artifactType === "work-item-handoff")
-          .map(artifact => [artifact.value.handoffPhase, artifact.value]),
-      ),
     });
 
     let rejected = false;
@@ -2954,34 +2171,6 @@ const runSelfTest = async () => {
   );
 
   expectLinkRejection(
-    ({ handoffs }) => {
-      const task = handoffs.verification.stories[0].tasks.find(
-        candidate => candidate.localId === "detail-drawer-baseline",
-      );
-      task.action = "update";
-    },
-    "must use action no-change",
-    "an unchanged work item still proposed as an update",
-  );
-
-  expectLinkRejection(
-    ({ handoffs }) => {
-      handoffs.migration.previousApplication.status = "not-applied";
-    },
-    "requires a confirmed-applied previous application",
-    "created external IDs without a confirmed application",
-  );
-
-  expectLinkRejection(
-    ({ handoffs }) => {
-      handoffs.migration.previousApplication.createdExternalIds[0].externalId =
-        "999999";
-    },
-    "does not carry the confirmed external ID",
-    "a created external ID the snapshot does not carry",
-  );
-
-  expectLinkRejection(
     ({ migration }) => {
       migration.renderedSurfaceComparison.surfaces =
         migration.renderedSurfaceComparison.surfaces.filter(
@@ -3050,181 +2239,6 @@ const runSelfTest = async () => {
       "Handoff validator self-test did not reject a visual-parity failure for an undeclared surface.",
     );
   }
-
-  const baselineArtifact = artifacts.find(
-    artifact =>
-      artifact.value.artifactType === "work-item-handoff" &&
-      artifact.value.handoffPhase === "baseline",
-  );
-  const contractArtifact = artifacts.find(
-    artifact => artifact.value.artifactType === "flow-contract",
-  );
-
-  const buildRerun = mutate => {
-    const rerun = structuredClone(baselineArtifact);
-    rerun.value.schemaVersion = 4;
-    rerun.value.runId = `${baselineArtifact.value.runId}-rerun`;
-    rerun.value.supersedes = {
-      path: baselineArtifact.absolutePath,
-      sha256: baselineArtifact.sha256,
-      runId: baselineArtifact.value.runId,
-    };
-    for (const [, entry] of collectWorkItemsByLocalId(rerun.value)) {
-      if (entry.item.action !== "create") entry.item.action = "no-change";
-    }
-    mutate(rerun.value);
-    return [
-      structuredClone(contractArtifact),
-      structuredClone(baselineArtifact),
-      rerun,
-    ];
-  };
-
-  validateArtifactLinks(buildRerun(() => {}));
-
-  const expectRerunRejection = (mutate, expected, description) => {
-    let rejected = false;
-    try {
-      validateArtifactLinks(buildRerun(mutate));
-    } catch (error) {
-      rejected = error.message.includes(expected);
-    }
-    if (!rejected) {
-      throw new Error(`Handoff validator self-test did not reject ${description}.`);
-    }
-  };
-
-  expectRerunRejection(
-    rerun => {
-      rerun.epic.action = "update";
-    },
-    "is unchanged and must use action no-change",
-    "a baseline rerun that re-proposes an unchanged Epic as an update",
-  );
-
-  expectRerunRejection(
-    rerun => {
-      rerun.feature.fields.whyMatters = `${rerun.feature.fields.whyMatters} Reworded.`;
-    },
-    "declares no-change but its fields, state or progress moved",
-    "a baseline rerun that hides a reworded Feature behind no-change",
-  );
-
-  expectRerunRejection(
-    rerun => {
-      rerun.supersedes.sha256 = "0".repeat(64);
-    },
-    "supersedes hash does not match",
-    "a baseline rerun whose supersedes hash does not match the earlier baseline",
-  );
-
-  // A brand-new Epic, Feature and Story must be expressible end to end: no ID
-  // on either side, action create, and no invented standup reference.
-  const buildCreateProposal = mutate => {
-    const pair = [
-      structuredClone(contractArtifact),
-      structuredClone(baselineArtifact),
-    ];
-    const [contract, handoff] = pair;
-    delete contract.value.workItemContext.epicExternalId;
-    delete contract.value.workItemContext.featureExternalId;
-    delete contract.value.workItemContext.storyExternalIds;
-    for (const item of [handoff.value.epic, handoff.value.feature,
-      ...handoff.value.stories]) {
-      item.action = "create";
-      delete item.externalId;
-    }
-    for (const story of handoff.value.stories) {
-      delete story.parentFeatureExternalId;
-    }
-    delete handoff.value.feature.parentEpicExternalId;
-    for (const story of handoff.value.stories) {
-      for (const task of story.tasks) delete task.parentStoryExternalId;
-    }
-    delete handoff.value.standup.storyExternalId;
-    mutate(contract.value, handoff.value);
-    return pair;
-  };
-
-  validateArtifactLinks(buildCreateProposal(() => {}));
-
-  const expectCreateRejection = (mutate, expected, description) => {
-    let rejected = false;
-    try {
-      validateArtifactLinks(buildCreateProposal(mutate));
-    } catch (error) {
-      rejected = error.message.includes(expected);
-    }
-    if (!rejected) {
-      throw new Error(`Handoff validator self-test did not reject ${description}.`);
-    }
-  };
-
-  expectCreateRejection(
-    (contract) => {
-      contract.workItemContext.epicExternalId = "700100";
-    },
-    "proposes create while flow-contract workItemContext already names 700100",
-    "a create proposal for an Epic the contract already identifies",
-  );
-
-  expectCreateRejection(
-    (contract, handoff) => {
-      handoff.epic.action = "update";
-      handoff.epic.externalId = "700100";
-    },
-    "has no ID in flow-contract workItemContext, so it must use action create",
-    "an update for an Epic the contract does not identify",
-  );
-
-  let approvalGateRejected = false;
-  try {
-    const pair = [
-      structuredClone(contractArtifact),
-      structuredClone(baselineArtifact),
-    ];
-    pair[0].value.approval.status = "pending";
-    validateArtifactLinks(pair);
-  } catch (error) {
-    approvalGateRejected = error.message.includes(
-      "the approval gate belongs to that Task",
-    );
-  }
-  if (!approvalGateRejected) {
-    throw new Error(
-      "Handoff validator self-test did not reject a complete baseline Task under a pending contract.",
-    );
-  }
-
-  const structuralRerun = buildRerun(() => {})[2].value;
-  const expectRerunStructuralRejection = (mutate, expected, description) => {
-    const candidate = structuredClone(structuralRerun);
-    mutate(candidate);
-    const structuralErrors = [];
-    validateNode(candidate, workItemSchema, "$", structuralErrors);
-    validateArtifactRules(candidate, structuralErrors);
-    if (!structuralErrors.some(error => error.includes(expected))) {
-      throw new Error(
-        `Handoff validator self-test did not reject ${description}.`,
-      );
-    }
-  };
-
-  expectRerunStructuralRejection(
-    candidate => {
-      candidate.schemaVersion = 3;
-    },
-    "$.supersedes requires schemaVersion 4",
-    "a supersedes declaration below schemaVersion 4",
-  );
-
-  expectRerunStructuralRejection(
-    candidate => {
-      candidate.supersedes.runId = candidate.runId;
-    },
-    "$.supersedes.runId must differ from $.runId",
-    "a baseline that supersedes its own run",
-  );
 
   const versionedContract = structuredClone(
     artifacts.find(artifact => artifact.value.artifactType === "flow-contract")
@@ -3303,6 +2317,50 @@ const runSelfTest = async () => {
     },
     "$.approval is not used from schemaVersion 6",
     "a schemaVersion 6 contract still carrying an approval block",
+  );
+
+  expectV6Rejection(
+    contract => {
+      delete contract.workItemContext;
+    },
+    "$.workItemContext is required below schemaVersion 7",
+    "a schemaVersion 6 contract without its work-item context",
+  );
+
+  const toV7 = contract => {
+    contract.schemaVersion = 7;
+    delete contract.workItemContext;
+    contract.userStory = {
+      title: "Migrate the line edit fields",
+      userValue: "As a map editor, I want to edit a line's length so that the map stays accurate.",
+      currentBehavior: "React renders the length field.",
+      desiredBehavior: "Angular renders the length field with the same behavior.",
+    };
+  };
+  const cleanV7 = contractV6(toV7);
+  const cleanV7Errors = [];
+  validateNode(cleanV7, schema, "$", cleanV7Errors);
+  validateArtifactRules(cleanV7, cleanV7Errors);
+  if (cleanV7Errors.length > 0) {
+    throw new Error(
+      `Handoff validator self-test rejected a valid schemaVersion 7 contract: ${cleanV7Errors.join(", ")}`,
+    );
+  }
+  expectV6Rejection(
+    contract => {
+      toV7(contract);
+      delete contract.userStory;
+    },
+    "$.userStory is required from schemaVersion 7",
+    "a schemaVersion 7 contract without its User Story",
+  );
+  expectV6Rejection(
+    contract => {
+      toV7(contract);
+      contract.workItemContext = {};
+    },
+    "$.workItemContext is not used from schemaVersion 7",
+    "a schemaVersion 7 contract still carrying work-item context",
   );
 
   expectV6Rejection(

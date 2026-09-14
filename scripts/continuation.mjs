@@ -19,11 +19,10 @@ more than the attempt its debug-result answers (debug-result.json answers 1,
 debug-result-<N>.json answers N).
 
 The artifacts must be the set the next phase validates first, or nothing is
-printed: flow-migrate takes the contract and the baseline work-item snapshot;
-flow-verify the contract, the migration result and both earlier snapshots,
-plus debug-result after a repair; flow-debug the contract, the migration and
-verification results, the debug handoff and both earlier snapshots;
-flow-baseline nothing, or the migration-map that proposed its slice, with
+printed: flow-migrate takes the contract; flow-verify the contract and the
+migration result, plus debug-result after a repair; flow-debug the contract,
+the migration and verification results and the debug handoff; flow-baseline
+nothing, or the migration-map that proposed its slice, with
 --flow-id to save; flow-plan nothing, or the verification-result that passed.
 
 Skills: flow-plan, flow-baseline, flow-migrate, flow-verify, flow-debug.
@@ -42,21 +41,15 @@ const artifactSets = {
     optional: ["migration-map"],
   },
   "flow-migrate": {
-    required: ["flow-contract", "work-item-handoff:baseline"],
+    required: ["flow-contract"],
     optional: [],
   },
   "flow-verify": {
-    required: [
-      "flow-contract", "migration-result",
-      "work-item-handoff:baseline", "work-item-handoff:migration",
-    ],
+    required: ["flow-contract", "migration-result"],
     optional: ["debug-result"],
   },
   "flow-debug": {
-    required: [
-      "flow-contract", "migration-result", "verification-result", "debug-handoff",
-      "work-item-handoff:baseline", "work-item-handoff:migration",
-    ],
+    required: ["flow-contract", "migration-result", "verification-result", "debug-handoff"],
     optional: [],
   },
 };
@@ -69,12 +62,7 @@ const readArtifact = async absolute => {
   }
 };
 
-const artifactKind = async absolute => {
-  const value = await readArtifact(absolute);
-  return value.artifactType === "work-item-handoff"
-    ? `work-item-handoff:${value.handoffPhase}`
-    : String(value.artifactType);
-};
+const artifactKind = async absolute => String((await readArtifact(absolute)).artifactType);
 
 const checkArtifactSet = async (next, artifacts) => {
   const expected = artifactSets[next];
@@ -263,14 +251,6 @@ const runSelfTest = async () => {
       return artifactPath;
     };
     const contract = await writeArtifact("flow-contract.json", { artifactType: "flow-contract" });
-    const baselineSnapshot = await writeArtifact("work-item-baseline.json", {
-      artifactType: "work-item-handoff",
-      handoffPhase: "baseline",
-    });
-    const migrationSnapshot = await writeArtifact("work-item-migration.json", {
-      artifactType: "work-item-handoff",
-      handoffPhase: "migration",
-    });
     const migrationResult = await writeArtifact("migration-result.json", {
       artifactType: "migration-result",
     });
@@ -295,7 +275,7 @@ const runSelfTest = async () => {
       "lab-root": temporary,
       "product-root": productRoot,
       "run-dir": runDirectory,
-      positional: [contract, baselineSnapshot],
+      positional: [contract],
       save: true,
     };
     const { invocation, savedPath } = await buildContinuation(options);
@@ -328,24 +308,24 @@ const runSelfTest = async () => {
         ...options,
         save: false,
         next: "flow-verify",
-        positional: [contract, migrationResult, baselineSnapshot],
+        positional: [contract],
       }),
-      "missing work-item-handoff:migration",
-      "a flow-verify invocation without the migration snapshot was accepted");
+      "missing migration-result",
+      "a flow-verify invocation without the migration result was accepted");
     await expectFailure(
       () => buildContinuation({
         ...options,
         save: false,
-        positional: [contract, baselineSnapshot, migrationResult],
+        positional: [contract, migrationResult],
       }),
       "unexpected migration-result",
       "an artifact the next phase does not validate was accepted");
 
     // Two repair loops save a prompt at every hand-over into one run directory,
     // each named for the attempt of the phase it starts.
-    const verifyInputs = [contract, migrationResult, baselineSnapshot, migrationSnapshot];
+    const verifyInputs = [contract, migrationResult];
     const debugInputs = (verification, handoff) =>
-      [contract, migrationResult, verification, handoff, baselineSnapshot, migrationSnapshot];
+      [contract, migrationResult, verification, handoff];
     const loops = [
       ["flow-verify", verifyInputs, "demo-flow-flow-verify-prompt.md"],
       ["flow-debug", debugInputs(verificationResult, debugHandoff), "demo-flow-flow-debug-prompt.md"],

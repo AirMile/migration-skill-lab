@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.26.0`.
+Skill version: `0.27.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -18,15 +18,13 @@ later phase depends on.
 Analyze one explicitly selected flow: survey its rendered surfaces, settle a
 boundary from that evidence, write a final `flow-contract.json`
 with the behavior baseline, the surface inventory and a bounded
-target-architecture proposal, then `work-item-baseline.json`, then the initial
-Targetprocess setup handoff, then a short review summary in this chat. Do not
-implement Angular code or present the proposed architecture as an established
-team standard.
+target-architecture proposal, then the slice's User Story and a short review
+summary in this chat. Do not implement Angular code or present the proposed
+architecture as an established team standard.
 
 The contract is the only durable analysis artifact. Write no prose report and
-no rendered work-item Markdown file: a second persisted copy drifts the moment
-either side is edited, and no later skill reads it. The rendered work-item
-handoff is shown only in chat as copy/paste output from the validated snapshot.
+no User Story file: a second persisted copy drifts the moment either side is
+edited, and no later skill reads it.
 
 `<lab>` is the migration-skill-lab root. Its `scripts\` perform the
 deterministic steps; never do one of them by hand.
@@ -56,14 +54,14 @@ about most.
 - Once the flow is settled and before the survey, run
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --claim --commands --save-status`.
   Without a map, the `flowId` is the flow as a slug; reuse an earlier
-  artifact's exact `flowId` so `supersedes` and `--since` still match. Ask
+  artifact's exact `flowId` so its earlier runs and saved prompts still match. Ask
   only when the flow maps to more than one plausible id. `--claim` creates
   this run's directory so no other chat takes the same slice:
   `flow.claimed.directory` and `flow.claimed.runId` are this run's, and
   `flow.nextRunDirectory` then points past it. A refused claim means another
   chat holds the flow; offer the next available slice. The output also gives
-  the product revision and status, this flow's earlier work-item handoffs,
-  `flow.board` and saved prompts, and the package scripts.
+  the product revision and status, this flow's saved prompts and the package
+  scripts.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
   where the user queued this slice. The `flowId` is that slice's `flowId`
   verbatim, from the invocation or the `--ready` entry the user confirmed,
@@ -77,16 +75,8 @@ about most.
 - A saved `<flowId>-<skill>-prompt.md` means an earlier phase chose to continue
   later: say so in one line and resume from the artifacts it names, exactly as
   if the phases had run back to back.
-- The board is never a question: the user could not answer it reliably, and
-  `flow-migrate` confirms what was applied anyway. The latest earlier baseline
-  handoff for this flow supplies the Epic, Feature and Story identity, parents
-  and field text. Without one, `flow.board` names the sibling snapshot this
-  flow inherits its Epic from, and its Feature when `inherits` is
-  `epic-and-feature`; record their IDs in `workItemContext`, propose a new
-  Story under them and propose the rest as `create`. Board state and progress
-  are the values that snapshot recorded. Name the source and the IDs in one
-  line; a correction the user gives unprompted replaces them. Without
-  `flow.board` either, propose the Epic, Feature and Story as `create`.
+- Board IDs, Epics, Features, Tasks and board state are never a question and
+  never recorded: the user places the Story on the board.
 - The test, typecheck and build commands are `commands.suggested`: run-once
   forms, never a script marked `terminates: false`, which would hang
   `flow-migrate`, or `writesToWorktree`. Confirm them in one line.
@@ -166,27 +156,24 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    until the answer is recorded.
 6. **Contract content.** Read `references/flow-contract.md` now, and record
    `targetArchitecture`, `scope` with `partialMount` and the write allowlist,
-   `visualParity`, `decisions`, `testGaps`, `openQuestions`,
-   `workItemContext`, `checkpointPolicy`, `validationPlan` and `rollback` as it
-   specifies.
-7. **Write and validate** `flow-contract.json` at schemaVersion 6 in the run
+   `visualParity`, `decisions`, `testGaps`, `openQuestions`, `userStory`,
+   `checkpointPolicy`, `validationPlan` and `rollback` as it specifies.
+7. **Write and validate** `flow-contract.json` at schemaVersion 7 in the run
    directory. Copy each block's shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\flow-contract.json" [--block <name>]`,
-   a real chain that passed end to end at the versions in force, then run
+   a real chain that passed end to end at schemaVersion 6, then leave out its
+   `workItemContext` and add `userStory`. Run
    `node "<lab>\scripts\validate-handoff.mjs" <contract>`. The contract is
-   final when written: schemaVersion 6 has no `status`, `approval` or
+   final when written: it has no `status`, `approval` or
    `targetArchitecture.status`, no draft state and no approval gate. When the
    host already runs in plan mode, write the artifacts after the user has
    exited it; a skill never enters or leaves plan mode.
-8. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
-   it for `work-item-baseline.json`. Populate the templates from cited contract
-   evidence. On a rerun, propose a new Story only on request or when evidence
-   shows the slice does not responsibly fit the existing one. The baseline Task is
-   complete once the contract validates. This is the board setup handoff: it
-   should give the user copy/paste content for the Epic, Feature, User Story,
-   baseline, implementation and verification Tasks, plus the first standup
-   update. It is not an approval gate and it does not mean Targetprocess was
-   updated.
+8. **User Story.** Run
+   `node "<lab>\scripts\render-user-story.mjs" <flow-contract.json>` and show
+   its output verbatim as the Story the user can copy onto the board: it is
+   generated from the validated contract, and a paraphrase drifts from what
+   `flow-verify` checks. It is not an approval gate and changes nothing on the
+   board.
 9. **Worktree check.** Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`.
    If anything changed, stop and report the delta; do not revert it or
@@ -208,7 +195,7 @@ rejects, no command the safety boundary forbids, no value the run can derive.
     gate and asks for nothing: end it by naming what would need a new run to
     change, which is the boundary, the write allowlist or a scenario.
 11. **Continuation.** Build the invocation with
-    `node "<lab>\scripts\continuation.mjs" --next flow-migrate --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <work-item-baseline.json>`,
+    `node "<lab>\scripts\continuation.mjs" --next flow-migrate --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
        the invocation. Never start a second terminal window: a skill cannot
@@ -235,17 +222,15 @@ Never:
   files; write tests or product code; install dependencies or alter lockfiles,
   configuration or environment files; start persistent services; or create any
   checkpoint commit in this read-only phase;
-- write a file other than the contract, the work-item snapshot and the
-  observation sidecar in the run directory, which `--claim` creates at the
-  start;
+- write a file other than the contract and the observation sidecar in the run
+  directory, which `--claim` creates at the start;
 - take a slice the user did not confirm, or survey one before its claim
   succeeded;
 - store source copies, credentials, tokens, private URLs or unnecessary
   personal data;
 - edit this skill, its references or an installed snapshot during a run;
 - present unapproved Angular conventions as target requirements;
-- update Targetprocess, invent an external ID or a progress value, or mark
-  anything applied without the user's confirmation;
+- update Targetprocess;
 - silently turn a possible UX improvement into accepted migration behavior;
 - enter, leave or simulate a host plan mode, or present the review summary as
   a gate;
@@ -254,8 +239,7 @@ Never:
 - start the migration in this chat, in a background agent or by a route the
   user did not choose.
 
-`flow-migrate` reads only the contract and the work-item snapshot; nothing from
-this chat reaches it.
+`flow-migrate` reads only the contract; nothing from this chat reaches it.
 
 ## Reading discipline
 
