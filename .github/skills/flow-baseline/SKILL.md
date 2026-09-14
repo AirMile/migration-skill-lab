@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.27.0`.
+Skill version: `0.28.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -168,33 +168,20 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    `targetArchitecture.status`, no draft state and no approval gate. When the
    host already runs in plan mode, write the artifacts after the user has
    exited it; a skill never enters or leaves plan mode.
-8. **User Story.** Run
-   `node "<lab>\scripts\render-user-story.mjs" <flow-contract.json>` and show
-   its output verbatim as the Story the user can copy onto the board: it is
-   generated from the validated contract, and a paraphrase drifts from what
-   `flow-verify` checks. It is not an approval gate and changes nothing on the
-   board.
-9. **Worktree check.** Run
+8. **Worktree check.** Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`.
    If anything changed, stop and report the delta; do not revert it or
    attribute it without evidence.
-10. **Review summary.** Render one screen from the validated contract, never
-    from memory, with only what a reader could disagree with:
-    - the `flowId`, the boundary and the `scope.partialMount` shape;
-    - the `planSlice` remainder, or that the whole slice migrates;
-    - `renderedSurfaceInventory`, one line per surface with its status;
-    - the `targetArchitecture` boundary and adapter in a few lines;
-    - each scenario id with a one-line summary;
-    - every `characterizationRequired` hypothesis;
-    - each `visualParity` id with its counterpart;
-    - `allowedWritePaths` verbatim, the test, typecheck and build commands, the
-      manual walkthrough's route and environment, the rollback and the
-      checkpoint policy;
-    - every open question and decision.
-    Do not restate confirmed behavior or its citations. The summary is not a
-    gate and asks for nothing: end it by naming what would need a new run to
-    change, which is the boundary, the write allowlist or a scenario.
-11. **Continuation.** Build the invocation with
+9. **User Story and review summary.** Run
+   `node "<lab>\scripts\render-user-story.mjs" <flow-contract.json>`. Your next
+   chat message pastes its whole output verbatim, the Story the user copies
+   onto the board followed by the review facts, because the host collapses
+   tool output and a run once showed neither. Paraphrasing drifts from what
+   `flow-verify` checks. After it, add in your own words only the
+   `targetArchitecture` boundary and adapter in a few lines, and end by naming
+   what would need a new run to change: the boundary, the write allowlist or a
+   scenario. Neither part is a gate, asks for anything or changes the board.
+10. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-migrate --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
@@ -207,8 +194,9 @@ rejects, no command the safety boundary forbids, no value the run can derive.
        it runs correctly days later.
     Never continue the migration in this chat or delegate it to a background
     agent, which cannot ask the user what it needs.
-12. **Observations.** Read `<lab>\docs\flow-observation-capture.md` and follow
-    it with `--primary <flow-contract.json> --status draft`, or `failed` or
+11. **Observations.** Last, after the chosen route, so a skipped step can still
+    be recorded: read `<lab>\docs\flow-observation-capture.md` and follow it
+    with `--primary <flow-contract.json> --status draft`, or `failed` or
     `blocked` when no contract could be written. Either sidecar closes the
     claim. A run left before it wrote anything frees its slice with
     `run-context.mjs --product-root <product> --lab-root <lab> --flow-id <flowId> --release`,

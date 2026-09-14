@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.27.0
+targetVersion: 0.28.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.27.0 acceptance criteria
+# `flow-baseline` v0.28.0 acceptance criteria
 
 ## Hard gates
 
@@ -39,19 +39,22 @@ allowlist the slice does not need, or stores sensitive content.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
 - The slice's User Story, printed by `render-user-story.mjs` from the
-  validated contract and shown in the chat.
+  validated contract and pasted into a chat message, not left in collapsed
+  tool output.
 - A bounded Detail Drawer target-architecture proposal that does not mirror
   React mechanically or redesign the full frontend.
 - A disabled or explicitly human-approved checkpoint policy with exact branch,
   external reference and push policy.
 - A machine-readable validation plan and rollback; approval is impossible
   while required test, typecheck, build or host details are absent.
-- One review summary rendered from the validated contract, covering scope,
-  partial mount, the surface inventory, the architecture, scenario summaries,
-  required characterization, visual-parity surfaces, the write allowlist,
-  validation commands, rollback, checkpoint policy, decisions and open
-  questions. It asks for no reply, authorizes nothing, and restates no confirmed
-  behavior, because a citation is checked by opening it.
+- One review summary: the review facts `render-user-story.mjs` prints after
+  the Story (partial mount, remainder, surface inventory, scenarios, required
+  characterization, visual-parity surfaces, the write allowlist verbatim,
+  validation commands, manual verification, rollback, checkpoint policy,
+  decisions and open questions), pasted in the same message, plus the
+  architecture boundary and adapter in a few lines. It asks for no reply,
+  authorizes nothing, and restates no confirmed behavior, because a citation
+  is checked by opening it.
 - Exactly one user-chosen continuation: a fresh `flow-migrate` chat opened now,
   the invocation shown for pasting, or the invocation saved in the run
   directory.
@@ -78,8 +81,8 @@ The source is acceptable when:
 10. it records no board ID, Epic, Feature, Task, board state or progress, and
     asks for none;
 11. it creates no product or empty checkpoint commit in the read-only phase;
-12. it builds the review summary from validated contract fields rather than
-    from prose;
+12. it builds the review summary from the review facts `render-user-story.mjs`
+    prints from validated contract fields rather than from prose;
 13. it never sets or claims to set the host plan mode, and defers its artifact
     writes until plan mode is exited when the session already runs in it;
 14. it opens a `flow-migrate` chat only on the user's explicit route choice and
@@ -286,3 +289,5 @@ The source is acceptable when:
     that remainder;
 95. no board ID, Epic, Feature, Task, board state or progress reaches the user
     as a question.
+96. the observation sidecar is written last, after the chosen continuation
+    route, so it can record a step the run skipped.

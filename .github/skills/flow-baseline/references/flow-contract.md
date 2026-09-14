@@ -77,7 +77,9 @@ the contract.
   framework is absent there, `required` is `true`, with the constants' package
   set and every file that set changes (manifest, lockfile, TypeScript
   configuration). Never write `false` on the assumption that an earlier slice
-  added it: that unchecked claim hides the migration's largest decision.
+  added it: that unchecked claim hides the migration's largest decision. With
+  `required: false`, leave `packages` and `paths` out and cite the manifest in
+  `note`, since listed packages read as work to do.
 - `scenarios`: Given/When/Then observable outcomes, each with evidence pointers
   and concrete values a tester can act on.
 - `visualParity`: one entry per `migrate` inventory id and no other id (the
@@ -115,7 +117,8 @@ the contract.
   criteria and attention points come from `scenarios`, `visualParity`,
   `characterizationRequired`, `openQuestions`, `planSlice` and the manual
   validation environment, so none of them is repeated here. Record no board
-  IDs.
+  IDs. These four strings are the whole block, and the schemaVersion 6
+  example has none, so `print-shape.mjs` cannot show it.
 - `checkpointPolicy`: `mode: disabled` with `pushPolicy: never`. Only a user who
   asks for `auto-local` unprompted changes that, and supplies
   `expectedBranch`, `externalRef` and `milestones`; `authorizedByRole` and

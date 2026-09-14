@@ -118,7 +118,7 @@ Every skill version declares:
 
 `migration-analyze` v0.1.0 remains preserved as a reviewed read-only benchmark
 reference. The source repository also contains experimental `flow-plan`
-v0.4.0, `flow-baseline` v0.27.0, `flow-migrate` v0.18.0, `flow-verify` v0.18.0,
+v0.4.0, `flow-baseline` v0.28.0, `flow-migrate` v0.18.0, `flow-verify` v0.18.0,
 `flow-debug` v0.8.0 and `migration-skill-audit` v0.1.0, with versioned
 handoff schemas, scoped checkpoint preflight, examples and the scripts that
 perform the deterministic steps of a run. The flow skills are installed as

@@ -20,7 +20,12 @@ copy/paste text blocks: title, user value, current and desired behavior,
 acceptance criteria from the scenarios and visual parity surfaces, and
 attention points from the characterization hypotheses, open questions, the
 map slice remainder and the manual verification environment. Citations are
-left out; the contract keeps them. Writes nothing.
+left out; the contract keeps them.
+
+Then prints the review facts a reader could disagree with, verbatim from the
+contract: partial mount, remainder, surfaces, scenarios, hypotheses, visual
+parity, write allowlist, commands, manual verification, rollback, checkpoint
+policy, decisions and open questions. Writes nothing.
 `;
 
 const readContract = async contractPath => {
@@ -49,7 +54,12 @@ const sentence = text => {
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
 };
 const clause = text => sentence(text).replace(/\.$/, "");
-const lowerFirst = text => text.charAt(0).toLowerCase() + text.slice(1);
+// Only a leading article or determiner is lowered mid-sentence; a field label
+// or identifier such as "Length" or "CanvasObjectAngleInput" keeps its case.
+const lowerFirst = text =>
+  /^(?:a|an|the|no|each|every|all|both|any|some|this|that|these|those|its|it|their|there|one|none)\b/i.test(text)
+    ? text.charAt(0).toLowerCase() + text.slice(1)
+    : text;
 
 const acceptanceCriteria = contract => [
   ...contract.scenarios.map(scenario =>
@@ -91,6 +101,48 @@ export const renderUserStory = contract => [
   "",
 ].join("\n");
 
+// A hand-written review summary once paraphrased these and dropped a write
+// path, so they come from the contract rather than from memory.
+const code = text => `\`${text}\``;
+const section = (label, items) =>
+  [`**${label}**`, "", ...(items.length > 0 ? items.map(item => `- ${item}`) : ["- None."]), ""];
+
+export const renderReviewFacts = contract => {
+  const { partialMount } = contract.scope;
+  const { validationPlan } = contract;
+  return [
+    `# Review facts — ${code(contract.flowId)}`,
+    "",
+    ...section("Partial mount", [partialMount.nested
+      ? `Nested in ${code(partialMount.retainedParent)}; retained siblings: ${partialMount.siblingSections.join(", ")}.`
+      : "Not nested: the slice mounts on its own."]),
+    ...section("Slice remainder", [contract.planSlice
+      ? sentence(contract.planSlice.remainder)
+      : "No migration map slice."]),
+    ...section("Rendered surfaces", contract.renderedSurfaceInventory.map(entry => `${code(entry.id)} — ${entry.status}`)),
+    ...section("Scenarios", contract.scenarios.map(scenario => `${code(scenario.id)} — when ${lowerFirst(clause(scenario.when))}`)),
+    ...section("To prove first", (contract.characterizationRequired ?? []).map(entry =>
+      `${code(entry.id)}, before ${code(entry.proveBefore)}: ${sentence(entry.hypothesis)}`)),
+    ...section("Visual parity", (contract.visualParity ?? []).map(entry =>
+      `${code(entry.id)} — compared with ${clause(entry.counterpart)}`)),
+    ...section("Allowed write paths", contract.scope.allowedWritePaths.map(code)),
+    ...section("Commands", [
+      ...validationPlan.testCommands.map(command => `test: ${code(command)}`),
+      `typecheck: ${code(validationPlan.typecheckCommand)}`,
+      `build: ${code(validationPlan.buildCommand)}`,
+      ...(contract.targetArchitecture.dependencyChanges?.required ? [`install: ${code(validationPlan.installCommand)}`] : []),
+    ]),
+    ...section("Manual verification", validationPlan.manualValidation.required
+      ? [`Walkthrough: ${sentence(validationPlan.manualValidation.scenario ?? "not recorded")}`,
+        `Environment: ${sentence(validationPlan.manualValidation.environment ?? "not recorded")}`]
+      : ["Not required."]),
+    ...section("Rollback", [sentence(contract.rollback)]),
+    ...section("Checkpoint policy", [`${code(contract.checkpointPolicy.mode)}, push ${code(contract.checkpointPolicy.pushPolicy)}`]),
+    ...section("Decisions", contract.decisions.map(entry => `${entry.topic}: ${sentence(entry.decision)}`)),
+    ...section("Open questions", contract.openQuestions.map(sentence)),
+  ].join("\n");
+};
+
 const assert = (condition, message) => {
   if (!condition) throw new Error(`User Story self-test failed: ${message}`);
 };
@@ -116,10 +168,20 @@ const runSelfTest = async () => {
       currentBehavior: "React's LineForm renders the Length, Angle and Fence offset fields.",
       desiredBehavior: "Angular renders those fields inside the retained React drawer with the same behavior.",
     };
+    contract.scenarios[0].then.push("Length keeps focus");
+    contract.visualParity[0].counterpart = "CanvasObjectAngleInput's rendered FocusNumberInput";
     const contractPath = path.join(temporary, "flow-contract.json");
     await writeFile(contractPath, JSON.stringify(contract, null, 2));
 
     const story = renderUserStory(await readContract(contractPath));
+    assert(story.includes("; Length keeps focus") && story.includes("the same as CanvasObjectAngleInput's rendered"),
+      "a field label or identifier lost its capital letter");
+    const review = renderReviewFacts(contract);
+    assert([...contract.scope.allowedWritePaths, ...contract.validationPlan.testCommands].every(value => review.includes(`\`${value}\``)),
+      "a write path or test command is not in the review facts verbatim");
+    assert(contract.scenarios.every(scenario => review.includes(`\`${scenario.id}\``)) &&
+      contract.decisions.every(entry => review.includes(entry.topic)),
+      "a scenario id or decision is missing from the review facts");
     assert(story.startsWith("# User Story — Migrate the Detail Drawer line fields"), "the title is not the heading");
     assert(!/\.tsx?:\d/.test(story), "a file:line citation reached the Story");
     assert(story.includes("- Given a line is selected and the Length field shows its current real length, when "),
@@ -154,7 +216,8 @@ const main = async () => {
     process.stdout.write(usage);
     process.exitCode = argument ? 0 : 1;
   } else {
-    process.stdout.write(renderUserStory(await readContract(argument)));
+    const contract = await readContract(argument);
+    process.stdout.write(`${renderUserStory(contract)}\n${renderReviewFacts(contract)}`);
   }
 };
 

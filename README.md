@@ -11,7 +11,7 @@ This lab contains:
 - experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.27.0, `flow-migrate` v0.18.0 and
+- experimental `flow-baseline` v0.28.0, `flow-migrate` v0.18.0 and
   `flow-verify` v0.18.0 source skills;
 - experimental `flow-debug` v0.8.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
@@ -27,7 +27,7 @@ This lab contains:
   saved prompts, terminating commands),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `render-user-story.mjs` (the slice's User Story from a
-  validated contract),
+  validated contract, then its review facts),
   `continuation.mjs` (the next phase's invocation, refused when its artifacts
   are not the set that phase validates), `new-observations.mjs`
   (the observation sidecar), `migration-map.mjs` (a first or seeded
