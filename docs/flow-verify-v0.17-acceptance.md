@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.16.0
+targetVersion: 0.17.0
 status: experimental
-date: 2026-09-11
+date: 2026-09-14
 ---
 
-# `flow-verify` v0.16.0 acceptance criteria
+# `flow-verify` v0.17.0 acceptance criteria
 
 ## Hard gates
 
@@ -29,7 +29,9 @@ run.
 - A schema-valid observation artifact written after the verification outputs,
   including an empty observation list when no concrete skill signal occurred.
 - Reconciled checkpoint SHAs, an explicit push outcome and a schema-valid
-  Epic/Feature/Story/Task verification snapshot plus deterministic Markdown.
+  Epic/Feature/Story/Task verification snapshot plus a deterministic inline
+  delta handoff for changed Targetprocess fields, progress, evidence and
+  standup text.
 - Verification Task evidence, calculated Story progress and a daily standup
   block with separate current/proposed percentages.
 - A schema-valid debug handoff for every non-PASS result, classified as local

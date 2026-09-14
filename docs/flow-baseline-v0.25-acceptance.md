@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.24.0
+targetVersion: 0.25.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.24.0 acceptance criteria
+# `flow-baseline` v0.25.0 acceptance criteria
 
 ## Hard gates
 
@@ -31,14 +31,15 @@ allowlist the slice does not need, or stores sensitive content.
 - One `flow-contract.json` at schemaVersion 6 that validates against the
   handoff schema, carrying `renderedSurfaceInventory` and `targetArchitecture`,
   with no `status`, no `approval` and no `targetArchitecture.status`.
-- No analysis report, no rendered work-item Markdown and no other file beyond
-  the contract, the work-item snapshot and the observation artifact, in the
-  run directory `run-context.mjs --claim` created at the start.
+- No analysis report, no rendered work-item Markdown file and no other file
+  beyond the contract, the work-item snapshot and the observation artifact, in
+  the run directory `run-context.mjs --claim` created at the start.
 - A before/after Git-visible product worktree comparison.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
 - A schema-valid baseline work-item snapshot with Epic/Feature/Story/Task
-  identity, fields, state and progress, shown inline rather than written twice.
+  identity, fields, state and progress, shown inline as the initial
+  Targetprocess setup handoff rather than written twice.
 - Items that did not move marked `no-change` with their previous field text
   copied verbatim, rendered as an identification line rather than restated.
 - Task contribution weights totaling 100, calculated Story progress and a

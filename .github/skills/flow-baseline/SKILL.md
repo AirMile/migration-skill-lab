@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.24.0`.
+Skill version: `0.25.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -18,13 +18,15 @@ later phase depends on.
 Analyze one explicitly selected flow: survey its rendered surfaces, settle a
 boundary from that evidence, write a final `flow-contract.json`
 with the behavior baseline, the surface inventory and a bounded
-target-architecture proposal, then `work-item-baseline.json`, then a short
-review summary in this chat. Do not implement Angular code or present the
-proposed architecture as an established team standard.
+target-architecture proposal, then `work-item-baseline.json`, then the initial
+Targetprocess setup handoff, then a short review summary in this chat. Do not
+implement Angular code or present the proposed architecture as an established
+team standard.
 
 The contract is the only durable analysis artifact. Write no prose report and
-no rendered work-item Markdown: a second copy drifts the moment either side is
-edited, and no later skill reads it.
+no rendered work-item Markdown file: a second persisted copy drifts the moment
+either side is edited, and no later skill reads it. The rendered work-item
+handoff is shown only in chat as copy/paste output from the validated snapshot.
 
 `<lab>` is the migration-skill-lab root. Its `scripts\` perform the
 deterministic steps; never do one of them by hand.
@@ -176,7 +178,11 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    it for `work-item-baseline.json`. Populate the templates from cited contract
    evidence, and propose a new Story only on request or when evidence shows the
    slice does not responsibly fit the existing one. The baseline Task is
-   complete once the contract validates.
+   complete once the contract validates. This is the board setup handoff: it
+   should give the user copy/paste content for the Epic, Feature, User Story,
+   baseline, implementation and verification Tasks, plus the first standup
+   update. It is not an approval gate and it does not mean Targetprocess was
+   updated.
 9. **Worktree check.** Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`.
    If anything changed, stop and report the delta; do not revert it or

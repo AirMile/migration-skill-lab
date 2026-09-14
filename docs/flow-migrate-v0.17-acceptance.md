@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.16.0
+targetVersion: 0.17.0
 status: experimental
-date: 2026-09-11
+date: 2026-09-14
 ---
 
-# `flow-migrate` v0.16.0 acceptance criteria
+# `flow-migrate` v0.17.0 acceptance criteria
 
 ## Hard gates
 
@@ -30,7 +30,9 @@ during its own run.
 - A schema-valid observation artifact written after `migration-result.json`,
   including an empty observation list when no concrete skill signal occurred.
 - A checkpoint record for every eligible milestone and a schema-valid
-  Epic/Feature/Story/Task progress snapshot plus deterministic Markdown.
+  Epic/Feature/Story/Task progress snapshot plus a deterministic inline delta
+  handoff for changed Targetprocess fields, progress, evidence and standup
+  text.
 - Checkpoints linked to the implementation Task, calculated Story progress and
   a daily standup block with the same percentage.
 

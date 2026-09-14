@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.16.0`.
+Skill version: `0.17.0`.
 
 Recommended model: Claude Sonnet 5, or Opus 5 when the slice touches
 drawlib, history or the host boundary.
@@ -132,7 +132,10 @@ as an established Lely standard.
     `not-addressed`. Use `completed`, `failed` or `blocked` honestly.
 12. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
     it for `work-item-migration.json`, putting the checkpoint milestones and
-    the actual work on the implementation Task.
+    the actual work on the implementation Task. This is a Targetprocess delta
+    handoff, not a second board setup: show only changed fields,
+    state/progress movement, evidence, standup text and IDs the user must
+    report back for items Targetprocess just created.
 13. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <work-item-baseline.json> <work-item-migration.json>`,
     then offer exactly three routes and perform only the chosen one:

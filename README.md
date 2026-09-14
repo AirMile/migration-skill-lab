@@ -11,8 +11,8 @@ This lab contains:
 - experimental `flow-plan` v0.3.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.24.0, `flow-migrate` v0.16.0 and
-  `flow-verify` v0.16.0 source skills;
+- experimental `flow-baseline` v0.25.0, `flow-migrate` v0.17.0 and
+  `flow-verify` v0.17.0 source skills;
 - experimental `flow-debug` v0.7.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned functional and work-item handoff schemas, examples and a
@@ -213,16 +213,19 @@ reasoning, and the mechanical steps are already scripts.
    `scripts\new-observations.mjs`. An empty observation list proves that
    capture ran without inventing feedback.
 
-Each phase of a slice's chain also writes an immutable work-item snapshot and
-deterministic copy/paste content for manual Targetprocess updates; `flow-plan`
-moves no board item and writes none. The work tracker is
-Targetprocess at `lely.tpondemand.com`; run artifacts created before
+Each phase of a slice's chain also writes an immutable work-item snapshot for
+manual Targetprocess updates; `flow-plan` moves no board item and writes none.
+`flow-baseline` is the initial board setup handoff, with deterministic
+copy/paste content for the Epic, Feature, User Story, stakeholder-readable
+Tasks and the first daily standup update. `flow-migrate` and `flow-verify`
+then show only Targetprocess deltas for changed fields, state/progress,
+evidence, standup text and newly assigned IDs to report back. The work tracker
+is Targetprocess at `lely.tpondemand.com`; run artifacts created before
 2026-09-08 still name it "TopDesk" and are left unchanged as historical
-evidence. A snapshot covers Epic, Feature, User Story, stakeholder-readable
-Tasks and a daily standup update. Story progress is validated from weighted
-Task progress; checkpoint commits are evidence for the implementation Task,
-not separate Tasks. The skills never update Targetprocess directly or claim
-that copy-ready content was applied.
+evidence. Story progress is validated from weighted Task progress; checkpoint
+commits are evidence for the implementation Task, not separate Tasks. The
+skills never update Targetprocess directly or claim that copy-ready content was
+applied.
 
 See `docs\skill-handoff-protocol-v0.8.md`. Skills exchange artifacts through
 the ignored `runs\` directory; they must not rely on prior chat context.

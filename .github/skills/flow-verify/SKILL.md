@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.16.0`.
+Skill version: `0.17.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -149,7 +149,10 @@ outcome, a diagnosis and the next action.
    it for `work-item-verification.json`, putting criterion, browser, host and
    push evidence on the verification Task. Propose Story `Done` only for an
    overall `PASS` with passed required host validation and every Task `Done`;
-   keep the Feature and Epic open while their other Stories remain.
+   keep the Feature and Epic open while their other Stories remain. This is a
+   Targetprocess delta handoff, not a second board setup: show only changed
+   fields, state/progress movement, evidence, standup text and IDs the user
+   must report back for items Targetprocess just created.
 10. Validate the complete chain, debug artifacts included, with
     `validate-handoff.mjs`. Run
     `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`

@@ -1,14 +1,20 @@
 ---
 document: flow-work-item-steps
-version: 0.2.0
+version: 0.3.0
 status: experimental
-date: 2026-09-11
+date: 2026-09-14
 ---
 
 # Work-item snapshot steps
 
 Every flow phase reads this file when it reaches its work-item step. The
 validator enforces the rules; this page is the order to apply them in.
+
+`flow-baseline` is the initial board setup handoff: it gives the user the
+copy/paste proposal for the Epic, Feature, User Story, the three
+stakeholder-readable Tasks and the first standup update. Later phases are delta
+handoffs: they show only changed fields, state/progress movement, evidence,
+standup text and any newly assigned IDs the next snapshot must record.
 
 | Phase | Snapshot | Previous snapshot | Primary artifact |
 |---|---|---|---|
@@ -68,7 +74,10 @@ validator enforces the rules; this page is the order to apply them in.
    `node "<lab>\scripts\render-work-item-handoff.mjs" --inline <snapshot> [--since <previous>]`;
    the flag comes before the path. Show its output verbatim: it is generated
    from the validated snapshot, and a paraphrase reintroduces the drift the
-   JSON prevents. Write no full Markdown render and do not restate a
-   `no-change` item's fields. `manualApplication` stays `copy-ready` or
-   `not-applied`: never update Targetprocess, and never claim that anything
-   was applied.
+   JSON prevents. For a first baseline, introduce it as the initial
+   Targetprocess setup proposal the user can copy. For migration and
+   verification, introduce it as a Targetprocess delta: do not re-copy stable
+   Epic, Feature or User Story text just because the phase progressed. Write
+   no full Markdown render and do not restate a `no-change` item's fields.
+   `manualApplication` stays `copy-ready` or `not-applied`: never update
+   Targetprocess, and never claim that anything was applied.
