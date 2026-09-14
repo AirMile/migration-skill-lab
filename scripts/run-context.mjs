@@ -275,12 +275,12 @@ const readMap = async labRoot => {
 
 const readFlow = async (labRoot, flowId) => {
   const runsDirectory = path.resolve(labRoot, "runs");
-  const { runs, next } = await listNumberedRuns(runsDirectory, `${flowId}-baseline`);
+  const { runs, next } = await baselineRuns(labRoot, flowId);
 
   const handoffs = [];
   const promptFiles = [];
   for (const run of runs) {
-    const directory = path.join(runsDirectory, run.name);
+    const directory = run.directory;
     for (const file of await readdir(directory)) {
       const filePath = path.join(directory, file);
       if (/^work-item-.*\.json$/.test(file)) {
@@ -306,8 +306,13 @@ const readFlow = async (labRoot, flowId) => {
 
   return {
     flowId,
-    runs: runs.map(run => path.join(runsDirectory, run.name)),
-    nextRunDirectory: path.join(runsDirectory, `${localDate()}-${flowId}-baseline-${next}`),
+    runs: runs.map(run => run.directory),
+    nextRunDirectory: path.join(
+      runsDirectory,
+      "flows",
+      flowId,
+      `${localDate()}-${flowId}-baseline-${next}`,
+    ),
     nextRunId: `${flowId}-baseline-${next}`,
     handoffs,
     promptFiles,
@@ -632,6 +637,34 @@ const runSelfTest = async () => {
       "the flow's earlier handoff or a saved prompt, attempt-numbered ones included, was not found");
     assert(context.runDirectory.promptFiles.length === 2, "the run directory's prompts were not listed");
 
+    const nestedLegacyRun = path.join(lab, "runs", "flows", "demo-flow", "2026-01-02-demo-flow-baseline-2");
+    await mkdir(nestedLegacyRun, { recursive: true });
+    await writeFile(path.join(nestedLegacyRun, "flow-contract.json"), JSON.stringify({
+      artifactType: "flow-contract",
+      flowId: "demo-flow",
+    }));
+    const mixedContext = await collectContext({
+      "product-root": product,
+      "lab-root": lab,
+      "flow-id": "demo-flow",
+    });
+    assert(mixedContext.flow.runs.length === 2 &&
+      mixedContext.flow.nextRunId === "demo-flow-baseline-3" &&
+      mixedContext.flow.runs.includes(nestedLegacyRun),
+    "legacy and nested flow runs are not combined for discovery and numbering");
+    const archivedRun = path.join(lab, "runs", "_archive", "2026-01-03-demo-flow-baseline-9");
+    await mkdir(archivedRun, { recursive: true });
+    await writeFile(path.join(archivedRun, "flow-contract.json"), JSON.stringify({
+      artifactType: "flow-contract",
+      flowId: "demo-flow",
+    }));
+    assert((await collectContext({
+      "product-root": product,
+      "lab-root": lab,
+      "flow-id": "demo-flow",
+    })).flow.nextRunId === "demo-flow-baseline-3",
+    "archive directories must not affect flow discovery or numbering");
+
     // A map run that stopped before writing its map does not hide the one before it.
     const firstMapRun = path.join(lab, "runs", "2026-01-01-migration-map-1");
     await mkdir(firstMapRun);
@@ -738,8 +771,8 @@ const runSelfTest = async () => {
       },
     };
     await writeFile(queuedMapPath, JSON.stringify(queuedMap));
-    const deltaRun = path.join(lab, "runs", "2026-01-03-delta-baseline-1");
-    await mkdir(deltaRun);
+    const deltaRun = path.join(lab, "runs", "flows", "delta", "2026-01-03-delta-baseline-1");
+    await mkdir(deltaRun, { recursive: true });
     await writeFile(path.join(deltaRun, "verification-result.json"),
       JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "delta" }));
 
@@ -756,7 +789,8 @@ const runSelfTest = async () => {
 
     const claimedBeta = await collectContext({ ...inLab, "flow-id": "beta", claim: true });
     assert(claimedBeta.flow.claimed.runId === "beta-baseline-1" &&
-      (await stat(claimedBeta.flow.claimed.directory)).isDirectory(),
+      (await stat(claimedBeta.flow.claimed.directory)).isDirectory() &&
+      path.dirname(claimedBeta.flow.claimed.directory) === path.join(lab, "runs", "flows", "beta"),
       "a claim did not create the flow's next baseline run directory");
     await expectRefusal({ ...inLab, "flow-id": "beta", claim: true }, "already has an open baseline run",
       "a second claim on an open run was not refused");
@@ -800,7 +834,7 @@ const runSelfTest = async () => {
     // that has not passed yet is still in flight.
     const writeRun = async (name, files) => {
       const directory = path.join(lab, "runs", name);
-      await mkdir(directory);
+      await mkdir(directory, { recursive: true });
       for (const [file, value] of Object.entries(files)) {
         await writeFile(path.join(directory, file), JSON.stringify(value));
       }

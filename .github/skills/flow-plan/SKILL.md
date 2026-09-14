@@ -35,8 +35,8 @@ Ask the user only for what nobody else holds:
 - which slices to queue, in order, from the options this run proposes. A flow
   the user names instead joins the map as a slice and the queue;
 - which feature to cut into slices, when no mapped candidate is workable;
-- a feature's Targetprocess ID when no baseline work-item snapshot under
-  `<lab>\runs\` carries it.
+- a feature's Targetprocess ID when no baseline work-item snapshot under the
+  run directories `run-context.mjs` discovers carries it.
 
 Derive everything else, state each value in one line and continue:
 

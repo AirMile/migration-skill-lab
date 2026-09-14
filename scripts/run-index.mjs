@@ -9,21 +9,61 @@ const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const readJson = async filePath =>
   JSON.parse((await readFile(filePath, "utf8")).replace(/^﻿/, ""));
 
-// The run directories named <date>-<stem>-<N>, oldest first, and the next N.
-export const listNumberedRuns = async (runsDirectory, stem) => {
-  let directories = [];
+const readDirectories = async directoryPath => {
   try {
-    directories = (await readdir(runsDirectory, { withFileTypes: true }))
+    return (await readdir(directoryPath, { withFileTypes: true }))
       .filter(entry => entry.isDirectory());
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
+    return [];
   }
+};
+
+const numberedRuns = async (directories, stem) => {
   const pattern = new RegExp(`^\\d{4}-\\d{2}-\\d{2}-${escapeRegex(stem)}-(\\d+)$`);
-  const runs = directories
+  const runs = directories.flatMap(({ directory, entries }) => entries
     .filter(entry => pattern.test(entry.name))
-    .map(entry => ({ name: entry.name, number: Number(pattern.exec(entry.name)[1]) }))
-    .sort((left, right) => left.number - right.number);
+    .map(entry => ({
+      name: entry.name,
+      number: Number(pattern.exec(entry.name)[1]),
+      directory: path.join(directory, entry.name),
+    })))
+    .sort((left, right) => left.number - right.number || left.directory.localeCompare(right.directory));
+  const duplicate = runs.find((run, index) => index > 0 && run.number === runs[index - 1].number);
+  if (duplicate) {
+    throw new Error(`Duplicate ${stem}-${duplicate.number} run directories: ${runs
+      .filter(run => run.number === duplicate.number).map(run => run.directory).join(", ")}.`);
+  }
   return { runs, next: (runs.at(-1)?.number ?? 0) + 1 };
+};
+
+// The run directories named <date>-<stem>-<N>, oldest first, and the next N.
+// Map runs remain flat; flow runs use flowRunDirectories for legacy + nested discovery.
+export const listNumberedRuns = async (runsDirectory, stem) =>
+  numberedRuns([{ directory: runsDirectory, entries: await readDirectories(runsDirectory) }], stem);
+
+const flowRoot = (labRoot, flowId) =>
+  path.join(path.resolve(labRoot), "runs", "flows", flowId);
+
+const flowRunDirectories = async (labRoot, flowId) => {
+  const runsDirectory = path.join(path.resolve(labRoot), "runs");
+  return [
+    { directory: runsDirectory, entries: await readDirectories(runsDirectory) },
+    { directory: flowRoot(labRoot, flowId), entries: await readDirectories(flowRoot(labRoot, flowId)) },
+  ];
+};
+
+const allFlowRunDirectories = async labRoot => {
+  const runsDirectory = path.join(path.resolve(labRoot), "runs");
+  const nestedRoot = path.join(runsDirectory, "flows");
+  const flowDirectories = await readDirectories(nestedRoot);
+  return [
+    { directory: runsDirectory, entries: await readDirectories(runsDirectory) },
+    ...(await Promise.all(flowDirectories.map(async entry => ({
+      directory: path.join(nestedRoot, entry.name),
+      entries: await readDirectories(path.join(nestedRoot, entry.name)),
+    })))),
+  ];
 };
 
 // A contract that migrated part of its map slice names what is still React;
@@ -41,17 +81,14 @@ const readRemainder = async directoryPath => {
 // contract records, and every flowId with a flow-contract, across all run
 // directories.
 export const scanRuns = async labRoot => {
-  const runsDirectory = path.join(path.resolve(labRoot), "runs");
   const passes = new Map();
   const started = new Set();
-  let directories = [];
-  try {
-    directories = (await readdir(runsDirectory, { withFileTypes: true })).filter(entry => entry.isDirectory());
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
-  for (const directory of directories) {
-    const directoryPath = path.join(runsDirectory, directory.name);
+  const locations = await allFlowRunDirectories(labRoot);
+  for (const { directory, entries } of locations) {
+    for (const entry of entries) {
+      const directoryPath = path.join(directory, entry.name);
+      const details = await stat(directoryPath);
+      if (!details.isDirectory()) continue;
     for (const file of await readdir(directoryPath)) {
       const isVerification = /^verification-result(?:-\d+)?\.json$/.test(file);
       if (!isVerification && file !== "flow-contract.json") continue;
@@ -71,6 +108,7 @@ export const scanRuns = async labRoot => {
       }
       if (value.artifactType === "flow-contract") started.add(value.flowId);
     }
+    }
   }
   return { passes, started };
 };
@@ -82,12 +120,14 @@ const closesBaseline = file =>
   /^skill-run-observations(?:-flow-baseline)?\.json$/.test(file);
 
 export const baselineRuns = async (labRoot, flowId) => {
-  const runsDirectory = path.resolve(labRoot, "runs");
-  const { runs, next } = await listNumberedRuns(runsDirectory, `${flowId}-baseline`);
+  const { runs, next } = await numberedRuns(
+    await flowRunDirectories(labRoot, flowId),
+    `${flowId}-baseline`,
+  );
   return {
     next,
     runs: await Promise.all(runs.map(async run => {
-      const directory = path.join(runsDirectory, run.name);
+      const directory = run.directory;
       const files = (await readdir(directory)).sort();
       const passed = (await Promise.all(files
         .filter(file => /^verification-result(?:-\d+)?\.json$/.test(file))

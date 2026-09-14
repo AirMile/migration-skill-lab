@@ -49,8 +49,10 @@ Targetprocess was changed.
   the moment either side is edited. A report can be rendered from the validated
   JSON whenever one is wanted, the way `render-work-item-handoff.mjs` renders a
   work-item handoff.
-- Put only compact, non-sensitive JSON artifacts in
-  `C:\Project\migration-skill-lab\runs\<run-id>`.
+- Put only compact, non-sensitive JSON artifacts in a run directory. New flow
+  runs use
+  `C:\Project\migration-skill-lab\runs\flows\<flowId>\<run-id>`; existing
+  flat run directories remain valid legacy evidence and are not moved.
 - Keep source code, credentials, tokens and private URLs out of every
   artifact.
 - Never create an artifact in the product repository.
