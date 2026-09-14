@@ -1,6 +1,6 @@
 ---
 name: flow-verify
-description: Independently verify one migrated React-to-Angular flow against its Flow Contract and report PASS, FAIL or BLOCKED. Use only with /flow-verify.
+description: Independently verify one migrated React-to-Angular flow against its Flow Contract and report PASS, FAIL or BLOCKED. Requires a high-capability model from a different family than flow-migrate; avoid Auto and low-cost models. Use only with /flow-verify.
 ---
 
 # Flow Verify

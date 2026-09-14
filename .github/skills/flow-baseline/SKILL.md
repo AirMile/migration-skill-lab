@@ -1,6 +1,6 @@
 ---
 name: flow-baseline
-description: Establish a reviewable behavior and test-evidence baseline for one human-selected React-to-Angular migration flow. Use only with /flow-baseline.
+description: Establish a reviewable behavior and test-evidence baseline for one human-selected React-to-Angular migration flow. Requires a high-capability reasoning model; avoid Auto and low-cost models for contract-grade baseline work. Use only with /flow-baseline.
 ---
 
 # Flow Baseline

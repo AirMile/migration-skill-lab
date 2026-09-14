@@ -1,6 +1,6 @@
 ---
 name: flow-debug
-description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow inside the write scope its contract declares, then hand off to a fresh independent re-verification. Use only with /flow-debug.
+description: Diagnose and repair one failed or repairable BLOCKED React-to-Angular migration flow inside the write scope its contract declares, then hand off to a fresh independent re-verification. Requires a high-capability coding model; avoid Auto and low-cost models for repair work. Use only with /flow-debug.
 ---
 
 # Flow Debug
