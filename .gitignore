@@ -10,6 +10,10 @@ runs/
 tmp/
 *.log
 
+# Local agent worktrees and assistant-specific runtime files
+.github/.claude/
+CLAUDE.md
+
 # Dependencies and generated caches
 node_modules/
 coverage/
