@@ -113,6 +113,28 @@ export const scanRuns = async labRoot => {
   return { passes, started };
 };
 
+// Every readable work-item snapshot in every flow run directory, newest first.
+export const workItemSnapshots = async labRoot => {
+  const snapshots = [];
+  for (const { directory, entries } of await allFlowRunDirectories(labRoot)) {
+    for (const entry of entries) {
+      const directoryPath = path.join(directory, entry.name);
+      for (const file of await readdir(directoryPath)) {
+        if (!/^work-item-.*\.json$/.test(file)) continue;
+        const filePath = path.join(directoryPath, file);
+        try {
+          const value = await readJson(filePath);
+          if (value.artifactType !== "work-item-handoff") continue;
+          snapshots.push({ path: filePath, value, modified: (await stat(filePath)).mtimeMs });
+        } catch {
+          continue;
+        }
+      }
+    }
+  }
+  return snapshots.sort((left, right) => right.modified - left.modified);
+};
+
 // A baseline run directory is open, a claim some chat still holds, until it
 // carries the contract or the sidecar a finished or failed baseline writes.
 const closesBaseline = file =>

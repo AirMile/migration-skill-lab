@@ -11,7 +11,7 @@ This lab contains:
 - experimental `flow-plan` v0.3.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.25.0, `flow-migrate` v0.17.0 and
+- experimental `flow-baseline` v0.26.0, `flow-migrate` v0.17.0 and
   `flow-verify` v0.17.0 source skills;
 - experimental `flow-debug` v0.7.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;

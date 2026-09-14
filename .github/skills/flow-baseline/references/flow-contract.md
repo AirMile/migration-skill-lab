@@ -108,8 +108,9 @@ the contract.
   put to the user instead. The mount mechanism is an open question only when
   the project-constants page is missing, and then the missing page is the
   question.
-- `workItemContext`: the existing Epic, Feature and Story IDs. Omit an item that
-  is not on the board yet, so its work-item entry proposes `create`.
+- `workItemContext`: the existing Epic, Feature and Story IDs, from this flow's
+  earlier handoff or `flow.board`. Omit an item that is not on the board yet,
+  so its work-item entry proposes `create`.
 - `checkpointPolicy`: `mode: disabled` with `pushPolicy: never`. Only a user who
   asks for `auto-local` unprompted changes that, and supplies
   `expectedBranch`, `externalRef` and `milestones`; `authorizedByRole` and

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { baselineRuns, listNumberedRuns, scanRuns } from "./run-index.mjs";
+import { baselineRuns, listNumberedRuns, scanRuns, workItemSnapshots } from "./run-index.mjs";
 
 // Every phase opened by reading Git state and deriving the same values in
 // prose: the run directory, the runId, which package scripts terminate, which
@@ -18,7 +18,10 @@ Options:
   --lab-root <dir>       migration-skill-lab root; needed with --flow-id
   --flow-id <id>         the next baseline run directory and runId, and this
                          flow's earlier runs, work-item handoffs and saved
-                         continuation prompts
+                         continuation prompts; without an earlier handoff,
+                         board names the sibling snapshot whose Epic, and
+                         Feature when the map puts both flows in one feature,
+                         a first baseline inherits
   --map                  the latest earlier migration-map.json and the next
                          map run directory and runId; needs --lab-root
   --ready [map]          the slices of a migration map, the latest without a
@@ -273,6 +276,48 @@ const readMap = async labRoot => {
   };
 };
 
+// A first baseline asked for the Epic and Feature IDs every time, although a
+// sibling flow's snapshot already records them. The newest snapshot of a flow
+// in the same map feature, or naming that feature's externalId, supplies both;
+// failing that, the newest snapshot of any flow supplies the Epic alone.
+const readBoard = async (labRoot, flowId) => {
+  const snapshots = (await workItemSnapshots(labRoot)).filter(snapshot => snapshot.value.epic);
+  if (snapshots.length === 0) return null;
+
+  let featureOf = () => null;
+  let mapFeature = null;
+  const mapPath = (await readMap(labRoot)).previousMap;
+  if (mapPath) {
+    try {
+      const map = JSON.parse((await readFile(mapPath, "utf8")).replace(/^﻿/, ""));
+      const featureIds = new Map((map.slices ?? []).map(slice => [slice.flowId, slice.featureId]));
+      featureOf = id => featureIds.get(id) ?? null;
+      mapFeature = (map.features ?? []).find(feature => feature.id === featureOf(flowId)) ?? null;
+    } catch {
+      // An unreadable map only loses the Feature match; the Epic still holds.
+    }
+  }
+
+  const sameFeature = mapFeature && snapshots.find(snapshot =>
+    snapshot.value.feature &&
+    (featureOf(snapshot.value.flowId) === mapFeature.id ||
+      (mapFeature.externalId && snapshot.value.feature.externalId === mapFeature.externalId)));
+  const source = sameFeature || snapshots[0];
+  const identity = item => item && {
+    localId: item.localId,
+    ...(Object.hasOwn(item, "externalId") ? { externalId: item.externalId } : {}),
+    title: item.title,
+  };
+  return {
+    snapshot: source.path,
+    flowId: source.value.flowId,
+    handoffPhase: source.value.handoffPhase,
+    inherits: sameFeature ? "epic-and-feature" : "epic",
+    epic: identity(source.value.epic),
+    feature: sameFeature ? identity(source.value.feature) : null,
+  };
+};
+
 const readFlow = async (labRoot, flowId) => {
   const runsDirectory = path.resolve(labRoot, "runs");
   const { runs, next } = await baselineRuns(labRoot, flowId);
@@ -306,6 +351,7 @@ const readFlow = async (labRoot, flowId) => {
 
   return {
     flowId,
+    board: handoffs.length > 0 ? null : await readBoard(labRoot, flowId),
     runs: runs.map(run => run.directory),
     nextRunDirectory: path.join(
       runsDirectory,
@@ -907,6 +953,31 @@ const runSelfTest = async () => {
     await writeFile(path.join(reclaimed.flow.claimed.directory, "flow-contract.json"), "{}\n");
     assert((await collectContext({ ...inLab, "flow-id": "beta", claim: true })).flow.claimed.runId === "beta-baseline-2",
       "a finished baseline run blocked a rerun's claim");
+
+    // A new slice inherits the board identity its siblings already recorded
+    // instead of asking for it again.
+    await writeFile(queuedMapPath, JSON.stringify({ ...queuedMap, features: [{ id: "demo", title: "Demo" }] }));
+    const epic = { localId: "epic", externalId: "100", title: "Epic" };
+    await writeFile(path.join(deltaRun, "work-item-verification.json"), JSON.stringify({
+      artifactType: "work-item-handoff", handoffPhase: "verification", flowId: "delta",
+      epic, feature: { localId: "demo-feature", externalId: "200", title: "Demo feature" }, stories: [],
+    }));
+    await writeRun("2026-01-06-omega-baseline-1", {
+      "work-item-baseline.json": {
+        artifactType: "work-item-handoff", handoffPhase: "baseline", flowId: "omega",
+        epic, feature: { localId: "other-feature", externalId: "300", title: "Other feature" }, stories: [],
+      },
+    });
+    const alphaBoard = (await collectContext({ ...inLab, "flow-id": "alpha" })).flow.board;
+    assert(alphaBoard?.inherits === "epic-and-feature" && alphaBoard.flowId === "delta" &&
+      alphaBoard.feature.externalId === "200" && alphaBoard.epic.externalId === "100",
+      `a slice does not inherit its map feature's Epic and Feature: ${JSON.stringify(alphaBoard)}`);
+    const unmappedBoard = (await collectContext({ ...inLab, "flow-id": "lambda" })).flow.board;
+    assert(unmappedBoard?.inherits === "epic" && unmappedBoard.feature === null &&
+      unmappedBoard.epic.externalId === "100",
+      `a flow outside the map inherits a Feature it may not belong to: ${JSON.stringify(unmappedBoard)}`);
+    assert((await collectContext({ ...inLab, "flow-id": "demo-flow" })).flow.board === null,
+      "a flow with its own handoff still looks for a sibling's");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

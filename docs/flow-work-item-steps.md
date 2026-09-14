@@ -1,6 +1,6 @@
 ---
 document: flow-work-item-steps
-version: 0.3.0
+version: 0.4.0
 status: experimental
 date: 2026-09-14
 ---
@@ -31,9 +31,14 @@ standup text and any newly assigned IDs the next snapshot must record.
    `create` while it has no external ID, and fills every pointer and hash.
    Never retype a field this phase did not move: retyped text comes back
    reworded, and a wording difference reads as a change.
-   A first baseline has no predecessor. Copy its shape from
+   A first baseline has no predecessor of its own. When `run-context.mjs`
+   reports `flow.board`, run
+   `node "<lab>\scripts\seed-work-item.mjs" --inherit <flow.board.snapshot> --primary <flow-contract.json> --out <snapshot> [--epic-only]`,
+   with `--epic-only` when `flow.board.inherits` is `epic`: it copies the Epic
+   and Feature the same way and leaves the Story to this run. Take the shape of
+   whatever it leaves, or of the whole snapshot without `flow.board`, from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\work-item-baseline.json"`
-   and fill the Epic, Feature and Story templates from cited contract evidence.
+   and fill those templates from cited contract evidence.
 2. **Record the previous proposal's outcome** (every phase after the baseline).
    Quote the outcome the previous snapshot recorded and ask the user whether it
    still holds: a confirmation, not an open question. Pass the answer as
@@ -47,10 +52,10 @@ standup text and any newly assigned IDs the next snapshot must record.
    implementation Task; verification moves the Story, its verification Task
    and, on a complete `PASS`, possibly the Feature. `richReleaseNotes`
    describes what changed about its own item, so it is refreshed only on an
-   item that moved; the run's general news belongs in the standup. On a
-   baseline rerun, also replace every `currentState` and `currentProgress` with
-   the board as the user confirmed it for this run: they are never carried
-   forward.
+   item that moved; the run's general news belongs in the standup. A baseline
+   never asks for the board: `currentState` and `currentProgress` stay as seeded
+   unless the user corrected them unprompted, because the next phase confirms
+   what was applied.
 4. **Tasks.** Each Story has exactly one stakeholder-readable `baseline`,
    `implementation` and `verification` Task, with `contributionPercent` values
    totalling 100; propose the weights rather than asking whether to create the

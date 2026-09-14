@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.25.0`.
+Skill version: `0.26.0`.
 
 Recommended model: Claude Opus 5. This phase writes the contract that every
 later phase depends on.
@@ -33,11 +33,11 @@ deterministic steps; never do one of them by hand.
 
 ## Inputs
 
-Ask the user only for what nobody else holds:
+Ask the user only for what nobody else holds: the flow and its user-visible
+goal. Never choose it yourself; when the scope is materially ambiguous, ask one
+focused question and stop.
 
-- the flow and its user-visible goal. Never choose it yourself; when the scope
-  is materially ambiguous, ask one focused question and stop. When the
-  invocation names no flow, run
+- When the invocation names no flow, run
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --ready [<migration-map.json>]`,
   the map only when the invocation names one, and put its `available` slices
   to the user, queued ones first, each with its `reason`, the unbuilt
@@ -46,11 +46,7 @@ Ask the user only for what nobody else holds:
   the choice even when one slice is queued. When it reports `replan`, say
   `/flow-plan` runs first, with its `replanReason`, and stop. A confirmed
   entry with a `remainder` continues an earlier chain: this run cuts from
-  that remainder;
-- whether a new Epic, Feature or User Story is requested, and the real external
-  ID of any that already exists on the board;
-- the current external board state and progress, kept separate from the
-  proposed, Task-derived values.
+  that remainder.
 
 Derive everything else, state each value in one line and continue. A question
 whose answer is in the product repository, this skill or the lab costs the user
@@ -66,8 +62,8 @@ about most.
   `flow.claimed.directory` and `flow.claimed.runId` are this run's, and
   `flow.nextRunDirectory` then points past it. A refused claim means another
   chat holds the flow; offer the next available slice. The output also gives
-  the product revision and status, this flow's earlier work-item handoffs and
-  saved prompts, and the package scripts.
+  the product revision and status, this flow's earlier work-item handoffs,
+  `flow.board` and saved prompts, and the package scripts.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
   where the user queued this slice. The `flowId` is that slice's `flowId`
   verbatim, from the invocation or the `--ready` entry the user confirmed,
@@ -81,8 +77,16 @@ about most.
 - A saved `<flowId>-<skill>-prompt.md` means an earlier phase chose to continue
   later: say so in one line and resume from the artifacts it names, exactly as
   if the phases had run back to back.
-- The latest earlier baseline handoff for this flow supplies the Epic, Feature
-  and Story identity, parents and field text; build on it instead of asking.
+- The board is never a question: the user could not answer it reliably, and
+  `flow-migrate` confirms what was applied anyway. The latest earlier baseline
+  handoff for this flow supplies the Epic, Feature and Story identity, parents
+  and field text. Without one, `flow.board` names the sibling snapshot this
+  flow inherits its Epic from, and its Feature when `inherits` is
+  `epic-and-feature`; record their IDs in `workItemContext`, propose a new
+  Story under them and propose the rest as `create`. Board state and progress
+  are the values that snapshot recorded. Name the source and the IDs in one
+  line; a correction the user gives unprompted replaces them. Without
+  `flow.board` either, propose the Epic, Feature and Story as `create`.
 - The test, typecheck and build commands are `commands.suggested`: run-once
   forms, never a script marked `terminates: false`, which would hang
   `flow-migrate`, or `writesToWorktree`. Confirm them in one line.
@@ -176,8 +180,8 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    exited it; a skill never enters or leaves plan mode.
 8. **Work-item snapshot.** Read `<lab>\docs\flow-work-item-steps.md` and follow
    it for `work-item-baseline.json`. Populate the templates from cited contract
-   evidence, and propose a new Story only on request or when evidence shows the
-   slice does not responsibly fit the existing one. The baseline Task is
+   evidence. On a rerun, propose a new Story only on request or when evidence
+   shows the slice does not responsibly fit the existing one. The baseline Task is
    complete once the contract validates. This is the board setup handoff: it
    should give the user copy/paste content for the Epic, Feature, User Story,
    baseline, implementation and verification Tasks, plus the first standup

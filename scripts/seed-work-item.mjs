@@ -18,6 +18,7 @@ const validatorPath = path.join(rootDirectory, "scripts", "validate-handoff.mjs"
 
 const usage = `Usage:
   node scripts/seed-work-item.mjs --previous <snapshot.json> --primary <artifact.json> --out <snapshot.json> [--applied <status>] [--created <localId>=<externalId>]...
+  node scripts/seed-work-item.mjs --inherit <snapshot.json> --primary <flow-contract.json> --out <snapshot.json> [--epic-only]
   node scripts/seed-work-item.mjs --finalize <snapshot.json> [--previous <snapshot.json>]
 
 Seed writes the next work-item snapshot from the previous one. Every Epic,
@@ -37,6 +38,12 @@ validate until this run has written them.
   --created <id=ext>  the external ID Targetprocess gave an item the previous
                       snapshot proposed to create; repeatable, and only with
                       --applied confirmed-applied
+
+Inherit starts a first baseline for a new flow from a sibling flow's snapshot,
+the one run-context.mjs reports as flow.board. It copies the Epic and, without
+--epic-only, the Feature byte for byte with their external IDs and recorded
+board values, proposes no movement on them and leaves stories empty for this
+run's own Story and Tasks.
 
 Finalize runs after the edits. It sets each Story's proposedProgress from its
 Tasks, copies that into the standup, and sets every action: create without an
@@ -340,7 +347,7 @@ const seed = async (options, { quiet = false } = {}) => {
     ];
     if (rerun) {
       lines.push(
-        "  - currentState and currentProgress of every item, as the user confirmed the board for this run; they are copied from the superseded snapshot only as a starting point.",
+        "  - currentState and currentProgress only where the user corrected the board unprompted; otherwise they stay as the superseded snapshot recorded them.",
       );
     }
     if (applied) {
@@ -350,6 +357,96 @@ const seed = async (options, { quiet = false } = {}) => {
     }
     lines.push(`Then run: node "${path.join(rootDirectory, "scripts", "seed-work-item.mjs")}" --finalize "${outPath}"`);
     console.log(lines.join("\n"));
+  }
+  return outPath;
+};
+
+const inherit = async (options, { quiet = false } = {}) => {
+  for (const name of ["primary", "out"]) {
+    if (!options[name]) throw new Error(`--${name} is required.\n\n${usage}`);
+  }
+  if (options.previous || options.applied || options.created.length > 0) {
+    throw new Error(
+      "--inherit starts a flow's first baseline; --previous, --applied and --created belong to a flow's own chain.",
+    );
+  }
+  const source = await loadJson(options.inherit);
+  const primary = await loadJson(options.primary);
+  if (source.value.artifactType !== "work-item-handoff") {
+    throw new Error(`${source.pointerPath} is not a work-item-handoff snapshot.`);
+  }
+  if (primary.value.artifactType !== "flow-contract") {
+    throw new Error(`${primary.pointerPath} is a ${primary.value.artifactType}; --inherit seeds a baseline from its flow-contract.`);
+  }
+  if (source.value.flowId === primary.value.flowId) {
+    throw new Error(
+      `${source.pointerPath} is this flow's own snapshot; a rerun seeds from it with --previous.`,
+    );
+  }
+
+  // Inheriting proposes nothing: current values stay as the source recorded
+  // them, and the proposal equals them until this run moves an item.
+  const settle = item => {
+    const next = structuredClone(item);
+    next.proposedState = next.currentState;
+    next.proposedProgress = next.currentProgress;
+    next.action = Object.hasOwn(next, "externalId") ? "no-change" : "create";
+    return next;
+  };
+  const epic = settle(source.value.epic);
+  const items = { epic };
+  if (!options["epic-only"]) items.feature = syncParentId(settle(source.value.feature), "feature", epic);
+  const inherited = options["epic-only"] ? "Epic" : "Epic and Feature";
+
+  const snapshot = {
+    schemaVersion: source.value.schemaVersion,
+    artifactType: "work-item-handoff",
+    handoffPhase: "baseline",
+    skill: "flow-baseline",
+    skillVersion: primary.value.skillVersion,
+    runId: primary.value.runId,
+    flowId: primary.value.flowId,
+    primaryArtifact: {
+      artifactType: primary.value.artifactType,
+      path: primary.pointerPath,
+      sha256: primary.sha256,
+    },
+    ...items,
+    stories: [],
+    standup: {
+      date: localDate(),
+      storyLocalId: "",
+      currentBoardProgress: 0,
+      proposedBoardProgress: 0,
+      completedSincePreviousUpdate: [],
+      next: [],
+      blockers: [],
+      summary: "",
+    },
+    manualApplication: {
+      status: "copy-ready",
+      summary: `Copy the proposed User Story, its Tasks and the standup update into Targetprocess under the existing ${inherited}, and confirm what was applied.`,
+    },
+    evidence: [
+      `${inherited} identity, field text and board values copied from ${source.pointerPath} (flow ${source.value.flowId}).`,
+    ],
+    openQuestions: [],
+  };
+
+  const outPath = path.resolve(options.out);
+  await writeNew(outPath, snapshot);
+  if (!quiet) {
+    const ids = [epic, items.feature].filter(Boolean)
+      .map(item => `${item.localId}${item.externalId ? ` #${item.externalId}` : ""}`).join(", ");
+    console.log([
+      `Wrote ${outPath}: first baseline inheriting ${ids} from flow ${source.value.flowId}.`,
+      "Still to write:",
+      ...(options["epic-only"] ? ["  - the Feature, from the print-shape template and cited contract evidence;"] : []),
+      "  - this flow's Story with its baseline, implementation and verification Tasks;",
+      "  - standup.storyLocalId, completedSincePreviousUpdate, next and summary (blockers may stay empty);",
+      "  - further evidence, and fields, proposedState or proposedProgress only on an inherited item this slice moves.",
+      `Then run: node "${path.join(rootDirectory, "scripts", "seed-work-item.mjs")}" --finalize "${outPath}"`,
+    ].join("\n"));
   }
   return outPath;
 };
@@ -401,11 +498,11 @@ const finalize = async (options, { quiet = false } = {}) => {
   });
   Object.assign(snapshot, items);
 
-  const standupStory = snapshot.stories.find(
-    story => story.localId === snapshot.standup.storyLocalId,
-  );
+  const standupStory = snapshot.standup.storyLocalId
+    ? snapshot.stories.find(story => story.localId === snapshot.standup.storyLocalId)
+    : snapshot.stories[0];
   if (standupStory) {
-    let standup = { ...snapshot.standup };
+    let standup = { ...snapshot.standup, storyLocalId: standupStory.localId };
     standup = Object.hasOwn(standupStory, "externalId")
       ? placeAfter(standup, "storyLocalId", "storyExternalId", standupStory.externalId)
       : withoutKey(standup, "storyExternalId");
@@ -426,11 +523,11 @@ const finalize = async (options, { quiet = false } = {}) => {
 
 const parseArguments = argumentsList => {
   const options = { created: [] };
-  const valued = new Set(["previous", "primary", "out", "applied", "created", "finalize"]);
+  const valued = new Set(["previous", "primary", "out", "applied", "created", "finalize", "inherit"]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
     const name = argument.slice(2);
-    if (argument === "--self-test" || argument === "--help") {
+    if (["--self-test", "--help", "--epic-only"].includes(argument)) {
       options[name] = true;
       continue;
     }
@@ -584,6 +681,54 @@ const runSelfTest = async () => {
     const appliedResult = validate([...chain, appliedPath]);
     assert(appliedResult.status === 0,
       `the applied migration snapshot does not validate:\n${appliedResult.stderr || appliedResult.stdout}`);
+
+    const siblingContractPath = path.join(temporary, "sibling-flow-contract.json");
+    const siblingContract = structuredClone((await loadJson(contractPath)).value);
+    siblingContract.flowId = "demo-sibling";
+    siblingContract.runId = "demo-sibling-baseline-1";
+    delete siblingContract.workItemContext.storyExternalIds;
+    await writeFile(siblingContractPath, JSON.stringify(siblingContract, null, 2));
+    await expectFailure(
+      () => inherit({ inherit: baselinePath, primary: contractPath, out: path.join(temporary, "own.json"), created: [] }, { quiet: true }),
+      "this flow's own snapshot",
+      "a flow inherited from its own snapshot instead of seeding a rerun",
+    );
+    const inheritedPath = path.join(temporary, "work-item-baseline-sibling.json");
+    await inherit(
+      { inherit: appliedPath, primary: siblingContractPath, out: inheritedPath, created: [] },
+      { quiet: true },
+    );
+    const inherited = await readJson(inheritedPath);
+    const source = await readJson(appliedPath);
+    assert(inherited.epic.externalId === source.epic.externalId &&
+      inherited.feature.externalId === source.feature.externalId &&
+      JSON.stringify(inherited.feature.fields) === JSON.stringify(source.feature.fields) &&
+      inherited.epic.action === "no-change" && inherited.stories.length === 0,
+      "the Epic and Feature were not inherited byte for byte as no-change");
+    const story = structuredClone(baseline.value.stories[0]);
+    delete story.externalId;
+    story.localId = "migrate-demo-sibling";
+    story.currentState = "Not created";
+    for (const task of story.tasks) {
+      task.localId = `demo-sibling-${task.kind}`;
+      task.parentStoryLocalId = story.localId;
+      delete task.parentStoryExternalId;
+      delete task.externalId;
+    }
+    inherited.stories = [story];
+    inherited.standup.completedSincePreviousUpdate = ["Established the sibling baseline."];
+    inherited.standup.next = ["Implement the sibling slice."];
+    inherited.standup.summary = "The sibling baseline is ready.";
+    await writeFile(inheritedPath, JSON.stringify(inherited, null, 2));
+    await finalize({ finalize: inheritedPath }, { quiet: true });
+    const finalizedInherited = await readJson(inheritedPath);
+    assert(finalizedInherited.standup.storyLocalId === story.localId &&
+      finalizedInherited.stories[0].action === "create" &&
+      finalizedInherited.feature.action === "no-change",
+      "finalize did not adopt the inherited baseline's only Story into the standup");
+    const inheritedResult = validate([siblingContractPath, inheritedPath]);
+    assert(inheritedResult.status === 0,
+      `the inherited baseline snapshot does not validate:\n${inheritedResult.stderr || inheritedResult.stdout}`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
@@ -600,6 +745,8 @@ const main = async () => {
     process.exitCode = options.help ? 0 : 1;
   } else if (options.finalize) {
     await finalize(options);
+  } else if (options.inherit) {
+    await inherit(options);
   } else {
     await seed(options);
   }

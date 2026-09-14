@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.25.0
+targetVersion: 0.26.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.25.0 acceptance criteria
+# `flow-baseline` v0.26.0 acceptance criteria
 
 ## Hard gates
 
@@ -292,4 +292,10 @@ The source is acceptable when:
 93. `planSlice` is recorded whenever the slice comes from a map, and its
     `remainder` is `null` only when the whole slice migrates;
 94. a run on a slice whose `--ready` entry carries a `remainder` cuts from
-    that remainder.
+    that remainder;
+95. no Epic, Feature or Story ID and no board state or progress reaches the
+    user as a question: a first baseline for a new flow takes the Epic, and
+    the Feature when the map puts both flows in one feature, from
+    `run-context.mjs`'s `flow.board`, seeds them with
+    `seed-work-item.mjs --inherit` and names that source and those IDs in one
+    line.
