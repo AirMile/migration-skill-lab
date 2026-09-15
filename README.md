@@ -11,8 +11,8 @@ This lab contains:
 - experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.29.0, `flow-migrate` v0.19.0 and
-  `flow-verify` v0.19.0 source skills;
+- experimental `flow-baseline` v0.30.0, `flow-migrate` v0.20.0 and
+  `flow-verify` v0.20.0 source skills;
 - experimental `flow-debug` v0.9.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
@@ -138,25 +138,6 @@ Lely-specific information.
 4. Keep source and runtime snapshot versions explicit.
 
 Do not use a live symlink to a public or personal repository.
-
-## Model per skill
-
-Copilot has no `model:` frontmatter; the model is chosen per chat. Because
-every phase already runs in a fresh chat, set it deliberately when opening
-that chat.
-
-| Skill | Model | Why |
-|---|---|---|
-| `flow-plan` | Claude Sonnet 5 | Cuts candidate slices from a component tree and weighs them against each other; every later chain inherits the cut. The counting is a script. |
-| `flow-baseline` | Claude Sonnet 5 | Heaviest reasoning. It reads unfamiliar React, inventories every rendered control and conditional branch, and writes the contract everything downstream depends on. An error here poisons all later phases. |
-| `flow-migrate` | Claude Sonnet 5 | Code generation inside a tight allowlist plus test authoring. |
-| `flow-verify` | GPT-6 Astra or GPT-5.5 — deliberately a different family than `flow-migrate` used | This is where the flow actually failed. Finding V1 shows the verifier silently skipped a requirement its own contract stated. A different model family does not inherit the migrator's blind spot. |
-| `flow-debug` | Claude Sonnet 5 or GPT-5.3-Codex | A bounded tier machine: reproduce, hypothesize, smallest patch. |
-| `migration-skill-audit` | Claude Sonnet 5 | Meta-reasoning over instruction text and spotting structural gaps, which is what produced M1 and V1. |
-
-Do not use Haiku 4.5, Gemini Flash, GPT-5 mini, GPT-5.4 mini or
-MAI-Code-1.1-Flash for any flow skill. They are too light for contract-grade
-reasoning, and the mechanical steps are already scripts.
 
 ## Migration workflow
 
