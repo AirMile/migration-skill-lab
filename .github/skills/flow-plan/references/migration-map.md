@@ -38,13 +38,18 @@ measured again on every run.
     planning view; `flow-baseline` decides the boundary and records a
     correction in its contract's `decisions`.
   - `status`: `candidate` until a flow-contract exists, `in-progress` after,
-    `landed` only from a `PASS`, with `evidence` pointing at it, and
-    `blocked` when a chain ended without one and needs a human decision.
-    Only `--seed` and `--land` move a slice to `in-progress` or `landed`; only
-    a `candidate` may be offered in `recommendation`. A slice owns its paths
-    until a chain ends with no remainder: a `PASS` whose contract leaves a
-    `planSlice.remainder` keeps it `in-progress`, and `run-context.mjs --ready`
-    offers it again with that remainder.
+    `landed` only from a `PASS` **and** a matching `land-receipt.json` (only
+    `slice-worktree.mjs --land` writes one), with `evidence` pointing at the
+    verification-result, and `blocked` when a chain ended without one and
+    needs a human decision. A `PASS` with no receipt yet stays `in-progress`
+    and is reported as `awaitingLand`, never `landed`, since neither a hand
+    merge nor an uncommitted worktree can be told apart from an unlanded
+    branch without that receipt. Only `--seed` and `--land` move a slice to
+    `in-progress` or `landed`; only a `candidate` may be offered in
+    `recommendation`. A slice owns its paths until a chain ends with no
+    remainder: a `PASS` whose contract leaves a `planSlice.remainder` keeps it
+    `in-progress`, and `run-context.mjs --ready` offers it again with that
+    remainder.
 - `prerequisites`: a React file that two or more slices import and no slice
   owns.
   - `kind` is `shared-component` for UI and `adapter` for state, a context or

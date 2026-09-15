@@ -57,12 +57,17 @@ Derive everything else, state each value in one line and continue:
    worktree is evidence, not permission to change it.
 2. **Seed.** With a previous map, run
    `node "<lab>\scripts\migration-map.mjs" --seed --previous <map.previousMap> --out <map.nextRunDirectory>\migration-map.json --run-id <map.nextRunId> --skill-version <this skill's version> --lab-root <lab>`.
-   It carries every field, lands each slice with a `PASS` verification-result
-   and moves each started candidate to `in-progress`; report the landed,
-   in-progress and `partial` lists in one line. Without one, run
-   `--init --product-root <product>` with the same `--out`, `--run-id` and
-   `--skill-version`: one feature per folder under `src\features`, no slices
-   yet.
+   It carries every field, lands each slice with a `PASS` **and** a matching
+   `land-receipt.json` (only `slice-worktree.mjs --land` writes one), and moves
+   each started candidate to `in-progress`; report the landed, in-progress,
+   `partial` and `awaitingLand` lists in one line. A flow in `awaitingLand` has
+   a `PASS` nobody has landed yet: tell the user to run
+   `node "<lab>\scripts\slice-worktree.mjs" --land --product-root <product> --run-dir <run-dir>`
+   for it before this map can treat it as landed, since a hand merge or an
+   uncommitted worktree both look unlanded until that command runs. Without a
+   previous map, run `--init --product-root <product>` with the same `--out`,
+   `--run-id` and `--skill-version`: one feature per folder under
+   `src\features`, no slices yet.
 3. **Measure.** Run
    `node "<lab>\scripts\migration-map.mjs" --measure --product-root <product> --map <migration-map.json> --lab-root <lab>`.
    Run it again after every change to slices or prerequisites, and last before
@@ -123,10 +128,17 @@ Derive everything else, state each value in one line and continue:
    run to settle step 3 is named as that and the run goes on; any other change
    stops it.
 10. **Summary.** Render one screen from the validated map, never from memory:
-    what landed since the previous map; per worked feature, its slices with
-    status; each prerequisite with its counterpart status and how many slices'
-    `requires` name it; the queue, each slice with its `requires`; open
-    questions. It is not a gate and asks for nothing.
+    what landed since the previous map; any slice still `awaitingLand` from
+    step 2, named with the `--land` command it needs; per worked feature, its
+    slices with status; each prerequisite with its counterpart status and how
+    many slices' `requires` name it; the queue, each slice with its
+    `requires`; open questions. It is not a gate and asks for nothing. For a
+    slice the user asks to publish, and only then, show
+    `node "<lab>\scripts\slice-worktree.mjs" --publish --product-root <product> --run-dir <run-dir>`:
+    it branches `feature/migrate-<flowId>` off `migration/angular` and pushes
+    it, once per slice, never to `migration/angular` or `main` and never as a
+    merge; opening the merge request stays the user's own action on the
+    team's Git host.
 11. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-baseline --lab-root <lab> --product-root <product> --run-dir <run-dir> <migration-map.json>`.
     It names no slice: each chat it starts offers the queue and claims the
@@ -151,6 +163,8 @@ Never:
 
 - edit, generate, format, stage, commit, stash, reset or check out product
   files, install anything, or start a persistent service;
+- run `slice-worktree.mjs --land` or `--publish` itself, or push anything to a
+  remote; only show the command for the user to run in their own terminal;
 - write a file other than the map, its metrics and the observation sidecar in
   the run directory;
 - choose or queue a slice for the user, or cut slices for a feature nobody is

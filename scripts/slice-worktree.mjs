@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -11,6 +12,11 @@ import {
   sliceBranch,
   statusPaths,
 } from "./run-context.mjs";
+
+const sha256 = raw => createHash("sha256").update(raw).digest("hex");
+
+// A slice-branch or `feature/migrate-<flowId>` name, never `main` or a bare word.
+const featureBranch = flowId => `feature/migrate-${flowId}`;
 
 // Every slice used to migrate in the one product checkout, beside every
 // earlier slice nobody had committed, so the allowlist check could no longer
@@ -32,15 +38,24 @@ Actions:
                            every one is inside the contract's
                            scope.allowedWritePaths, merge the branch into the
                            integration checkout with --no-ff and remove the
-                           worktree; the branch stays
+                           worktree; the branch stays; writes land-receipt.json
+                           in the run directory, the fact migration-map.mjs and
+                           run-context.mjs read back for "landed"
   --remove --run-id <id>   remove an abandoned claim's clean worktree, and its
                            branch when that holds no commit of its own
+  --publish --run-dir <dir>
+                           after a land-receipt.json: branch
+                           feature/migrate-<flowId> off the integration
+                           checkout's current HEAD and push it to origin; never
+                           pushes ${integrationBranch} or main, never merges,
+                           never force-pushes, never opens a merge request
 
 Options:
   --no-install             skip npm ci on --create
   --self-test              run the built-in checks
 
-It never pushes, never stages a path outside the allowlist and never forces.
+It never pushes ${integrationBranch} or main, never stages a path outside the
+allowlist and never forces.
 `;
 
 const git = (root, args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8" });
@@ -211,16 +226,83 @@ const landWorktree = async ({ productRoot, runDirectory }) => {
     );
   }
 
+  const merged = gitOrThrow(root, ["rev-parse", "HEAD"]);
+
+  // Written once the merge itself succeeded, so a receipt only ever attests a
+  // fact this function just made true; a failed or missing worktree removal
+  // below (a running dev server holds files open on Windows) does not undo it.
+  const receipt = {
+    schemaVersion: 1,
+    artifactType: "land-receipt",
+    runId,
+    flowId,
+    branch,
+    integrationBranch,
+    commit,
+    merged,
+    verification: { path: path.basename(verification.file), sha256: sha256(await readFile(verification.file)) },
+    landedAt: new Date().toISOString(),
+  };
+  await writeFile(
+    path.join(path.resolve(runDirectory), "land-receipt.json"),
+    `${JSON.stringify(receipt, null, 2)}\n`,
+  );
+
   // A running dev server holds files open on Windows; the merge stands either way.
   const removal = git(root, ["worktree", "remove", worktree]);
   return {
     runId,
     branch,
     commit,
-    merged: gitOrThrow(root, ["rev-parse", "HEAD"]),
+    merged,
     worktreeRemoved: removal.status === 0,
     ...(removal.status === 0 ? {} : { worktreeRemoval: (removal.stderr || removal.stdout).trim() }),
   };
+};
+
+// A slice only publishes once its land-receipt exists: that is the one fact
+// --land itself produced, unlike a PASS file anyone could copy in by hand.
+const publishBranch = async ({ productRoot, runDirectory }) => {
+  const runDirectoryPath = path.resolve(runDirectory);
+  const receiptPath = path.join(runDirectoryPath, "land-receipt.json");
+  if (!(await exists(receiptPath))) {
+    throw new Error(`${runDirectoryPath} holds no land-receipt.json; land the slice with --land before publishing it.`);
+  }
+  const receipt = await readJson(receiptPath);
+  if (receipt.artifactType !== "land-receipt") throw new Error(`${receiptPath} is not a land-receipt.`);
+  const { runId, flowId } = receipt;
+  requireRunId(runId);
+
+  const integration = readProductState(productRoot);
+  const root = integration.root;
+  if (integration.branch !== integrationBranch) {
+    throw new Error(`${root} has ${integration.branch ?? "a detached HEAD"} checked out, not ${integrationBranch}.`);
+  }
+  if (!integration.clean) {
+    throw new Error(`${root} has uncommitted changes (${integration.status.join(", ")}); publishing needs a clean checkout.`);
+  }
+  if (git(root, ["merge-base", "--is-ancestor", receipt.merged, "HEAD"]).status !== 0) {
+    throw new Error(`${root}'s HEAD no longer contains ${receipt.merged}; ${integrationBranch} moved since the land, check it before publishing.`);
+  }
+
+  const branch = featureBranch(flowId);
+  if (branchExists(root, branch)) {
+    throw new Error(`${branch} already exists; a slice publishes once. Remove it by hand to republish.`);
+  }
+  const remoteHead = git(root, ["ls-remote", "--exit-code", "--heads", "origin", branch]);
+  if (remoteHead.status === 0) {
+    throw new Error(`origin already has ${branch}; a slice publishes once. Remove it there to republish.`);
+  }
+
+  const head = gitOrThrow(root, ["rev-parse", "HEAD"]);
+  gitOrThrow(root, ["branch", branch, head]);
+  const push = git(root, ["push", "-u", "origin", branch]);
+  if (push.status !== 0) {
+    gitOrThrow(root, ["branch", "-D", branch]);
+    throw new Error(`git push -u origin ${branch} failed: ${(push.stderr || push.stdout).trim()}`);
+  }
+
+  return { runId, flowId, branch, remote: "origin", commit: head, pushed: true };
 };
 
 const removeWorktree = async ({ productRoot, runId }) => {
@@ -252,7 +334,7 @@ const removeWorktree = async ({ productRoot, runId }) => {
 
 const parseArguments = argumentsList => {
   const options = { install: true };
-  const flags = new Set(["--self-test", "--help", "--create", "--land", "--remove", "--no-install"]);
+  const flags = new Set(["--self-test", "--help", "--create", "--land", "--remove", "--publish", "--no-install"]);
   const valued = new Set(["product-root", "run-id", "run-dir"]);
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
@@ -274,13 +356,17 @@ const parseArguments = argumentsList => {
 };
 
 const run = async options => {
-  const actions = ["create", "land", "remove"].filter(name => options[name]);
-  if (actions.length !== 1) throw new Error(`Name exactly one of --create, --land and --remove.\n\n${usage}`);
+  const actions = ["create", "land", "remove", "publish"].filter(name => options[name]);
+  if (actions.length !== 1) throw new Error(`Name exactly one of --create, --land, --publish and --remove.\n\n${usage}`);
   if (!options["product-root"]) throw new Error(`--product-root is required.\n\n${usage}`);
   const [action] = actions;
   if (action === "land") {
     if (!options["run-dir"]) throw new Error("--land needs --run-dir.");
     return landWorktree({ productRoot: options["product-root"], runDirectory: options["run-dir"] });
+  }
+  if (action === "publish") {
+    if (!options["run-dir"]) throw new Error("--publish needs --run-dir.");
+    return publishBranch({ productRoot: options["product-root"], runDirectory: options["run-dir"] });
   }
   const input = { productRoot: options["product-root"], runId: options["run-id"], install: options.install };
   return action === "create" ? createWorktree(input) : removeWorktree(input);
@@ -315,8 +401,11 @@ const runSelfTest = async () => {
   });
   try {
     const product = path.join(temporary, "product");
+    const origin = path.join(temporary, "origin.git");
     await mkdir(path.join(product, "src"), { recursive: true });
     gitOrThrow(product, ["init", "-q"]);
+    gitOrThrow(temporary, ["init", "-q", "--bare", "origin.git"]);
+    gitOrThrow(product, ["remote", "add", "origin", origin]);
     await writeFile(path.join(product, ".gitignore"), "node_modules/\n");
     await writeFile(path.join(product, "src", "a.txt"), "base\n");
     await writeFile(path.join(product, "README.md"), "demo\n");
@@ -383,6 +472,30 @@ const runSelfTest = async () => {
       branchExists(product, sliceBranch("demo-baseline-2")) &&
       gitOrThrow(product, ["log", "-1", "--format=%s", integrationBranch]) === "Land demo-baseline-2",
       `a verified slice did not land: ${JSON.stringify(landed)}`);
+
+    // --land wrote the one fact --publish trusts; a run with no receipt never
+    // publishes, and a run that already published never does so twice.
+    const receipt = JSON.parse(await readFile(path.join(runDirectory, "land-receipt.json"), "utf8"));
+    assert(receipt.artifactType === "land-receipt" && receipt.runId === "demo-baseline-2" &&
+      receipt.flowId === "demo" && receipt.branch === sliceBranch("demo-baseline-2") &&
+      receipt.merged === landed.merged && receipt.commit === landed.commit,
+      `--land did not write a matching land-receipt.json: ${JSON.stringify(receipt)}`);
+
+    const publish = () => run({ publish: true, "product-root": product, "run-dir": runDirectory });
+    const noReceiptDirectory = path.join(temporary, "no-receipt-run");
+    await mkdir(noReceiptDirectory);
+    await expectRefusal(() => run({ publish: true, "product-root": product, "run-dir": noReceiptDirectory }),
+      "holds no land-receipt.json", "a slice published without a land-receipt");
+
+    const published = await publish();
+    assert(published.branch === "feature/migrate-demo" && published.remote === "origin" && published.pushed &&
+      branchExists(product, "feature/migrate-demo") &&
+      gitOrThrow(origin, ["rev-parse", "feature/migrate-demo"]) === published.commit,
+      `a landed slice was not published: ${JSON.stringify(published)}`);
+    await expectRefusal(publish, "already exists", "a slice published a second time");
+    assert(!branchExists(product, integrationBranch.replace("migration", "main")) &&
+      git(origin, ["rev-parse", "--verify", "--quiet", "refs/heads/main"]).status !== 0,
+      "publishing pushed something to main");
 
     // Two slices that touch the same file: the second merge conflicts, aborts
     // and leaves the integration branch as it was.

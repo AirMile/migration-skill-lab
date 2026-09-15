@@ -33,11 +33,18 @@ Product repository: `C:\Project\frontend`, the integration checkout.
 - Nothing in a slice worktree is committed until its verification passes. Then
   the user runs `slice-worktree.mjs --land`. It commits only paths inside the
   contract's allowlist, merges the branch into `migration/angular` with
-  `--no-ff`, and removes the worktree. A merge conflict aborts and changes
-  nothing.
+  `--no-ff`, removes the worktree and writes `land-receipt.json` in the run
+  directory. A merge conflict aborts and changes nothing.
 - `/flow-plan` and `--ready` read the integration checkout. A PASS counts as
-  landed only once its branch is merged.
-- Nothing is pushed. Publishing `migration/angular` is the team's decision.
+  landed only once its run directory holds a `land-receipt.json` for that PASS's
+  runId; without one it is reported as `awaitingLand`, not landed, even after a
+  hand merge, since a receipt is the one fact only `--land` itself produces.
+- Publishing one landed slice is `slice-worktree.mjs --publish --run-dir <dir>`,
+  read from its `land-receipt.json`. It branches `feature/migrate-<flowId>` off
+  `migration/angular`'s current HEAD and pushes it to `origin`, once per slice.
+  It never pushes `migration/angular` or `main`, never force-pushes, never
+  merges and never opens a merge request; that stays a human, reviewed action
+  on the team's Git host. Nothing publishes until the user runs it.
 - Slices build and migrate in parallel, each in its own worktree. Manual
   verification does not, because one local frontend serves the desktop app.
   Two slices that build the same unbuilt prerequisite

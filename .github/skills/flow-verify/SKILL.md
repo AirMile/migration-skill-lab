@@ -162,8 +162,9 @@ outcome, a diagnosis and the next action.
     `node "<lab>\scripts\continuation.mjs" --next flow-plan --lab-root <lab> --product-root <product> --run-dir <run-dir> <verification-result.json>`.
     From a slice worktree it prints a `slice-worktree.mjs --land` command first.
     Show it for the user to run in a terminal before `/flow-plan`: it commits the
-    slice and merges it into the integration branch, which this skill never
-    does.
+    slice, merges it into the integration branch and writes `land-receipt.json`,
+    the fact `/flow-plan` treats as landed, none of which this skill ever does
+    itself.
     Offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
        the invocation. Never start a second terminal window;

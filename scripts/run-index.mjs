@@ -67,22 +67,30 @@ const allFlowRunDirectories = async labRoot => {
 };
 
 // A contract that migrated part of its map slice names what is still React;
-// its PASS keeps the slice open.
-const readRemainder = async directoryPath => {
+// its PASS keeps the slice open. Its runId is what a land-receipt is keyed
+// on, since a verification-result's own runId names the verification attempt
+// itself, not the slice branch it verified.
+const readContractInfo = async directoryPath => {
   try {
-    const remainder = (await readJson(path.join(directoryPath, "flow-contract.json"))).planSlice?.remainder;
-    return typeof remainder === "string" && remainder.trim() ? remainder : null;
+    const contract = await readJson(path.join(directoryPath, "flow-contract.json"));
+    const remainder = contract.planSlice?.remainder;
+    return {
+      remainder: typeof remainder === "string" && remainder.trim() ? remainder : null,
+      runId: typeof contract.runId === "string" ? contract.runId : null,
+    };
   } catch {
-    return null;
+    return { remainder: null, runId: null };
   }
 };
 
 // The newest PASS verification-result per flowId, with the remainder its
 // contract records, and every flowId with a flow-contract, across all run
-// directories.
+// directories. Also every land-receipt.json, keyed by the runId it landed,
+// the one fact `slice-worktree.mjs --land` itself produced after merging.
 export const scanRuns = async labRoot => {
   const passes = new Map();
   const started = new Set();
+  const receipts = new Map();
   const locations = await allFlowRunDirectories(labRoot);
   for (const { directory, entries } of locations) {
     for (const entry of entries) {
@@ -91,7 +99,7 @@ export const scanRuns = async labRoot => {
       if (!details.isDirectory()) continue;
     for (const file of await readdir(directoryPath)) {
       const isVerification = /^verification-result(?:-\d+)?\.json$/.test(file);
-      if (!isVerification && file !== "flow-contract.json") continue;
+      if (!isVerification && file !== "flow-contract.json" && file !== "land-receipt.json") continue;
       const filePath = path.join(directoryPath, file);
       let value;
       try {
@@ -103,14 +111,18 @@ export const scanRuns = async labRoot => {
         const modified = (await stat(filePath)).mtimeMs;
         const previous = passes.get(value.flowId);
         if (!previous || previous.modified < modified) {
-          passes.set(value.flowId, { filePath, modified, remainder: await readRemainder(directoryPath) });
+          const { remainder, runId } = await readContractInfo(directoryPath);
+          passes.set(value.flowId, { filePath, modified, remainder, runId });
         }
       }
       if (value.artifactType === "flow-contract") started.add(value.flowId);
+      if (file === "land-receipt.json" && value.artifactType === "land-receipt" && value.runId) {
+        receipts.set(value.runId, { filePath, value });
+      }
     }
     }
   }
-  return { passes, started };
+  return { passes, started, receipts };
 };
 
 // A baseline run directory is open, a claim some chat still holds, until it
@@ -139,7 +151,7 @@ export const baselineRuns = async (labRoot, flowId) => {
         files,
         open: !files.some(closesBaseline),
         contract: files.includes("flow-contract.json"),
-        pass: passed ? { remainder: await readRemainder(directory) } : null,
+        pass: passed ? { remainder: (await readContractInfo(directory)).remainder } : null,
       };
     })),
   };

@@ -515,12 +515,17 @@ const initMap = async options => {
 };
 
 // Only a PASS with no remainder lands a slice and only a flow-contract starts
-// one, so seed and land share this and nothing else changes a status.
+// one, so seed and land share this and nothing else changes a status. A PASS
+// alone is not enough: only a land-receipt.json for that PASS's runId is the
+// fact that `slice-worktree.mjs --land` itself produced after merging, so a
+// PASS without one stays open and is reported back as awaitingLand rather
+// than silently trusted.
 const applyRunEvidence = async (slices, labRoot) => {
-  const { passes, started } = await scanRuns(labRoot);
+  const { passes, started, receipts } = await scanRuns(labRoot);
   const landed = [];
   const inProgress = [];
   const partial = [];
+  const awaitingLand = [];
   for (const slice of slices) {
     if (slice.status === "landed") continue;
     const pass = passes.get(slice.flowId);
@@ -528,6 +533,12 @@ const applyRunEvidence = async (slices, labRoot) => {
       if (slice.status === "candidate") slice.status = "in-progress";
       partial.push(slice.flowId);
     } else if (pass) {
+      const receipt = pass.runId ? receipts.get(pass.runId) : null;
+      if (!receipt) {
+        if (slice.status === "candidate") slice.status = "in-progress";
+        awaitingLand.push(slice.flowId);
+        continue;
+      }
       slice.status = "landed";
       slice.evidence = {
         path: pointerPath(pass.filePath, labRoot),
@@ -539,7 +550,7 @@ const applyRunEvidence = async (slices, labRoot) => {
       inProgress.push(slice.flowId);
     }
   }
-  return { landed, inProgress, partial };
+  return { landed, inProgress, partial, awaitingLand };
 };
 
 const seedMap = async options => {
@@ -566,10 +577,10 @@ const seedMap = async options => {
   delete next.metrics;
   next.recommendation = { options: [], queue: [] };
 
-  const { landed, inProgress, partial } = await applyRunEvidence(next.slices, options["lab-root"]);
+  const { landed, inProgress, partial, awaitingLand } = await applyRunEvidence(next.slices, options["lab-root"]);
 
   await writeNew(options.out, serializeMap(next));
-  return { out: path.resolve(options.out), landed, inProgress, partial };
+  return { out: path.resolve(options.out), landed, inProgress, partial, awaitingLand };
 };
 
 const landMap = async options => {
@@ -579,9 +590,9 @@ const landMap = async options => {
   const mapPath = path.resolve(options.map);
   const map = await readJsonFile(mapPath);
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
-  const { landed, inProgress, partial } = await applyRunEvidence(map.slices, options["lab-root"]);
+  const { landed, inProgress, partial, awaitingLand } = await applyRunEvidence(map.slices, options["lab-root"]);
   if (landed.length > 0 || inProgress.length > 0 || partial.length > 0) await writeFile(mapPath, serializeMap(map));
-  return { map: mapPath, landed, inProgress, partial };
+  return { map: mapPath, landed, inProgress, partial, awaitingLand };
 };
 
 // A hand-written block missing a field would otherwise surface as a bare
@@ -884,8 +895,18 @@ const runSelfTest = async () => {
     const passPath = path.join(lab, "runs", "2026-01-02-alpha-form-baseline-1", "verification-result.json");
     await write(lab, "runs/2026-01-02-alpha-form-baseline-1/verification-result.json",
       JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "alpha-form" }));
+    await write(lab, "runs/2026-01-02-alpha-form-baseline-1/flow-contract.json",
+      JSON.stringify({ artifactType: "flow-contract", flowId: "alpha-form", runId: "alpha-form-baseline-1" }));
+    await write(lab, "runs/2026-01-02-alpha-form-baseline-1/land-receipt.json",
+      JSON.stringify({ artifactType: "land-receipt", runId: "alpha-form-baseline-1", flowId: "alpha-form" }));
     await write(lab, "runs/2026-01-03-beta-form-baseline-1/flow-contract.json",
       JSON.stringify({ artifactType: "flow-contract", flowId: "beta-form" }));
+    // A PASS with a flow-contract but no land-receipt is not landed: nobody
+    // ran --land yet, so the map must keep reporting it, not trust the PASS alone.
+    await write(lab, "runs/2026-01-02b-epsilon-form-baseline-1/verification-result.json",
+      JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "epsilon-form" }));
+    await write(lab, "runs/2026-01-02b-epsilon-form-baseline-1/flow-contract.json",
+      JSON.stringify({ artifactType: "flow-contract", flowId: "epsilon-form", runId: "epsilon-form-baseline-1" }));
     const secondMap = path.join(lab, "runs", "2026-01-04-migration-map-2", "migration-map.json");
     const seeded = await seedMap({
       previous: firstMap, out: secondMap, "run-id": "migration-map-2", "skill-version": "0.1.0", "lab-root": lab,
@@ -907,14 +928,24 @@ const runSelfTest = async () => {
     // A slice cut after the seed has a PASS the seed could not see.
     second.slices.push({ flowId: "gamma-form", featureId: "alpha", title: "Gamma", paths: ["src/features/gamma"],
       dependsOn: [], requires: [], criteria, status: "candidate" });
+    second.slices.push({ flowId: "epsilon-form", featureId: "alpha", title: "Epsilon", paths: ["src/features/epsilon"],
+      dependsOn: [], requires: [], criteria, status: "candidate" });
     await writeFile(secondMap, serializeMap(second));
     await write(lab, "runs/2026-01-05-gamma-form-baseline-1/verification-result.json",
       JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "gamma-form" }));
+    await write(lab, "runs/2026-01-05-gamma-form-baseline-1/flow-contract.json",
+      JSON.stringify({ artifactType: "flow-contract", flowId: "gamma-form", runId: "gamma-form-baseline-1" }));
+    await write(lab, "runs/2026-01-05-gamma-form-baseline-1/land-receipt.json",
+      JSON.stringify({ artifactType: "land-receipt", runId: "gamma-form-baseline-1", flowId: "gamma-form" }));
     const landedLater = await landMap({ map: secondMap, "lab-root": lab });
     const gamma = (await readJsonFile(secondMap)).slices.find(slice => slice.flowId === "gamma-form");
     assert(JSON.stringify(landedLater.landed) === JSON.stringify(["gamma-form"]) &&
       gamma.status === "landed" && gamma.evidence?.sha256,
       "a slice cut after the seed did not land from its PASS");
+    const epsilon = (await readJsonFile(secondMap)).slices.find(slice => slice.flowId === "epsilon-form");
+    assert(JSON.stringify(landedLater.awaitingLand) === JSON.stringify(["epsilon-form"]) &&
+      epsilon.status === "in-progress" && !epsilon.evidence,
+      `a PASS without a land-receipt landed anyway: ${JSON.stringify(landedLater)} ${epsilon.status}`);
 
     // A PASS on part of a slice keeps the slice open for the next chain.
     const third = await readJsonFile(secondMap);

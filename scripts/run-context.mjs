@@ -67,15 +67,6 @@ export const sliceBranch = runId => `migration/${runId}`;
 const git = (root, args, input) =>
   spawnSync("git", ["-C", root, ...args], { encoding: "utf8", input });
 
-const branchExists = (root, branch) =>
-  git(root, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).status === 0;
-
-// A run from before slice branches, or a product without the integration
-// branch, has nothing to merge and is never waiting for it.
-const awaitingLand = (root, runId) =>
-  branchExists(root, integrationBranch) && branchExists(root, sliceBranch(runId)) &&
-  git(root, ["merge-base", "--is-ancestor", sliceBranch(runId), integrationBranch]).status !== 0;
-
 const localDate = () => {
   const now = new Date();
   const pad = number => String(number).padStart(2, "0");
@@ -325,7 +316,7 @@ const readReady = async (labRoot, mapFile, productRoot, productHead) => {
   const map = JSON.parse((await readFile(mapPath, "utf8")).replace(/^﻿/, ""));
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
 
-  const { passes } = await scanRuns(labRoot);
+  const { passes, receipts } = await scanRuns(labRoot);
   const unbuilt = new Set(map.prerequisites
     .filter(prerequisite => prerequisite.angular?.status !== "built")
     .map(prerequisite => prerequisite.id));
@@ -340,10 +331,11 @@ const readReady = async (labRoot, mapFile, productRoot, productHead) => {
       inFlight: runs.some(run => run.open || (run.contract && !run.pass)),
       remainder: pass?.remainder ?? null,
       laterRuns: Boolean(passRun) && runs.some(run => run.number > passRun.number),
-      // A PASS still on its own branch is not in the integration branch a
-      // new slice branches from.
-      awaitingLand: Boolean(pass && passRun) &&
-        awaitingLand(productRoot, `${slice.flowId}-baseline-${passRun.number}`),
+      // A PASS with no land-receipt.json for its own runId was never landed
+      // by --land: a hand merge or a plain uncommitted worktree both look
+      // like this, and neither is proof the integration branch has the work.
+      // A remainder PASS never lands at all, so it is never "awaiting" one.
+      awaitingLand: Boolean(pass) && pass.remainder === null && !(pass.runId && receipts.has(pass.runId)),
     });
   }
   const landed = new Set(map.slices
@@ -793,8 +785,12 @@ const runSelfTest = async () => {
     await writeFile(queuedMapPath, JSON.stringify(queuedMap));
     const deltaRun = path.join(lab, "runs", "flows", "delta", "2026-01-03-delta-baseline-1");
     await mkdir(deltaRun, { recursive: true });
+    await writeFile(path.join(deltaRun, "flow-contract.json"),
+      JSON.stringify({ artifactType: "flow-contract", flowId: "delta", runId: "delta-baseline-1" }));
     await writeFile(path.join(deltaRun, "verification-result.json"),
       JSON.stringify({ artifactType: "verification-result", status: "PASS", flowId: "delta" }));
+    await writeFile(path.join(deltaRun, "land-receipt.json"),
+      JSON.stringify({ artifactType: "land-receipt", runId: "delta-baseline-1", flowId: "delta" }));
 
     const expectRefusal = async (options, text, message) => {
       try {
@@ -860,7 +856,7 @@ const runSelfTest = async () => {
       }
     };
     const contractFor = (flowId, remainder) => ({
-      artifactType: "flow-contract", flowId,
+      artifactType: "flow-contract", flowId, runId: `${flowId}-baseline-1`,
       ...(remainder === undefined ? {} : { planSlice: { map: {}, flowId, remainder } }),
     });
     const passFor = flowId => ({ artifactType: "verification-result", status: "PASS", flowId });
@@ -916,8 +912,9 @@ const runSelfTest = async () => {
     assert(stuckReady.replan === true && stuckReady.replanReason.includes("/flow-plan"),
       `a map with no available slice does not ask to replan: ${JSON.stringify(stuckReady)}`);
 
-    // A PASS lands by merge: until its branch is in the integration branch,
-    // the slice is not offered again and a slice that depends on it waits.
+    // A PASS lands only with a land-receipt.json for its own runId: until
+    // --land writes one, the slice is not offered again and a slice that
+    // depends on it waits.
     await writeRun("2026-01-06-lambda-baseline-1", {
       "flow-contract.json": contractFor("lambda"),
       "verification-result.json": passFor("lambda"),
@@ -930,24 +927,19 @@ const runSelfTest = async () => {
     }));
     const readLand = async () => new Map((await collectContext({ ...inLab, ready: landMapPath }))
       .ready.slices.map(entry => [entry.flowId, entry]));
-    assert(!(await readLand()).has("lambda") && (await readLand()).get("mu").available,
-      "a PASS from before slice branches does not land its slice");
-    const sliceCommit = git(product, [
-      "-c", "user.name=Run Context Self Test",
-      "-c", "user.email=run-context-self-test@example.invalid",
-      "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "slice",
-    ]).stdout.trim();
-    runGit(product, ["branch", integrationBranch]);
-    runGit(product, ["branch", sliceBranch("lambda-baseline-1"), sliceCommit]);
     const unlanded = await readLand();
     assert(unlanded.get("lambda")?.awaitingLand && !unlanded.get("lambda").available &&
       JSON.stringify(unlanded.get("mu").openDependencies) === JSON.stringify(["lambda"]) &&
       !unlanded.get("mu").available,
-      `a PASS whose branch is not merged counts as landed: ${JSON.stringify([...unlanded.values()])}`);
-    runGit(product, ["branch", "-f", integrationBranch, sliceCommit]);
+      `a PASS without a land-receipt counts as landed: ${JSON.stringify([...unlanded.values()])}`);
+    await writeRun("2026-01-06-lambda-baseline-1", {
+      "flow-contract.json": contractFor("lambda"),
+      "verification-result.json": passFor("lambda"),
+      "land-receipt.json": { artifactType: "land-receipt", runId: "lambda-baseline-1", flowId: "lambda" },
+    });
     const merged = await readLand();
     assert(!merged.has("lambda") && merged.get("mu").available,
-      `a merged PASS does not land its slice: ${JSON.stringify([...merged.values()])}`);
+      `a landed PASS with a matching land-receipt does not land its slice: ${JSON.stringify([...merged.values()])}`);
 
     const releasedBeta = await collectContext({ ...inLab, "flow-id": "beta", release: true });
     assert(releasedBeta.flow.released.length === 1 && !(await exists(claimedBeta.flow.claimed.directory)),
