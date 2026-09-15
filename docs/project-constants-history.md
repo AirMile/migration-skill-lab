@@ -97,3 +97,16 @@ guides `experimental/zoneless`, `signals`, `signals/linked-signal`,
 best-practices report whose other proposals did not hold for Angular 19 or for
 islands without SSR, routing or HttpClient; the evaluation is in
 `runs\2026-09-14-angular-best-practices-audit-1\`.
+
+## Styling
+
+Added on 2026-09-15 after `detail-drawer-straight-strip-form-baseline-1`
+needed two verify and debug rounds on its one migrated field, while all five
+behaviour scenarios passed. The Length field bound its icon SVG through
+`[innerHTML]`, which the sanitizer emptied, and it stacked its label above the
+value because the contract described it that way and cited `NumberInput.tsx`,
+while the floating label and the 56px centred row are declared two components
+deeper, in `HoverInput.tsx`. The repair used `bypassSecurityTrustHtml`: it
+renders, but turns a styling fix into a security exception, hence the second
+rule. Which styling patterns and pitfalls the product holds beyond these two
+is the subject of `docs\styling-pitfalls-research-prompt.md`.

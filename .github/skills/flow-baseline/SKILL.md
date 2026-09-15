@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.30.0`.
+Skill version: `0.31.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -126,6 +126,13 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    `migration-map.mjs` leaves them out, and cite them: a control with a dozen
    external importers is shared infrastructure wherever it sits on screen. The counts stay out of the contract; the boundary decision carries
    the conclusion.
+   For every `migrate` surface, run
+   `node "<lab>\scripts\style-sources.mjs" --product-root <product> --entry <component file>[:<start>-<end>]`,
+   the line range when the surface is part of a file and `--map <migration-map.json>`
+   when the invocation names one. It walks the render tree down to the
+   templates that paint the surface, which a description misses: a label's
+   technique was two components deeper than the field. Read what it lists
+   under `unparsed`, `unresolved` and `packages` by hand.
 3. **Boundary.** Only now, with the evidence in hand, weigh materially
    different candidates. Judge every candidate in writing against all four
    criteria and say plainly where it fails:
@@ -168,7 +175,7 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    `targetArchitecture`, `scope` with `partialMount` and the write allowlist,
    `visualParity`, `decisions`, `testGaps`, `openQuestions`, `userStory`,
    `checkpointPolicy`, `validationPlan` and `rollback` as it specifies.
-7. **Write and validate** `flow-contract.json` at schemaVersion 7 in the run
+7. **Write and validate** `flow-contract.json` at schemaVersion 8 in the run
    directory. Copy each block's shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\flow-contract.json" [--block <name>]`,
    a real chain that passed end to end at schemaVersion 6, then leave out its

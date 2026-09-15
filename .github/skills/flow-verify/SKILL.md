@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.20.0`.
+Skill version: `0.21.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -100,6 +100,10 @@ outcome, a diagnosis and the next action.
    Present one item at a time:
    - name each item by its contract `visualParityId` and `surface` text, never
      by invented shorthand such as "V1";
+   - a `visualParity` item asks about each element its `styleSources` paint
+     (icon, label, value, unit, border, spacing) against the counterpart in the
+     same view, so one pass finds every deviation and one debug handoff
+     carries them all;
    - a step names the control, not the outcome: the button, the field by its
      visible label, the menu path, the keystroke. "Click the field labelled
      Length", not "check the length input". Use the real label, `dataTestId`

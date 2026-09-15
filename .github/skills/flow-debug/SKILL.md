@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.9.0`.
+Skill version: `0.10.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -81,7 +81,9 @@ Report `BLOCKED` before any product write when:
    failed attempt is evidence; never overwrite it with a later one.
 5. **Visual parity** failures are first-class repair targets. The expected
    outcome is the contract's declared `appearance` and `layout` for the named
-   surface, not a fresh judgement of the React source, and the evidence comes
+   surface, not a fresh judgement of the React source; the rules to compare
+   the Angular styles with are the templates its `styleSources` cite, so start
+   there instead of searching the tree again. The evidence comes
    from the real host layout: a fixture cannot show width, alignment or
    spacing against the retained siblings, so a visual repair seen only there is
    not repaired. Record the measured deviation and the value after the repair,

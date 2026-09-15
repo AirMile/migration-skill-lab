@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.30.0
+targetVersion: 0.31.0
 status: experimental
-date: 2026-09-14
+date: 2026-09-15
 ---
 
-# `flow-baseline` v0.30.0 acceptance criteria
+# `flow-baseline` v0.31.0 acceptance criteria
 
 ## Hard gates
 
@@ -28,9 +28,10 @@ allowlist the slice does not need, or stores sensitive content.
   and cleanup behavior.
 - A cited evidence ledger with `Confirmed`, `Inference` and `Open question`.
 - Existing relevant tests, their proved behavior and prioritized evidence gaps.
-- One `flow-contract.json` at schemaVersion 7 that validates against the
-  handoff schema, carrying `renderedSurfaceInventory`, `targetArchitecture`
-  and `userStory`, with no `status`, no `approval`, no
+- One `flow-contract.json` at schemaVersion 8 that validates against the
+  handoff schema, carrying `renderedSurfaceInventory`, `targetArchitecture`,
+  `userStory` and per `visualParity` entry the `styleSources` and
+  `sharedComponents` from `style-sources.mjs`, with no `status`, no `approval`, no
   `targetArchitecture.status` and no `workItemContext`.
 - No analysis report, no User Story file and no other file beyond the
   contract and the observation artifact, in
@@ -300,3 +301,11 @@ The source is acceptable when:
     integration checkout;
 99. an abandoned claim releases both the run directory and the clean worktree
     and branch, and a worktree holding changes is never removed.
+100. every `migrate` surface's `visualParity` entry carries the `contract`
+     block `style-sources.mjs` printed for that surface, verbatim, with its
+     `unparsed`, `unresolved` and `packages` entries read by hand, and never
+     style citations or shared components typed from its own reading;
+101. a shared component a migrated surface renders through is reused when its
+     counterpart is built and otherwise built by the slice at its measured
+     target, which the allowlist covers; the slice never re-creates it in its
+     own folder.

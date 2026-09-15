@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.9.0
+targetVersion: 0.10.0
 status: experimental
-date: 2026-09-14
+date: 2026-09-15
 ---
 
-# `flow-debug` v0.9.0 acceptance criteria
+# `flow-debug` v0.10.0 acceptance criteria
 
 ## Hard gates
 
@@ -109,3 +109,5 @@ The source is acceptable when:
 28. a remaining `angularConventions` finding in the final
     `run-context.mjs --compare --contract` output keeps the result from
     `repaired`.
+29. a visual repair starts from the templates the surface's `styleSources`
+    cite and never makes markup render through `bypassSecurityTrust*`.

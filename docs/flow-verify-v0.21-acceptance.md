@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.20.0
+targetVersion: 0.21.0
 status: experimental
-date: 2026-09-14
+date: 2026-09-15
 ---
 
-# `flow-verify` v0.20.0 acceptance criteria
+# `flow-verify` v0.21.0 acceptance criteria
 
 ## Hard gates
 
@@ -142,3 +142,6 @@ The source is acceptable when:
 49. a `PASS` in a slice worktree shows the `slice-worktree.mjs --land` command
     the continuation prints, for the user to run before `/flow-plan`, and the
     skill never commits or merges the slice itself.
+50. a `visualParity` walkthrough item covers every element the surface's
+    `styleSources` paint against the counterpart in one view, so every visible
+    deviation of that surface lands in the same `debug-handoff.json`.

@@ -312,7 +312,7 @@ const readLabPointer = async (ownerPath, label, pointer) => {
 
 // A map slice is the ceiling of a baseline chain: its paths, the tests beside
 // its files, the Angular folders they move to and the targets of the
-// prerequisites it requires.
+// prerequisites it requires or renders through.
 const validatePlanSlice = async (absolutePath, contract) => {
   const { planSlice } = contract;
   const map = await readLabPointer(absolutePath, "planSlice map", planSlice.map);
@@ -329,19 +329,47 @@ const validatePlanSlice = async (absolutePath, contract) => {
   const metrics = await readLabPointer(absolutePath, "planSlice map metrics", map.metrics);
   const measured = (metrics.slices ?? []).find(entry => entry.flowId === slice.flowId);
   const slicePaths = slice.paths.map(normalizeProductPath);
+  const targets = new Map((metrics.prerequisites ?? []).map(prerequisite => [prerequisite.id, prerequisite.target]));
+  const prerequisites = new Map((map.prerequisites ?? []).map(prerequisite => [prerequisite.id, prerequisite]));
+
+  // A shared component a migrated surface renders through is reused when its
+  // counterpart is built, and otherwise built at its target by this slice: a
+  // restyled copy inside the slice drifts from the component it copies.
+  const toBuild = [];
+  for (const id of new Set((contract.visualParity ?? []).flatMap(entry => entry.sharedComponents ?? []))) {
+    if (!prerequisites.has(id)) {
+      throw new Error(`${absolutePath} $.visualParity names shared component ${id}, which map ${planSlice.map.runId} does not hold.`);
+    }
+    if (prerequisites.get(id).angular?.status === "built") continue;
+    if (!targets.get(id)) {
+      throw new Error(`${absolutePath} $.visualParity names shared component ${id}, which the measured structure gives no target; leave it out.`);
+    }
+    toBuild.push(id);
+  }
+
   const ceiling = [...new Set([
     ...slicePaths,
     ...slicePaths.filter(entry => path.posix.extname(entry)).map(entry => `${path.posix.dirname(entry)}/__tests__`),
     ...(measured?.angularTargets ?? []).map(normalizeProductPath),
-    ...(metrics.prerequisites ?? [])
-      .filter(prerequisite => slice.requires.includes(prerequisite.id) && prerequisite.target)
-      .map(prerequisite => path.posix.dirname(normalizeProductPath(prerequisite.target))),
+    ...[...new Set([...slice.requires, ...toBuild])]
+      .filter(id => targets.get(id))
+      .map(id => path.posix.dirname(normalizeProductPath(targets.get(id)))),
   ])];
-  for (const entry of contract.scope.allowedWritePaths.map(normalizeProductPath)) {
+  const allowed = contract.scope.allowedWritePaths.map(normalizeProductPath);
+  for (const entry of allowed) {
     if (!ceiling.some(base => pathCovers(base, entry))) {
       throw new Error(
         `${absolutePath} $.scope.allowedWritePaths entry ${entry} is outside slice ${planSlice.flowId}; ` +
           `the slice allows ${ceiling.join(", ")}.`,
+      );
+    }
+  }
+  for (const id of toBuild) {
+    const target = normalizeProductPath(targets.get(id));
+    if (!allowed.some(base => pathCovers(base, target))) {
+      throw new Error(
+        `${absolutePath} $.visualParity renders through ${id}, whose counterpart is not built; ` +
+          `this slice builds it, so $.scope.allowedWritePaths must cover ${target}.`,
       );
     }
   }
@@ -752,6 +780,21 @@ const validateArtifactRules = (value, errors) => {
               `$.visualParity ${entry.id} requires layout parity against the retained sibling sections when the mount is nested.`,
             );
           }
+        }
+      }
+
+      // From schemaVersion 8 each surface cites the templates that paint it and
+      // the shared components it renders through, as style-sources.mjs prints
+      // them: a migration restyled from prose missed what the source said.
+      for (const entry of value.visualParity) {
+        if (value.schemaVersion >= 8) {
+          if (!entry.styleSources?.length || !Array.isArray(entry.sharedComponents)) {
+            errors.push(
+              `$.visualParity ${entry.id} requires styleSources and sharedComponents from schemaVersion 8; copy the contract block style-sources.mjs prints.`,
+            );
+          }
+        } else if (Object.hasOwn(entry, "styleSources") || Object.hasOwn(entry, "sharedComponents")) {
+          errors.push(`$.visualParity ${entry.id} styleSources and sharedComponents require schemaVersion 8.`);
         }
       }
     }
@@ -2363,6 +2406,40 @@ const runSelfTest = async () => {
     "a schemaVersion 7 contract still carrying work-item context",
   );
 
+  const toV8 = contract => {
+    toV7(contract);
+    contract.schemaVersion = 8;
+    for (const entry of contract.visualParity) {
+      entry.styleSources = ["src/components/inputs/HoverInput.tsx:59-71"];
+      entry.sharedComponents = [];
+    }
+  };
+  const cleanV8 = contractV6(toV8);
+  const cleanV8Errors = [];
+  validateNode(cleanV8, schema, "$", cleanV8Errors);
+  validateArtifactRules(cleanV8, cleanV8Errors);
+  if (cleanV8Errors.length > 0) {
+    throw new Error(
+      `Handoff validator self-test rejected a valid schemaVersion 8 contract: ${cleanV8Errors.join(", ")}`,
+    );
+  }
+  expectV6Rejection(
+    contract => {
+      toV8(contract);
+      delete contract.visualParity[0].styleSources;
+    },
+    "requires styleSources and sharedComponents from schemaVersion 8",
+    "a schemaVersion 8 surface without its style sources",
+  );
+  expectV6Rejection(
+    contract => {
+      toV7(contract);
+      contract.visualParity[0].sharedComponents = [];
+    },
+    "styleSources and sharedComponents require schemaVersion 8",
+    "a schemaVersion 7 contract naming shared components",
+  );
+
   expectV6Rejection(
     contract => {
       contract.status = "draft";
@@ -2780,6 +2857,7 @@ const runSelfTest = async () => {
         { id: "line-store", target: "src/angular/core/store/line.store.ts" },
         { id: "unrequired", target: "src/angular/shared/unrequired.component.ts" },
         { id: "unplaced", target: null },
+        { id: "built-icon", target: "src/angular/shared/icon.component.ts" },
       ],
     })}\n`;
     const metricsPath = path.join(planDirectory, "migration-metrics.json");
@@ -2793,6 +2871,12 @@ const runSelfTest = async () => {
         paths: ["src/features/demo-line-drawer/LineDrawer.tsx"],
         requires: ["line-store", "unplaced"],
       }],
+      prerequisites: [
+        { id: "line-store", angular: { status: "none" }, copies: [] },
+        { id: "unrequired", angular: { status: "none" }, copies: [] },
+        { id: "unplaced", angular: { status: "none" }, copies: [] },
+        { id: "built-icon", angular: { status: "built" }, copies: [] },
+      ],
     })}\n`;
     const planMapPath = path.join(planDirectory, "migration-map.json");
     await writeFile(planMapPath, mapRaw);
@@ -2848,6 +2932,30 @@ const runSelfTest = async () => {
       contract => { contract.planSlice.map.runId = "migration-map-8"; },
       "is not the migration-map of run migration-map-8",
       "a planSlice map pointer naming another run",
+    );
+
+    const sharing = (...ids) => contract => { contract.visualParity[0].sharedComponents = ids; };
+    const planned = plannedContract();
+    sharing("line-store", "built-icon")(planned);
+    await validatePlanSlice(contractPath, planned);
+    const buildingUnrequired = plannedContract();
+    sharing("unrequired")(buildingUnrequired);
+    buildingUnrequired.scope.allowedWritePaths.push("src/angular/shared/unrequired.component.ts");
+    await validatePlanSlice(contractPath, buildingUnrequired);
+    await expectPlanRejection(
+      sharing("unrequired"),
+      "renders through unrequired, whose counterpart is not built",
+      "a surface that renders through an unbuilt shared component this slice does not build",
+    );
+    await expectPlanRejection(
+      sharing("unplaced"),
+      "shared component unplaced, which the measured structure gives no target",
+      "a shared component without a target",
+    );
+    await expectPlanRejection(
+      sharing("absent"),
+      "shared component absent, which map migration-map-7 does not hold",
+      "a shared component the map does not hold",
     );
 
     const expectPlanRuleRejection = (mutate, expectedMessage, label) => {

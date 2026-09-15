@@ -1,8 +1,8 @@
 ---
 document: project-constants
-version: 0.7.0
+version: 0.8.0
 status: decided
-date: 2026-09-14
+date: 2026-09-15
 ---
 
 # Project constants
@@ -198,9 +198,20 @@ Consequences for how components are written:
   (`toSignal`, `takeUntilDestroyed`) are developer preview, `resource` and
   `httpResource` are experimental, and Signal Forms do not exist yet.
 
-`scripts\angular-conventions.mjs` checks the rules a pattern can find, on both
-this section and Compilation, and `run-context.mjs --contract` reports them as
-`angularConventions`.
+`scripts\angular-conventions.mjs` checks the rules a pattern can find, on this
+section, Compilation and Styling, and `run-context.mjs --contract` reports them
+as `angularConventions`.
+
+## Styling
+
+- A styled-components template ports declaration by declaration into the
+  component's static `styles`, keeping its layout technique: positioning,
+  transforms, fixed heights and flex alignment. A theme interpolation becomes a
+  CSS custom property, as Compilation describes.
+- Markup, icons included, is written in the template or rendered by a
+  component, never bound as a string through `[innerHTML]`: the sanitizer
+  strips `<svg>` from a bound string without an error, and
+  `DomSanitizer.bypassSecurityTrust*` trades that for a security exception.
 
 ## Timing
 

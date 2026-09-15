@@ -11,9 +11,9 @@ This lab contains:
 - experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.30.0, `flow-migrate` v0.20.0 and
-  `flow-verify` v0.20.0 source skills;
-- experimental `flow-debug` v0.9.0 source skill;
+- experimental `flow-baseline` v0.31.0, `flow-migrate` v0.21.0 and
+  `flow-verify` v0.21.0 source skills;
+- experimental `flow-debug` v0.10.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
@@ -27,6 +27,8 @@ This lab contains:
   findings inside it, run directory, runId, saved prompts, terminating
   commands), `angular-conventions.mjs` (the project-constants rules a pattern
   can check in Angular files, which `run-context.mjs --contract` uses),
+  `style-sources.mjs` (the styled templates and shared components a surface
+  renders, which a contract's visual parity cites),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `render-user-story.mjs` (the slice's User Story from a
   validated contract, then its review facts),

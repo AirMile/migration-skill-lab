@@ -95,7 +95,15 @@ the contract.
   sections, drawer insets, input containment) and a `reference` citing the
   counterpart. Add a reference screenshot when one is available. A surface
   that is not declared here can never fail downstream, so anything a user
-  would notice belongs here.
+  would notice belongs here. `appearance` and `layout` say what a tester
+  compares; `styleSources` and `sharedComponents` say where the rules live,
+  and are the `contract` block `style-sources.mjs` printed for the surface,
+  copied verbatim, since `flow-migrate` ports from those citations and not
+  from the prose. A shared component whose counterpart is not built is built
+  by this slice at its measured `target`, which joins the allowlist: a
+  restyled copy inside the slice drifts from the component it copies, and the
+  validator rejects a contract that leaves the target out. Both fields are
+  new at schemaVersion 8, so `print-shape.mjs` cannot show them.
 - `characterizationRequired`: `id`, `hypothesis`, `proveBefore` as an array of
   the scenario ids it blocks, and `evidence`, an array even for one citation.
   `flow-migrate` records an outcome per id and `flow-verify` re-examines the

@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.20.0
+targetVersion: 0.21.0
 status: experimental
-date: 2026-09-14
+date: 2026-09-15
 ---
 
-# `flow-migrate` v0.20.0 acceptance criteria
+# `flow-migrate` v0.21.0 acceptance criteria
 
 ## Hard gates
 
@@ -140,3 +140,13 @@ The source is acceptable when:
     `repository.root`, or when a slice worktree does not have
     `migration/<runId>` checked out, and it never creates or commits to a
     branch itself.
+47. every declared surface is styled by porting the templates its
+    `styleSources` cite, keeping their layout technique, and each
+    `renderedSurfaceComparison.surfaces` entry names the citations it ported
+    and claims nothing about a rendering nobody saw;
+48. each `sharedComponents` entry is reused from its built counterpart or
+    built at its measured target, and no copy of it lands in the slice's own
+    folder;
+49. an icon or other markup reaches the template as markup or a component,
+    never as a string through `[innerHTML]` or `bypassSecurityTrust*`, which
+    `angular-conventions.mjs` reports as `inner-html`.

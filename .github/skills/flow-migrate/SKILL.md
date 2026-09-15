@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.20.0`.
+Skill version: `0.21.0`.
 
 Recommended model: Claude Sonnet 5.
 
@@ -92,7 +92,10 @@ as an established Lely standard.
    `validation` with its outcome; typechecking against packages that were
    never installed reports a defect that does not exist.
 5. **Implement** the smallest Angular change that meets the same scenarios,
-   then add Angular tests for the same behavior. When the slice is nested in a
+   then add Angular tests for the same behavior. A `visualParity`
+   `sharedComponents` entry is reused when its counterpart is built and
+   otherwise built at its measured target, never re-created inside the slice's
+   own folder, where every copy drifts from the others. When the slice is nested in a
    retained React parent, at least one test renders it through that real parent
    tree; an isolated custom-element fixture may remain as a unit test but is
    never the sole basis for a claim about padding, spacing or containment.
@@ -106,9 +109,11 @@ as an established Lely standard.
    accepts in `validation` only the declared commands plus
    `verify-checkpoint.mjs` invocations.
 7. **Visual parity** is its own milestone once the functional slice is green:
-   bring every declared surface onto its `appearance` and `layout`, rerun the
-   checks and record it separately, so behavior and appearance carry separate
-   evidence.
+   port every declared surface from the templates its `styleSources` cite, as
+   the project constants' Styling says, then check it against its `appearance`
+   and `layout`. A layout rebuilt from the prose instead lost a floating label.
+   Rerun the checks and record it separately, so behavior and appearance carry
+   separate evidence.
 8. **Checkpoints.** When `checkpointPolicy.mode` is `auto-local`, read
    `references/checkpoints.md` and checkpoint each green milestone as it says.
    When it is `disabled`, commit nothing.
@@ -132,7 +137,8 @@ as an established Lely standard.
     `renderedSurfaceComparison` with `evidenceSource: real-parent-tree`, the
     sibling sections compared against and concrete style and layout
     observations. Record one `surfaces` entry per `visualParity` id as
-    `addressed` or `not-addressed` with what you did, never `matches`: the
+    `addressed` or `not-addressed` with the `styleSources` you ported and what
+    you did, never what you did not render and see, and never `matches`: the
     visual verdict is `flow-verify`'s, and jsdom evidence is disqualified for a
     nested mount. A `completed` result cannot skip a surface or leave one
     `not-addressed`. Use `completed`, `failed` or `blocked` honestly.

@@ -17,11 +17,12 @@ scanAngularConventions(productRoot, allowedPaths) checks every .ts file under
 the allowed paths that sits in a folder named angular, except tests, stories and
 declaration files, and returns the findings sorted by path and line.
 
-Rules: on-push, signal-io, inject, zoneless, stable-api, static-styles.
+Rules: on-push, signal-io, inject, zoneless, stable-api, static-styles, inner-html.
 `;
 
 const CHANGE_DETECTION = "Change detection";
 const COMPILATION = "Compilation";
+const STYLING = "Styling";
 
 // APIs that are developer preview or experimental on Angular 19, by module.
 const unstableImports = {
@@ -55,6 +56,11 @@ export const checkAngularSource = (source, filePath) => {
   }
 
   for (const match of code.matchAll(/@(?:Input|Output)\s*\(/g)) add(match.index, "signal-io", COMPILATION);
+
+  // A bound markup string loses its <svg> to the sanitizer without an error.
+  for (const match of code.matchAll(/\[innerHTML\]|\bbypassSecurityTrust(?:Html|Style|Script|Url|ResourceUrl)\b/g)) {
+    add(match.index, "inner-html", STYLING);
+  }
 
   if (/@(?:Component|Directive|Injectable|Pipe)\s*\(/.test(code)) {
     for (const match of code.matchAll(/\bconstructor\s*\(\s*[^)\s]/g)) add(match.index, "inject", COMPILATION);
@@ -164,6 +170,19 @@ const runSelfTest = () => {
   ];
   for (const entry of expected) assert(found.split(",").includes(entry), `missing ${entry} in ${found}`);
   assert(found.split(",").length === expected.length, `unexpected findings in ${found}`);
+
+  const markup = [
+    "@Component({",
+    '  selector: "ra-icon",',
+    "  changeDetection: ChangeDetectionStrategy.OnPush,",
+    '  template: `<span class="icon" [innerHTML]="icon"></span>`,',
+    "})",
+    "export class IconComponent {",
+    '  readonly icon = inject(DomSanitizer).bypassSecurityTrustHtml("<svg></svg>");',
+    "}",
+  ].join("\n");
+  assert(rulesOf(checkAngularSource(markup, "d.ts")) === "inner-html:4,inner-html:7",
+    `a markup string bound through innerHTML has findings ${rulesOf(checkAngularSource(markup, "d.ts"))}`);
 
   const service = 'import { Injectable } from "@angular/core";\nexport const resource = () => 1;\n@Injectable({ providedIn: "root" })\nexport class S {}\n';
   assert(checkAngularSource(service, "c.ts").length === 0,
