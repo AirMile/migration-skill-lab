@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.31.0
+targetVersion: 0.32.0
 status: experimental
 date: 2026-09-15
 ---
 
-# `flow-baseline` v0.31.0 acceptance criteria
+# `flow-baseline` v0.32.0 acceptance criteria
 
 ## Hard gates
 
@@ -303,9 +303,12 @@ The source is acceptable when:
     and branch, and a worktree holding changes is never removed.
 100. every `migrate` surface's `visualParity` entry carries the `contract`
      block `style-sources.mjs` printed for that surface, verbatim, with its
-     `unparsed`, `unresolved` and `packages` entries read by hand, and never
-     style citations or shared components typed from its own reading;
+     `unparsed`, `unresolved`, `unfollowed` and `packages` entries and each
+     `icons` entry without a `source` read by hand, and never style citations
+     or shared components typed from its own reading;
 101. a shared component a migrated surface renders through is reused when its
      counterpart is built and otherwise built by the slice at its measured
      target, which the allowlist covers; the slice never re-creates it in its
-     own folder.
+     own folder;
+102. a surface for which `style-sources.mjs` reports `angularMounts` is treated
+     as already running in Angular, never as a surface without styles.

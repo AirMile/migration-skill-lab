@@ -753,6 +753,7 @@ const runSelfTest = async () => {
       .angularConventions;
     assert(JSON.stringify(conventions) === JSON.stringify([
       { path: "src/angular/line.component.ts", line: 1, rule: "on-push", constant: "Change detection" },
+      { path: "src/angular/line.component.ts", line: 1, rule: "host-display", constant: "Styling" },
     ]), `unexpected Angular convention findings ${JSON.stringify(conventions)}`);
 
     // A map queues slices and each baseline claims one, so parallel chats

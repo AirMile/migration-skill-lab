@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.31.0`.
+Skill version: `0.32.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -132,7 +132,9 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    when the invocation names one. It walks the render tree down to the
    templates that paint the surface, which a description misses: a label's
    technique was two components deeper than the field. Read what it lists
-   under `unparsed`, `unresolved` and `packages` by hand.
+   under `unparsed`, `unresolved`, `unfollowed` and `packages`, and each
+   `icons` entry without a `source`, by hand. An `angularMounts` entry means
+   that part already runs in Angular and has nothing left to cite.
 3. **Boundary.** Only now, with the evidence in hand, weigh materially
    different candidates. Judge every candidate in writing against all four
    criteria and say plainly where it fails:

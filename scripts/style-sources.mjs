@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -21,23 +21,32 @@ given line range of it, and prints as JSON what paints it:
 - contract: the block a flow-contract visualParity entry copies verbatim, with
   styleSources, one "path:start-end" citation per styled, css, keyframes or
   createGlobalStyle template the tree renders, one "path:line" per inline style
-  attribute and one path per imported stylesheet; and sharedComponents, the ids
-  of the migration map prerequisites the tree renders through, when their
-  counterpart is built or the measured structure gives them a target;
+  attribute, one path per imported stylesheet and one path per resolved icon;
+  and sharedComponents, the ids of the migration map prerequisites the tree
+  renders through, when their counterpart is built or the measured structure
+  gives them a target;
 - sharedComponents: those prerequisites with their counterpart status and
   target. A built one is not walked into, since its Angular counterpart already
   carries those styles;
+- icons: every EIconNames member the tree renders, with the file that draws
+  it, found through a registry entry ([EIconNames.X]: Component, or the enum
+  value as a key) or else as the one X.tsx under an icons folder; a null source
+  is read by hand, such as an @lely/icons SVG;
+- angularMounts: relative imports into an angular folder, which mean that part
+  already runs in Angular and has no React styles left to cite;
 - files: every rendered file with its depth and the file that rendered it;
 - packages: components rendered from packages, whose styles have no source here;
 - unparsed: styled declarations that are no template literal, to read by hand;
-- unresolved: relative imports that resolve to no file.
+- unresolved: relative imports that resolve to no file;
+- unfollowed: names asked of a file that it neither declares nor passes on
+  through a re-export or an imported binding, to read by hand.
 
 A relative import is followed when the importing code renders one of its names
 as JSX, wraps it with styled() or interpolates it into a template; a barrel is
-followed through its re-exports for the names asked of it. Tests and stories
-are never followed. Regular expressions, not a TypeScript parser: the lab
-installs nothing. Pointers in the map resolve against --lab-root, by default
-this lab. Never writes anything.
+followed for the names asked of it, through export-from and through an import
+it exports again. Tests and stories are never followed. Regular expressions,
+not a TypeScript parser: the lab installs nothing. Pointers in the map resolve
+against --lab-root, by default this lab. Never writes anything.
 
 Options:
   --help        print this text
@@ -194,13 +203,84 @@ const parseReExports = code => [
 ];
 
 const exportedNames = code => new Set([
-  ...[...code.matchAll(new RegExp(`\\bexport\\s+(?:const|let|var|function|class)\\s+(${identifier})`, "g"))].map(match => match[1]),
+  ...[...code.matchAll(new RegExp(
+    `\\bexport\\s+(?:declare\\s+)?(?:default\\s+)?(?:abstract\\s+)?(?:async\\s+)?(?:const\\s+enum|const|let|var|function\\*?|class|enum|interface|type)\\s+(${identifier})`,
+    "g",
+  ))].map(match => match[1]),
   ...(/\bexport\s+default\b/.test(code) ? ["default"] : []),
   ...[...code.matchAll(/\bexport\s*\{([^}]*)\}(?!\s*from)/g)]
     .flatMap(match => match[1].split(",").map(entry => entry.trim().split(/\s+as\s+/).at(-1)).filter(Boolean)),
 ]);
 
+// Names a file exports from its own bindings: export { a as b } and export default a.
+const localExports = code => {
+  const locals = new Map();
+  for (const match of code.matchAll(/\bexport\s*\{([^}]*)\}(?!\s*from)/g)) {
+    for (const entry of match[1].split(",").map(part => part.trim()).filter(part => part && !/^type\s/.test(part))) {
+      const [local, exported] = entry.split(/\s+as\s+/).map(part => part.trim());
+      locals.set(exported ?? local, local);
+    }
+  }
+  const fallback = new RegExp(`\\bexport\\s+default\\s+(${identifier})\\s*;?[ \\t]*$`, "m").exec(code);
+  if (fallback) locals.set("default", fallback[1]);
+  return locals;
+};
+
 const readCode = file => withoutComments(readFileSync(file, "utf8").replace(/\r\n/g, "\n"));
+
+// The product's icons are an enum member at the call site and a component
+// looked up at runtime, so the walk alone never reaches the SVG a field draws.
+const iconEnum = "EIconNames";
+
+const listSourceFiles = (directory, files = []) => {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (["node_modules", "dist", "coverage", "__tests__"].includes(entry.name)) continue;
+    const full = path.join(directory, entry.name);
+    if (entry.isDirectory()) listSourceFiles(full, files);
+    else if (sourceExtensions.includes(path.extname(entry.name)) && !isTestOrStory(full)) files.push(full);
+  }
+  return files;
+};
+
+const createIconResolver = root => {
+  let sources = null;
+  const load = () => {
+    sources ??= listSourceFiles(path.join(root, "src")).map(file => ({ file, code: readCode(file) }));
+    return sources;
+  };
+  const escapeText = text => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const viaRegistry = keyPattern => {
+    const found = new Set();
+    for (const { file, code } of load()) {
+      const bindings = new Map(parseImports(code).flatMap(imported =>
+        imported.names.map(name => [name.local, imported.specifier])));
+      for (const match of code.matchAll(new RegExp(`${keyPattern}\\s*:\\s*(${identifier})\\s*(?=[,}\\n])`, "g"))) {
+        const specifier = bindings.get(match[1]);
+        const resolved = specifier?.startsWith(".") ? resolveInternal(file, specifier) : null;
+        if (resolved) found.add(resolved);
+      }
+    }
+    return [...found];
+  };
+  return member => {
+    let value = null;
+    for (const { code } of load()) {
+      const body = new RegExp(`\\benum\\s+${iconEnum}\\s*\\{([^}]*)\\}`).exec(code)?.[1];
+      value ??= body ? new RegExp(`\\b${escapeName(member)}\\s*=\\s*["']([^"']+)["']`).exec(body)?.[1] ?? null : null;
+    }
+    const byRegistry = [...new Set([
+      ...viaRegistry(`\\[\\s*${iconEnum}\\.${escapeName(member)}\\s*\\]`),
+      ...(value ? viaRegistry(`["']${escapeText(value)}["']`) : []),
+    ])];
+    if (byRegistry.length === 1) return { value, source: byRegistry[0], method: "registry" };
+    const byName = byRegistry.length > 1 ? byRegistry : load()
+      .map(({ file }) => file)
+      .filter(file => path.relative(root, file).split(path.sep).includes("icons") &&
+        [".tsx", ".jsx"].includes(path.extname(file)) && path.basename(file, path.extname(file)) === member);
+    if (byRegistry.length === 0 && byName.length === 1) return { value, source: byName[0], method: "file-name" };
+    return { value, source: null, method: null, candidates: byName };
+  };
+};
 
 const loadPrerequisites = (mapPath, labRoot) => {
   const readJson = file => JSON.parse(readFileSync(file, "utf8").replace(/^﻿/, ""));
@@ -295,6 +375,10 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
       unparsed,
       inlineStyles,
       stylesheets,
+      icons: [...region.matchAll(new RegExp(`\\b${iconEnum}\\.(${identifier})`, "g"))]
+        .map(match => ({ member: match[1], line: lineAt(region, match.index) })),
+      angularMounts: [],
+      unfollowed: [],
     };
 
     const follow = (resolved, wanted) => {
@@ -305,7 +389,12 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
       request(resolved, { depth: state.depth + 1, from: productPath(file), wanted: new Set(wanted) });
     };
 
-    for (const imported of parseImports(code)) {
+    const imports = parseImports(code);
+    for (const imported of imports) {
+      if (imported.specifier.startsWith(".") && !productPath(file).split("/").includes("angular")) {
+        const target = resolveInternal(file, imported.specifier);
+        if (target && productPath(target).split("/").includes("angular")) state.result.angularMounts.push(productPath(target));
+      }
       const used = imported.names.filter(name => referencesName(painted, name.local));
       const namespaced = imported.namespace ?
         [...painted.matchAll(new RegExp(`(?<![\\w$.)\\]])<${escapeName(imported.namespace)}\\.(${identifier})|\\bstyled\\(\\s*${escapeName(imported.namespace)}\\.(${identifier})`, "g"))]
@@ -328,6 +417,7 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
     }
 
     if (state.wanted !== "all") {
+      const passedOn = new Set();
       for (const reExport of parseReExports(code)) {
         if (!reExport.specifier.startsWith(".")) continue;
         const resolved = resolveInternal(file, reExport.specifier);
@@ -335,13 +425,48 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
           unresolved.push({ from: productPath(file), specifier: reExport.specifier });
           continue;
         }
-        const wanted = reExport.star ?
-          [...exportedNames(readCode(resolved))].filter(name => name !== "default" && state.wanted.has(name)) :
-          reExport.names.filter(name => state.wanted.has(name.exported)).map(name => name.imported);
-        if (wanted.length > 0) follow(resolved, wanted);
+        const pairs = reExport.star ?
+          [...exportedNames(readCode(resolved))]
+            .filter(name => name !== "default" && state.wanted.has(name))
+            .map(name => ({ imported: name, exported: name })) :
+          reExport.names.filter(name => state.wanted.has(name.exported));
+        for (const pair of pairs) passedOn.add(pair.exported);
+        if (pairs.length > 0) follow(resolved, pairs.map(pair => pair.imported));
+      }
+      // A barrel can also import a component and export it again.
+      const bindings = new Map(imports.flatMap(imported =>
+        imported.names.map(name => [name.local, { specifier: imported.specifier, imported: name.imported }])));
+      const locals = localExports(code);
+      const declared = exportedNames(code);
+      for (const name of state.wanted) {
+        if (passedOn.has(name)) continue;
+        const binding = bindings.get(locals.get(name));
+        const resolved = binding?.specifier.startsWith(".") ? resolveInternal(file, binding.specifier) : null;
+        if (resolved) follow(resolved, [binding.imported]);
+        else if (binding?.specifier.startsWith(".")) unresolved.push({ from: productPath(file), specifier: binding.specifier });
+        else if (!binding && !declared.has(name)) state.result.unfollowed.push(name);
       }
     }
   }
+
+  const resolveIcon = createIconResolver(root);
+  const icons = new Map();
+  for (const [file, state] of states) {
+    for (const use of state.result.icons) {
+      if (!icons.has(use.member)) icons.set(use.member, { ...resolveIcon(use.member), usedIn: [] });
+      icons.get(use.member).usedIn.push(`${productPath(file)}:${use.line}`);
+    }
+  }
+  const iconList = [...icons.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([member, icon]) => ({
+      name: `${iconEnum}.${member}`,
+      value: icon.value,
+      source: icon.source && productPath(icon.source),
+      method: icon.method,
+      ...(icon.candidates?.length ? { candidates: icon.candidates.map(productPath) } : {}),
+      usedIn: icon.usedIn.sort(),
+    }));
 
   const files = [...states.entries()]
     .map(([file, state]) => ({ file, state }))
@@ -355,7 +480,7 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
   const sharedComponents = [...shared.values()].sort((left, right) => left.id.localeCompare(right.id));
   return {
     contract: {
-      styleSources: [...new Set(styleSources)],
+      styleSources: [...new Set([...styleSources, ...iconList.map(icon => icon.source).filter(Boolean)])],
       sharedComponents: sharedComponents
         .filter(component => component.angular === "built" || component.target)
         .map(component => component.id),
@@ -371,9 +496,15 @@ export const collectStyleSources = ({ productRoot, entries, prerequisites = new 
         lines: `${definition.lines[0]}-${definition.lines[1]}`,
       })),
     })),
+    icons: iconList,
+    angularMounts: files.flatMap(({ file, state }) =>
+      [...new Set(state.result.angularMounts)].map(mounts => ({ path: productPath(file), mounts }))),
     packages: [...packages.entries()].map(([name, components]) => ({ name, components: [...components].sort() })),
     unparsed: files.flatMap(({ file, state }) => state.result.unparsed.map(line => `${productPath(file)}:${line}`)),
-    unresolved,
+    unresolved: [...new Map(unresolved.map(entry => [`${entry.from}|${entry.specifier}`, entry])).values()],
+    unfollowed: files
+      .filter(({ state }) => state.result.unfollowed.length > 0)
+      .map(({ file, state }) => ({ path: productPath(file), names: [...new Set(state.result.unfollowed)].sort() })),
   };
 };
 
@@ -434,11 +565,47 @@ const runSelfTest = async () => {
     "src/features/strip/strip.css": ".strip { gap: 4px; }\n",
     "src/features/strip/types.ts": "export type Props = { length: number };\n",
     "src/state/stores.ts": "export const useStores = () => ({});\n",
-    "src/components/icons/names.ts": "export enum EIconNames { StraightLine = \"straight-line\" }\n",
+    "src/components/icons/names.ts": [
+      "export enum EIconNames {",
+      "  StraightLine = \"icon-straight-line\",",
+      "  Angle = \"icon-angle\",",
+      "  Robot = \"icon-robot\",",
+      "  Picture = \"lely-icon-picture\",",
+      "}",
+    ].join("\n"),
+    "src/components/icons/StraightLine.tsx": "export const StraightLine = () => <svg viewBox=\"0 0 24 24\" />;\n",
+    "src/shared/icons/registry.ts": "import AngleIcon from \"./Angle\";\nexport const SHARED_ICONS = {\n  \"icon-angle\": AngleIcon,\n};\n",
+    "src/shared/icons/Angle.tsx": "export default () => <svg />;\n",
+    "src/shared/icons/Robot.tsx": "export const Robot = () => <svg />;\n",
     "src/features/drawer/FocusNumberInput.tsx": [
       "import { NumberInput } from \"../../components/inputs\";",
-      "export const FocusNumberInput = props => <NumberInput {...props} />;",
+      "import { Button, Ghost } from \"../../components/button\";",
+      "export const FocusNumberInput = props => <><NumberInput {...props} /><Button /><Ghost /></>;",
     ].join("\n"),
+    "src/components/button/index.ts": [
+      "import Button from \"./Button\";",
+      "export { Button };",
+      "export * as Kinds from \"./kinds\";",
+    ].join("\n"),
+    "src/components/button/Button.tsx": [
+      "import styled from \"styled-components\";",
+      "const Base = styled.button`",
+      "  padding: 0;",
+      "`;",
+      "export default function Button() {",
+      "  return <Base />;",
+      "}",
+    ].join("\n"),
+    "src/features/strip/Migrated.tsx": "import { AngularHost } from \"./AngularHost\";\nexport const Migrated = () => <AngularHost />;\n",
+    "src/features/strip/AngularHost.tsx": [
+      "import { useEffect } from \"react\";",
+      "import { mountThing } from \"../../angular/domains/strip/mount-thing\";",
+      "export const AngularHost = () => {",
+      "  useEffect(() => mountThing());",
+      "  return <div />;",
+      "};",
+    ].join("\n"),
+    "src/angular/domains/strip/mount-thing.ts": "export const mountThing = () => {};\n",
     "src/features/drawer/__tests__/FocusNumberInput.test.tsx": "import { FocusNumberInput } from \"../FocusNumberInput\";\n",
     "src/components/inputs/index.ts": [
       "export { NumberInput } from \"./NumberInput\";",
@@ -468,7 +635,9 @@ const runSelfTest = async () => {
       "",
       "export const NumberInput = ({ unit }) => (",
       "  <S.Unit>",
-      "    <Icon name=\"x\" />",
+      "    <Icon name={EIconNames.Angle} />",
+      "    <Icon name={EIconNames.Robot} />",
+      "    <Icon name={EIconNames.Picture} />",
       "    <Preset unit={unit} />",
       "  </S.Unit>",
       ");",
@@ -495,12 +664,19 @@ const runSelfTest = async () => {
       "  align-items: center;",
       "`;",
       "const Legacy = styled.div({ color: \"red\" });",
+      "import { ThemeBase } from \"../theme\";",
       "export const HoverInput = () => (",
-      "  <Controls><Tooltip /><HoverLabel /><Legacy /><Gone /></Controls>",
+      "  <Controls><Tooltip /><HoverLabel /><Legacy /><Gone /><ThemeBase.Provider /></Controls>",
       ");",
     ].join("\n"),
+    "src/components/theme.ts": "export interface ThemeBase { radius: number }\nexport const enum Mode { Dark = \"dark\" }\n",
     "src/components/icons/Icon.tsx": [
       "import styled from \"styled-components\";",
+      "import { StraightLine } from \"./StraightLine\";",
+      "import { EIconNames } from \"./names\";",
+      "const LOCAL_ICONS = {",
+      "  [EIconNames.StraightLine]: StraightLine,",
+      "};",
       "const Svg = styled.svg`width: 24px;`;",
       "export default () => <Svg />;",
     ].join("\n"),
@@ -549,11 +725,15 @@ const runSelfTest = async () => {
       range(strip, "const Row", lineOf(strip, "display: flex") + 1),
       `${strip}:${lineOf(strip, "style={{")}`,
       "src/features/strip/strip.css",
+      range("src/components/button/Button.tsx", "const Base", 4),
       range(number, "const presetCss", 8),
       range(number, "const Preset", 15),
       range(hover, "const HoverLabel", 7),
       range(hover, "const Controls", 11),
       range("src/components/inputs/parts.ts", "export const Unit", 4),
+      "src/shared/icons/Angle.tsx",
+      "src/shared/icons/Robot.tsx",
+      "src/components/icons/StraightLine.tsx",
     ];
     assert(JSON.stringify(output.contract.styleSources) === JSON.stringify(expected),
       `styleSources ${JSON.stringify(output.contract.styleSources)} differ from ${JSON.stringify(expected)}`);
@@ -577,6 +757,22 @@ const runSelfTest = async () => {
     assert(output.files.find(file => file.path === hover).depth === 4 &&
       output.files.find(file => file.path === hover).renderedBy === number,
       "the depth or renderer of a nested file is wrong");
+    assert(JSON.stringify(output.unfollowed) === JSON.stringify([{ path: "src/components/button/index.ts", names: ["Ghost"] }]),
+      `a name a barrel does not pass on should be unfollowed: ${JSON.stringify(output.unfollowed)}`);
+    const icons = Object.fromEntries(output.icons.map(icon => [icon.name, icon]));
+    assert(icons["EIconNames.StraightLine"]?.method === "registry" &&
+      icons["EIconNames.StraightLine"].usedIn[0] === `${strip}:${lineOf(strip, "EIconNames.StraightLine")}` &&
+      icons["EIconNames.Angle"]?.method === "registry" && icons["EIconNames.Angle"].value === "icon-angle" &&
+      icons["EIconNames.Robot"]?.method === "file-name" &&
+      icons["EIconNames.Picture"]?.source === null && icons["EIconNames.Picture"].value === "lely-icon-picture",
+      `icons were resolved wrongly: ${JSON.stringify(output.icons)}`);
+    assert(output.angularMounts.length === 0, `angularMounts without a mount: ${JSON.stringify(output.angularMounts)}`);
+
+    const migrated = collectStyleSources({ productRoot: product, entries: ["src/features/strip/Migrated.tsx"] });
+    assert(JSON.stringify(migrated.angularMounts) ===
+      JSON.stringify([{ path: "src/features/strip/AngularHost.tsx", mounts: "src/angular/domains/strip/mount-thing.ts" }]) &&
+      migrated.contract.styleSources.length === 0,
+      `a migrated surface was not reported as mounting Angular: ${JSON.stringify(migrated.angularMounts)}`);
 
     const ranged = collectStyleSources({
       productRoot: product,

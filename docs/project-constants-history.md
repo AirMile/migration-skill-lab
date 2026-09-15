@@ -110,3 +110,25 @@ deeper, in `HoverInput.tsx`. The repair used `bypassSecurityTrustHtml`: it
 renders, but turns a styling fix into a security exception, hence the second
 rule. Which styling patterns and pitfalls the product holds beyond these two
 is the subject of `docs\styling-pitfalls-research-prompt.md`.
+
+Extended the same day from that research
+(`runs\2026-09-15-styling-pitfalls-research-1\`, report
+`2026-09-15-styling-pitfalls-research.md` in the Obsidian analyses folder, at
+product revision `b742440`). Both existing islands already set
+`:host { display: block }` and neither escapes emulated encapsulation, so those
+became rules a script checks rather than conventions two components happened
+to share. `floorPlanMaker.css:94` is the one global rule found that reaches
+island DOM. The icon sentence answers the report's open question whether a
+static, developer-authored string may pass `bypassSecurityTrustHtml`: no. The
+product's local icons are already plain JSX `<svg>` components, and the one
+`dangerouslySetInnerHTML` in `Icon.tsx` serves `@lely/icons` files whose markup
+can be copied just as well. `straight-strip-length.component.ts` and
+`line-fields.component.ts` still bind icons that way.
+
+Not adopted: a separate shared-component id for `HoverInput` and
+`NumberInput`. In the detail drawer every field reaches them through
+`focus-number-input`, which a slice now builds at its target, so that
+counterpart carries the floating label once. Also not adopted: a check of
+`hostTokenStyle` against the theme values a template reads, and a rule for
+native elements such as `<details>`. Only about 18 of the theme's values have a
+CSS custom property today (`shared/styles/index.css`), which stays a known gap.

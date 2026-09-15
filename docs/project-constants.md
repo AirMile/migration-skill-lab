@@ -1,6 +1,6 @@
 ---
 document: project-constants
-version: 0.8.0
+version: 0.9.0
 status: decided
 date: 2026-09-15
 ---
@@ -207,11 +207,22 @@ as `angularConventions`.
 - A styled-components template ports declaration by declaration into the
   component's static `styles`, keeping its layout technique: positioning,
   transforms, fixed heights and flex alignment. A theme interpolation becomes a
-  CSS custom property, as Compilation describes.
+  CSS custom property, as Compilation describes, and a `${Component}` selector
+  becomes a class on that element in the same template.
+- `:host` sets `display`, normally `display: block; width: 100%`: an unknown
+  element is inline, and the drawer's flex columns declare no width of their
+  own.
+- Styles stay emulated, with no `ViewEncapsulation.None` and no `::ng-deep`,
+  so an island's rules never reach the React around it. The page's global
+  rules still reach the island: the Floor Plan Creator loads
+  `shared/styles/floorPlanMaker.css`, whose `input { width: 100% !important; }`
+  sizes every input, so a narrower field is sized by its wrapper.
 - Markup, icons included, is written in the template or rendered by a
-  component, never bound as a string through `[innerHTML]`: the sanitizer
-  strips `<svg>` from a bound string without an error, and
-  `DomSanitizer.bypassSecurityTrust*` trades that for a security exception.
+  component, never bound as a string through `[innerHTML]`, even a static one:
+  the sanitizer strips `<svg>` from a bound string without an error, and
+  `DomSanitizer.bypassSecurityTrust*` trades that for a security exception. An
+  icon ports as literal `<svg>` markup, copied from its local icon component or
+  from its `@lely/icons` file.
 
 ## Timing
 
