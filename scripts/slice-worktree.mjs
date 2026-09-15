@@ -167,8 +167,12 @@ const landWorktree = async ({ productRoot, runDirectory }) => {
   requireRunId(runId);
   const allowed = await readAllowlist(contractPath);
 
+  // A verification-result's own runId names the verification attempt itself
+  // (e.g. "<runId>-verification-2"), not the slice's runId; see run-index.mjs.
   const verification = await latestVerification(path.resolve(runDirectory));
-  if (verification.value.status !== "PASS" || verification.value.runId !== runId) {
+  const verifiesThisRun = verification.value.runId === runId ||
+    verification.value.runId === `${runId}-verification-${verification.value.verificationAttempt}`;
+  if (verification.value.status !== "PASS" || !verifiesThisRun) {
     throw new Error(
       `${verification.file} is ${verification.value.status} for ${verification.value.runId}, ` +
         `not a PASS for ${runId}; only a verified slice lands.`,
@@ -443,7 +447,12 @@ const runSelfTest = async () => {
     }));
     const verification = (attempt, status) => writeFile(
       path.join(runDirectory, attempt === 1 ? "verification-result.json" : `verification-result-${attempt}.json`),
-      JSON.stringify({ artifactType: "verification-result", runId: "demo-baseline-2", status, verificationAttempt: attempt }),
+      JSON.stringify({
+        artifactType: "verification-result",
+        runId: `demo-baseline-2-verification-${attempt}`,
+        status,
+        verificationAttempt: attempt,
+      }),
     );
     const land = () => run({ land: true, "product-root": product, "run-dir": runDirectory });
 
@@ -511,7 +520,7 @@ const runSelfTest = async () => {
       if (file.startsWith("verification-result")) await rm(path.join(runDirectory, file));
     }
     await writeFile(path.join(runDirectory, "verification-result.json"), JSON.stringify({
-      artifactType: "verification-result", runId: "demo-baseline-3", status: "PASS", verificationAttempt: 1,
+      artifactType: "verification-result", runId: "demo-baseline-3-verification-1", status: "PASS", verificationAttempt: 1,
     }));
     await writeFile(path.join(third.worktree, "src", "a.txt"), "third slice\n");
     await writeFile(path.join(product, "src", "a.txt"), "landed meanwhile\n");
