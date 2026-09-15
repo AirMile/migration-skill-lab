@@ -515,7 +515,8 @@
             "required": { "type": "boolean" },
             "owner": { "type": "string", "minLength": 1 },
             "environment": { "type": "string", "minLength": 1 },
-            "scenario": { "type": "string", "minLength": 1 }
+            "scenario": { "type": "string", "minLength": 1 },
+            "userPath": { "type": "string", "minLength": 1 }
           }
         }
       }

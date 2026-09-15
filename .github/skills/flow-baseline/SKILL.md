@@ -135,6 +135,11 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    under `unparsed`, `unresolved`, `unfollowed` and `packages`, and each
    `icons` entry without a `source`, by hand. An `angularMounts` entry means
    that part already runs in Angular and has nothing left to cite.
+   While reading entry points, note whichever router, menu or navigation
+   configuration mounts the surveyed surface, cited, for
+   `validationPlan.manualValidation.userPath` later: the screen, menu or tab a
+   tester opens to see the surface running today. Leave it for step 6 when no
+   citable route turns up; never guess one.
 3. **Boundary.** Only now, with the evidence in hand, weigh materially
    different candidates. Judge every candidate in writing against all four
    criteria and say plainly where it fails:

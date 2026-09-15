@@ -56,6 +56,9 @@ allowlist the slice does not need, or stores sensitive content.
   architecture boundary and adapter in a few lines. It asks for no reply,
   authorizes nothing, and restates no confirmed behavior, because a citation
   is checked by opening it.
+- The review summary ends with an optional user-path section: the in-app
+  screen, menu or tab that reaches the migrated surface, present only when the
+  survey found a citable route and absent, with no placeholder, otherwise.
 - Exactly one user-chosen continuation: a fresh `flow-migrate` chat opened now,
   the invocation shown for pasting, or the invocation saved in the run
   directory.
@@ -312,3 +315,9 @@ The source is acceptable when:
      own folder;
 102. a surface for which `style-sources.mjs` reports `angularMounts` is treated
      as already running in Angular, never as a surface without styles.
+103. the review summary's optional last section names the in-app screen, menu
+     or tab that reaches the migrated surface, cited from routing or
+     navigation configuration found during the survey, and is left out —
+     never filled with a placeholder — when the survey found no citable route;
+104. `validationPlan.manualValidation.userPath` is never required for
+     approval and never invented when the source gives no route.

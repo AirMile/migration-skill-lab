@@ -25,7 +25,8 @@ left out; the contract keeps them.
 Then prints the review facts a reader could disagree with, verbatim from the
 contract: partial mount, remainder, surfaces, scenarios, hypotheses, visual
 parity, write allowlist, commands, manual verification, rollback, checkpoint
-policy, decisions and open questions. Writes nothing.
+policy, decisions and open questions, ending with the optional user path when
+the contract carries one. Writes nothing.
 `;
 
 const readContract = async contractPath => {
@@ -140,6 +141,9 @@ export const renderReviewFacts = contract => {
     ...section("Checkpoint policy", [`${code(contract.checkpointPolicy.mode)}, push ${code(contract.checkpointPolicy.pushPolicy)}`]),
     ...section("Decisions", contract.decisions.map(entry => `${entry.topic}: ${sentence(entry.decision)}`)),
     ...section("Open questions", contract.openQuestions.map(sentence)),
+    ...(validationPlan.manualValidation.userPath
+      ? section("User path", [sentence(validationPlan.manualValidation.userPath)])
+      : []),
   ].join("\n");
 };
 
@@ -182,6 +186,16 @@ const runSelfTest = async () => {
     assert(contract.scenarios.every(scenario => review.includes(`\`${scenario.id}\``)) &&
       contract.decisions.every(entry => review.includes(entry.topic)),
       "a scenario id or decision is missing from the review facts");
+    assert(!review.includes("**User path**"),
+      "a User path section appeared for a contract with no manualValidation.userPath");
+    const withUserPath = { ...contract, validationPlan: { ...contract.validationPlan, manualValidation: {
+      ...contract.validationPlan.manualValidation, userPath: "Open the Floor Plan Creator and select a line.",
+    } } };
+    const reviewWithUserPath = renderReviewFacts(withUserPath);
+    assert(reviewWithUserPath.includes("**User path**") &&
+      reviewWithUserPath.indexOf("**User path**") > reviewWithUserPath.indexOf("**Open questions**") &&
+      reviewWithUserPath.includes("Open the Floor Plan Creator and select a line."),
+      "the optional User path section did not render last with its text");
     assert(story.startsWith("# User Story — Migrate the Detail Drawer line fields"), "the title is not the heading");
     assert(!/\.tsx?:\d/.test(story), "a file:line citation reached the Story");
     assert(story.includes("- Given a line is selected and the Length field shows its current real length, when "),

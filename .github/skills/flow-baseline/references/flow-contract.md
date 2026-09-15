@@ -147,7 +147,12 @@ the contract.
   choose. Name the ids rather than retelling them: `flow-verify` builds every
   item from the entry itself, and a retold scenario is a second copy that
   drifts. Nobody is assigned to it, so the route and the environment are the
-  whole instruction.
+  whole instruction. `userPath` is optional: the screen, menu or tab a tester
+  opens to see the surveyed surface running today, so they can check current
+  behavior and visuals without reading source. Write it only from a citable
+  router, menu or navigation configuration the survey found; leave it out
+  rather than guess one. Not in the canonical example, so `print-shape.mjs`
+  cannot show it.
 - `rollback`: which files return to which state, and what a revert must not
   disturb. Restating that `migration-result.json` records the checkpoint SHAs
   answers nothing.
