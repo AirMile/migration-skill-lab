@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.29.0
+targetVersion: 0.30.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-baseline` v0.29.0 acceptance criteria
+# `flow-baseline` v0.30.0 acceptance criteria
 
 ## Hard gates
 
@@ -294,3 +294,9 @@ The source is acceptable when:
 97. every value the slice receives from outside Angular (a store subscription,
     a socket event, a timer, a promise) has one `targetArchitecture.lifecycle`
     rule naming its source and the signal it is written into.
+98. right after its claim it makes the run's branch and worktree with
+    `slice-worktree.mjs --create`, and every later step, `repository.root`
+    and the continuation use that worktree as the product root, never the
+    integration checkout;
+99. an abandoned claim releases both the run directory and the clean worktree
+    and branch, and a worktree holding changes is never removed.

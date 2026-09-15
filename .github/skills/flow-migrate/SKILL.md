@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.19.0`.
+Skill version: `0.20.0`.
 
 Recommended model: Claude Sonnet 5.
 
@@ -52,7 +52,11 @@ Report `BLOCKED` instead of deciding anything here when:
 - a test command does not terminate, since a watch-mode script stalls the run.
   Never edit the contract to fix it;
 - `dependencyChanges.required` is true without exact `packages` and `paths`.
-  Never choose a version here.
+  Never choose a version here;
+- the product root is not the contract's `repository.root`, or that root is a
+  slice worktree (`...-slices\<runId>`) and `product.branch` is not
+  `migration/<runId>`. Migrating in the integration checkout mixes this slice
+  with every other.
 
 Record a missing convention as a limitation; never present a provisional one
 as an established Lely standard.
@@ -159,7 +163,8 @@ Never:
   about;
 - create branches, stashes, remotes, pull requests or external writes; commit
   while checkpoint mode is disabled; push, amend, rewrite history, bypass hooks
-  or use `git add -A`;
+  or use `git add -A`. The slice's branch exists already, and it lands by
+  `slice-worktree.mjs --land` after its PASS;
 - alter backend, Maui, Auth0 or other host contracts beyond what
   `targetArchitecture` declares; a changed contract or wider scope returns to
   `flow-baseline`;

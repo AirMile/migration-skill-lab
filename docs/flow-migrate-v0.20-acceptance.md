@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.19.0
+targetVersion: 0.20.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-migrate` v0.19.0 acceptance criteria
+# `flow-migrate` v0.20.0 acceptance criteria
 
 ## Hard gates
 
@@ -136,3 +136,7 @@ The source is acceptable when:
     result.
 45. every `angularConventions` finding in that same output is fixed and the
     check rerun, and one that remains keeps the result from `completed`.
+46. it reports `BLOCKED` when the product root is not the contract's
+    `repository.root`, or when a slice worktree does not have
+    `migration/<runId>` checked out, and it never creates or commits to a
+    branch itself.

@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -24,6 +25,10 @@ migration result, plus debug-result after a repair; flow-debug the contract,
 the migration and verification results and the debug handoff; flow-baseline
 nothing, or the migration-map that proposed its slice, with
 --flow-id to save; flow-plan nothing, or the verification-result that passed.
+
+When --next flow-plan is given a slice worktree as the product root, the
+invocation names the integration checkout instead, and the slice-worktree
+--land command that merges the slice comes first.
 
 Skills: flow-plan, flow-baseline, flow-migrate, flow-verify, flow-debug.
 `;
@@ -114,6 +119,17 @@ const promptAttempt = async (next, artifacts) => {
 
 const quote = value => (/\s/.test(value) ? `"${value}"` : value);
 
+// A linked worktree shares its repository's Git directory, so that
+// directory's parent is the integration checkout the slice lands in.
+const integrationCheckout = productRoot => {
+  const directories = spawnSync("git", [
+    "-C", productRoot, "rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir",
+  ], { encoding: "utf8" });
+  if (directories.status !== 0) return null;
+  const [gitDirectory, commonDirectory] = directories.stdout.trim().split(/\r?\n/).map(value => path.resolve(value));
+  return gitDirectory === commonDirectory ? null : path.dirname(commonDirectory);
+};
+
 const requireExisting = async (value, kind) => {
   const absolute = path.resolve(value);
   let details;
@@ -142,8 +158,23 @@ const buildContinuation = async options => {
   }
   await checkArtifactSet(options.next, artifacts);
   const labRoot = await requireExisting(options["lab-root"], "directory");
-  const productRoot = await requireExisting(options["product-root"], "directory");
+  let productRoot = await requireExisting(options["product-root"], "directory");
   const runDirectory = await requireExisting(options["run-dir"], "directory");
+
+  // After a PASS the slice lands before flow-plan measures, and flow-plan
+  // measures the integration checkout, never the worktree the merge removes.
+  let land;
+  const integration = options.next === "flow-plan" && artifacts.length > 0 ?
+    integrationCheckout(productRoot) :
+    null;
+  if (integration) {
+    const landParts = [
+      "node", path.join(labRoot, "scripts", "slice-worktree.mjs"), "--land",
+      "--product-root", integration, "--run-dir", runDirectory,
+    ];
+    land = landParts.map(quote).join(" ");
+    productRoot = integration;
+  }
 
   const parts = [
     `/${options.next}`,
@@ -179,6 +210,12 @@ const buildContinuation = async options => {
     const content = [
       `# Resume ${flowId} with /${options.next}`,
       "",
+      ...(land ? [
+        "First land the verified slice on the integration branch, in a terminal:",
+        "",
+        land,
+        "",
+      ] : []),
       "Paste this line into a fresh chat. Every input is an artifact on disk, so",
       "it runs the same way whenever the chat is opened.",
       "",
@@ -194,7 +231,7 @@ const buildContinuation = async options => {
       throw error;
     }
   }
-  return { invocation, savedPath };
+  return { invocation, land, savedPath };
 };
 
 const parseArguments = argumentsList => {
@@ -374,6 +411,47 @@ const runSelfTest = async () => {
     });
     assert(planAfterPass.invocation.startsWith(`/flow-plan ${verificationResult} `),
       "a PASS does not continue into flow-plan with its verification-result");
+    assert(planAfterPass.land === undefined, "a product root that is no worktree asks to land");
+
+    // A PASS in a slice worktree lands first, and flow-plan measures the
+    // integration checkout.
+    const git = (root, args) => {
+      const result = spawnSync("git", ["-C", root, ...args], { encoding: "utf8" });
+      assert(result.status === 0, `git ${args.join(" ")} failed: ${result.stderr}`);
+    };
+    const integration = path.join(temporary, "integration");
+    const worktree = path.join(temporary, "integration-slices", "demo-flow-baseline-1");
+    await mkdir(integration);
+    git(integration, ["init", "-q"]);
+    git(integration, [
+      "-c", "user.name=Continuation Self Test", "-c", "user.email=continuation@example.invalid",
+      "commit", "-q", "--allow-empty", "-m", "init",
+    ]);
+    git(integration, ["worktree", "add", "-q", "-b", "migration/demo-flow-baseline-1", worktree]);
+    // Git reports the long path where the temp directory has an 8.3 short name.
+    const integrationPath = await realpath(integration);
+    const planFromWorktree = await buildContinuation({
+      ...options,
+      next: "flow-plan",
+      "product-root": worktree,
+      positional: [verificationResult],
+    });
+    assert(planFromWorktree.land === [
+      "node", path.join(temporary, "scripts", "slice-worktree.mjs"), "--land",
+      "--product-root", integrationPath, "--run-dir", runDirectory,
+    ].map(quote).join(" ") &&
+      planFromWorktree.invocation.includes(` ${quote(integrationPath)} `) &&
+      !planFromWorktree.invocation.includes(worktree),
+      `a PASS in a worktree does not land before flow-plan: ${JSON.stringify(planFromWorktree)}`);
+    assert((await readFile(planFromWorktree.savedPath, "utf8")).includes(planFromWorktree.land),
+      "the saved flow-plan prompt does not carry the land command");
+    const migrateInWorktree = await buildContinuation({
+      ...options,
+      save: false,
+      "product-root": worktree,
+    });
+    assert(migrateInWorktree.land === undefined && migrateInWorktree.invocation.includes(worktree),
+      "a phase inside the slice does not keep the worktree as its product root");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
@@ -392,7 +470,8 @@ const main = async () => {
     process.exitCode = options.help ? 0 : 1;
     return;
   }
-  const { invocation, savedPath } = await buildContinuation(options);
+  const { invocation, land, savedPath } = await buildContinuation(options);
+  if (land) console.log(`Land the verified slice first, in a terminal:\n${land}\n`);
   console.log(invocation);
   if (savedPath) console.log(`\nSaved to ${savedPath}.`);
 };

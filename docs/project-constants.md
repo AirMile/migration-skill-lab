@@ -1,6 +1,6 @@
 ---
 document: project-constants
-version: 0.6.0
+version: 0.7.0
 status: decided
 date: 2026-09-14
 ---
@@ -17,7 +17,31 @@ per-run choice: edit this file, and the next run picks it up. Why each entry
 was decided, and what it replaced, is in `project-constants-history.md`; no run
 needs it.
 
-Product repository: `C:\Project\frontend`.
+Product repository: `C:\Project\frontend`, the integration checkout.
+
+## Branches and worktrees
+
+- `migration/angular` is the integration branch, checked out in
+  `C:\Project\frontend`. It starts at `03bb7e9`, the revision every run so far
+  was measured on, which must be an ancestor of `origin/main`. Merging a newer `origin/main` into
+  it is its own deliberate step; `--ready` then reports `productMoved`, and
+  `/flow-plan` measures again.
+- Each baseline run gets its own branch `migration/<runId>` in the worktree
+  `C:\Project\frontend-slices\<runId>`, off `migration/angular`.
+  `scripts\slice-worktree.mjs --create` makes both right after the claim. That
+  worktree is the product root of every phase of the run.
+- Nothing in a slice worktree is committed until its verification passes. Then
+  the user runs `slice-worktree.mjs --land`. It commits only paths inside the
+  contract's allowlist, merges the branch into `migration/angular` with
+  `--no-ff`, and removes the worktree. A merge conflict aborts and changes
+  nothing.
+- `/flow-plan` and `--ready` read the integration checkout. A PASS counts as
+  landed only once its branch is merged.
+- Nothing is pushed. Publishing `migration/angular` is the team's decision.
+- Slices build and migrate in parallel, each in its own worktree. Manual
+  verification does not, because one local frontend serves the desktop app.
+  Two slices that build the same unbuilt prerequisite
+  (`sharesUnbuiltWithActive`) conflict when the second lands.
 
 ## Angular version
 
@@ -214,7 +238,8 @@ gitignored.
 
 The Route Assistant desktop application, running the local frontend and the
 local backend. Its title bar carries `localhost` and `react mode: development`
-badges beside the version string.
+badges beside the version string. The local frontend runs from the worktree of
+the slice under verification.
 
 Not a standalone browser tab and not Storybook. The drawer renders inside the
 application's WebView at the application's window size, so padding, spacing and

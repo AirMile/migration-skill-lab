@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.19.0`.
+Skill version: `0.20.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -92,7 +92,9 @@ outcome, a diagnosis and the next action.
    it replaced.
 4. **Lead the manual walkthrough** in `manualValidation.environment`, along
    its route. Do not ask whether someone did it already; conducting it is this
-   skill's work. Build each item from its `scenarios` or `visualParity` entry,
+   skill's work. The desktop app shows whichever checkout serves the local
+   frontend, so before the first item the tester starts it from `<product>`,
+   this slice's worktree, and stops any other slice's. Build each item from its `scenarios` or `visualParity` entry,
    never from a retelling of it, and treat the entries in
    `migration-result.limitations` as places a difference is already expected.
    Present one item at a time:
@@ -154,6 +156,10 @@ outcome, a diagnosis and the next action.
     A `PASS` leads to a fresh `/flow-plan`, which lands this slice on the
     migration map and proposes the next:
     `node "<lab>\scripts\continuation.mjs" --next flow-plan --lab-root <lab> --product-root <product> --run-dir <run-dir> <verification-result.json>`.
+    From a slice worktree it prints a `slice-worktree.mjs --land` command first.
+    Show it for the user to run in a terminal before `/flow-plan`: it commits the
+    slice and merges it into the integration branch, which this skill never
+    does.
     Offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
        the invocation. Never start a second terminal window;

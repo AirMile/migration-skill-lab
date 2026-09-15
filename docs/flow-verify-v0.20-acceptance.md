@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.19.0
+targetVersion: 0.20.0
 status: experimental
 date: 2026-09-14
 ---
 
-# `flow-verify` v0.19.0 acceptance criteria
+# `flow-verify` v0.20.0 acceptance criteria
 
 ## Hard gates
 
@@ -137,3 +137,8 @@ The source is acceptable when:
 47. each `angularConventions` finding in the `run-context.mjs --contract`
     output is a `FAIL` whose diagnosis names its `rule` and `constant`, never
     a judgement of the Angular code made by hand.
+48. the manual walkthrough runs against the local frontend served from this
+    slice's worktree;
+49. a `PASS` in a slice worktree shows the `slice-worktree.mjs --land` command
+    the continuation prints, for the user to run before `/flow-plan`, and the
+    skill never commits or merges the slice itself.

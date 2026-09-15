@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.29.0`.
+Skill version: `0.30.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -39,8 +39,9 @@ focused question and stop.
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --ready [<migration-map.json>]`,
   the map only when the invocation names one, and put its `available` slices
   to the user, queued ones first, each with its `reason`, the unbuilt
-  prerequisites in `sharesUnbuiltWithActive`, since a baseline in another
-  chat builds those too, its `remainder` and whether `productMoved`. Wait for
+  prerequisites in `sharesUnbuiltWithActive`, since a slice on another branch
+  builds those too and whichever lands second meets a merge conflict, its
+  `remainder` and whether `productMoved`. Wait for
   the choice even when one slice is queued. When it reports `replan`, say
   `/flow-plan` runs first, with its `replanReason`, and stop. A confirmed
   entry with a `remainder` continues an earlier chain: this run cuts from
@@ -52,7 +53,8 @@ a turn to tell you something you knew; it is the failure this skill is asked
 about most.
 
 - Once the flow is settled and before the survey, run
-  `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --claim --commands --save-status`.
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --lab-root <lab> --flow-id <slug> --claim --commands`,
+  where `<product>` is still the integration checkout the invocation names.
   Without a map, the `flowId` is the flow as a slug; reuse an earlier
   artifact's exact `flowId` so its earlier runs and saved prompts still match. Ask
   only when the flow maps to more than one plausible id. `--claim` creates
@@ -60,8 +62,16 @@ about most.
   `flow.claimed.directory` and `flow.claimed.runId` are this run's, and
   `flow.nextRunDirectory` then points past it. A refused claim means another
   chat holds the flow; offer the next available slice. The output also gives
-  the product revision and status, this flow's saved prompts and the package
-  scripts.
+  this flow's saved prompts and the package scripts.
+- Right after the claim, run
+  `node "<lab>\scripts\slice-worktree.mjs" --create --product-root <product> --run-id <flow.claimed.runId>`.
+  It branches this run off the integration branch into its own worktree, so
+  the slice never shares a working tree with another slice's uncommitted work.
+  From here on `<product>` is its `worktree`: the survey, `repository.root`,
+  every later command and the continuation. Take the product revision and
+  status from
+  `node "<lab>\scripts\run-context.mjs" --product-root <product> --save-status`
+  in that worktree. A refused create releases the claim and reports why.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
   where the user queued this slice. The `flowId` is that slice's `flowId`
   verbatim, from the invocation or the `--ready` entry the user confirmed,
@@ -199,8 +209,10 @@ rejects, no command the safety boundary forbids, no value the run can derive.
     with `--primary <flow-contract.json> --status draft`, or `failed` or
     `blocked` when no contract could be written. Either sidecar closes the
     claim. A run left before it wrote anything frees its slice with
-    `run-context.mjs --product-root <product> --lab-root <lab> --flow-id <flowId> --release`,
-    which removes only an empty run directory.
+    `run-context.mjs --product-root <integration checkout> --lab-root <lab> --flow-id <flowId> --release`,
+    which removes only an empty run directory, then
+    `slice-worktree.mjs --remove --product-root <integration checkout> --run-id <runId>`,
+    which removes only a clean worktree and a branch without commits.
 
 ## Safety boundary
 
@@ -209,7 +221,8 @@ Never:
 - edit, generate, format, stage, commit, stash, reset or check out product
   files; write tests or product code; install dependencies or alter lockfiles,
   configuration or environment files; start persistent services; or create any
-  checkpoint commit in this read-only phase;
+  checkpoint commit in this read-only phase. The one exception is the branch,
+  worktree and `npm ci` that `slice-worktree.mjs --create` makes for this run;
 - write a file other than the contract and the observation sidecar in the run
   directory, which `--claim` creates at the start;
 - take a slice the user did not confirm, or survey one before its claim

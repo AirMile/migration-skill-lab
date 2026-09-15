@@ -69,6 +69,26 @@ end on the existing mount code
 treat `setInput()` as newly *possible*, not yet *confirmed*, until a slice
 tries it and the workaround is removed or kept on its own merits.
 
+## Branches and worktrees
+
+Decided on 2026-09-14. Before then every slice migrated in the one checkout
+`C:\Project\frontend`, and checkpoint mode stayed `disabled`, so nothing was
+ever committed. By the straight-strip slice, that working tree held:
+- a test rename from 1 September;
+- the line-edit slice from 9 September;
+- the structure relocation from 11 September.
+
+`flow-verify`'s allowlist check reported all of it as writes outside the
+straight-strip contract, and only the user's memory could say which files
+predated the run. A separate branch from `main` per slice was rejected, because
+each slice builds on the Angular packages and configuration an earlier slice
+added. Instead, slices branch off one integration branch that collects them, in
+their own worktrees so that later slices can run in parallel.
+
+Committing waits for the PASS rather than using `auto-local` checkpoints. A
+failed or blocked chain then leaves nothing on any branch, and one scripted
+step decides what lands.
+
 ## Change detection
 
 API status on Angular 19 was checked on 2026-09-14 against the `v19.angular.dev`

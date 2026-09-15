@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { scanAngularConventions } from "./angular-conventions.mjs";
 import { baselineRuns, listNumberedRuns, scanRuns } from "./run-index.mjs";
 
@@ -58,8 +59,22 @@ Options:
 // from verification attempt 2 on.
 const promptFilePattern = /-prompt(?:-\d+)?\.md$/;
 
+// Each baseline run migrates on its own branch, off the integration branch,
+// and lands on it by merge after its PASS; slice-worktree.mjs makes both.
+export const integrationBranch = "migration/angular";
+export const sliceBranch = runId => `migration/${runId}`;
+
 const git = (root, args, input) =>
   spawnSync("git", ["-C", root, ...args], { encoding: "utf8", input });
+
+const branchExists = (root, branch) =>
+  git(root, ["rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).status === 0;
+
+// A run from before slice branches, or a product without the integration
+// branch, has nothing to merge and is never waiting for it.
+const awaitingLand = (root, runId) =>
+  branchExists(root, integrationBranch) && branchExists(root, sliceBranch(runId)) &&
+  git(root, ["merge-base", "--is-ancestor", sliceBranch(runId), integrationBranch]).status !== 0;
 
 const localDate = () => {
   const now = new Date();
@@ -67,7 +82,7 @@ const localDate = () => {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 };
 
-const readProductState = root => {
+export const readProductState = root => {
   const head = git(root, ["rev-parse", "HEAD"]);
   if (head.status !== 0) {
     throw new Error(`${root} is not a Git repository with a commit: ${head.stderr.trim()}`);
@@ -143,9 +158,9 @@ const pathCovers = (basePath, candidatePath) =>
 const normalizeAllowedPath = value =>
   value.replace(/\\/g, "/").replace(/^(\.\/)+/, "").replace(/\/+$/, "") || ".";
 
-const statusPaths = entry => entry.slice(3).split(" <- ");
+export const statusPaths = entry => entry.slice(3).split(" <- ");
 
-const outsideAllowlist = (paths, allowed) =>
+export const outsideAllowlist = (paths, allowed) =>
   [...new Set(paths)]
     .filter(filePath => !allowed.some(basePath => pathCovers(basePath, filePath)))
     .sort();
@@ -159,7 +174,7 @@ const committedPaths = (root, fromHead, toHead) => {
   return diff.stdout.split("\0").filter(Boolean);
 };
 
-const readAllowlist = async contractPath => {
+export const readAllowlist = async contractPath => {
   const contract = JSON.parse(
     (await readFile(path.resolve(contractPath), "utf8")).replace(/^\uFEFF/, ""),
   );
@@ -302,7 +317,7 @@ const readFlow = async (labRoot, flowId) => {
   };
 };
 
-const readReady = async (labRoot, mapFile, productHead) => {
+const readReady = async (labRoot, mapFile, productRoot, productHead) => {
   const mapPath = mapFile ? path.resolve(mapFile) : (await readMap(labRoot)).previousMap;
   if (!mapPath) {
     return { map: null, queue: [], active: [], slices: [], replan: true, replanReason: "no migration map; run /flow-plan" };
@@ -311,10 +326,6 @@ const readReady = async (labRoot, mapFile, productHead) => {
   if (map.artifactType !== "migration-map") throw new Error(`${mapPath} is not a migration-map.`);
 
   const { passes } = await scanRuns(labRoot);
-  const landed = new Set(map.slices
-    .filter(slice => slice.status === "landed" ||
-      (passes.has(slice.flowId) && passes.get(slice.flowId).remainder === null))
-    .map(slice => slice.flowId));
   const unbuilt = new Set(map.prerequisites
     .filter(prerequisite => prerequisite.angular?.status !== "built")
     .map(prerequisite => prerequisite.id));
@@ -329,8 +340,17 @@ const readReady = async (labRoot, mapFile, productHead) => {
       inFlight: runs.some(run => run.open || (run.contract && !run.pass)),
       remainder: pass?.remainder ?? null,
       laterRuns: Boolean(passRun) && runs.some(run => run.number > passRun.number),
+      // A PASS still on its own branch is not in the integration branch a
+      // new slice branches from.
+      awaitingLand: Boolean(pass && passRun) &&
+        awaitingLand(productRoot, `${slice.flowId}-baseline-${passRun.number}`),
     });
   }
+  const landed = new Set(map.slices
+    .filter(slice => slice.status === "landed" ||
+      (passes.has(slice.flowId) && passes.get(slice.flowId).remainder === null &&
+        !runStates.get(slice.flowId).awaitingLand))
+    .map(slice => slice.flowId));
   // Queued slices, from schemaVersion 2; before it the one chosen slice.
   const queue = map.schemaVersion >= 2 ?
     map.recommendation?.queue ?? [] :
@@ -345,17 +365,18 @@ const readReady = async (labRoot, mapFile, productHead) => {
     }))
     .filter(entry => entry.prerequisites.length > 0);
 
-  const active = map.slices.filter(slice => !landed.has(slice.flowId) && runStates.get(slice.flowId).inFlight);
+  const active = map.slices.filter(slice => !landed.has(slice.flowId) &&
+    (runStates.get(slice.flowId).inFlight || runStates.get(slice.flowId).awaitingLand));
   const candidates = map.slices
     .filter(slice => !landed.has(slice.flowId) && ["candidate", "in-progress"].includes(slice.status))
     .map(slice => {
       const openDependencies = slice.dependsOn.filter(id => !landed.has(id));
-      const { count, inFlight, remainder, laterRuns } = runStates.get(slice.flowId);
+      const { count, inFlight, remainder, laterRuns, awaitingLand: unlanded } = runStates.get(slice.flowId);
       // Any run after the partial PASS, a failed or blocked one included, needs a person.
       return {
         slice,
         openDependencies,
-        available: openDependencies.length === 0 && !inFlight &&
+        available: openDependencies.length === 0 && !inFlight && !unlanded &&
           (count === 0 || (remainder !== null && !laterRuns)),
       };
     });
@@ -378,6 +399,7 @@ const readReady = async (labRoot, mapFile, productHead) => {
       openDependencies,
       baselineRuns: runStates.get(slice.flowId).count,
       inFlight: runStates.get(slice.flowId).inFlight,
+      awaitingLand: runStates.get(slice.flowId).awaitingLand,
       remainder: runStates.get(slice.flowId).remainder,
       available: isAvailable,
       ...(isAvailable ? { sharesUnbuiltWithActive: sharedUnbuilt(slice, active) } : {}),
@@ -490,7 +512,9 @@ const collectContext = async options => {
   }
   if (options.map) context.map = await readMap(options["lab-root"]);
   if (options.ready) {
-    context.ready = await readReady(options["lab-root"], options.ready === true ? null : options.ready, state.head);
+    context.ready = await readReady(
+      options["lab-root"], options.ready === true ? null : options.ready, state.root, state.head,
+    );
   }
   if (options["run-dir"]) context.runDirectory = await readRunDirectory(options["run-dir"]);
   if (options.commands) context.commands = await readCommands(state.root);
@@ -891,6 +915,39 @@ const runSelfTest = async () => {
     assert(stuckReady.replan === true && stuckReady.replanReason.includes("/flow-plan"),
       `a map with no available slice does not ask to replan: ${JSON.stringify(stuckReady)}`);
 
+    // A PASS lands by merge: until its branch is in the integration branch,
+    // the slice is not offered again and a slice that depends on it waits.
+    await writeRun("2026-01-06-lambda-baseline-1", {
+      "flow-contract.json": contractFor("lambda"),
+      "verification-result.json": passFor("lambda"),
+    });
+    const landMapPath = path.join(path.dirname(queuedMapPath), "land-map.json");
+    await writeFile(landMapPath, JSON.stringify({
+      ...queuedMap,
+      slices: [slice("lambda", { status: "in-progress" }), slice("mu", { dependsOn: ["lambda"] })],
+      recommendation: { options: [], queue: [] },
+    }));
+    const readLand = async () => new Map((await collectContext({ ...inLab, ready: landMapPath }))
+      .ready.slices.map(entry => [entry.flowId, entry]));
+    assert(!(await readLand()).has("lambda") && (await readLand()).get("mu").available,
+      "a PASS from before slice branches does not land its slice");
+    const sliceCommit = git(product, [
+      "-c", "user.name=Run Context Self Test",
+      "-c", "user.email=run-context-self-test@example.invalid",
+      "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "slice",
+    ]).stdout.trim();
+    runGit(product, ["branch", integrationBranch]);
+    runGit(product, ["branch", sliceBranch("lambda-baseline-1"), sliceCommit]);
+    const unlanded = await readLand();
+    assert(unlanded.get("lambda")?.awaitingLand && !unlanded.get("lambda").available &&
+      JSON.stringify(unlanded.get("mu").openDependencies) === JSON.stringify(["lambda"]) &&
+      !unlanded.get("mu").available,
+      `a PASS whose branch is not merged counts as landed: ${JSON.stringify([...unlanded.values()])}`);
+    runGit(product, ["branch", "-f", integrationBranch, sliceCommit]);
+    const merged = await readLand();
+    assert(!merged.has("lambda") && merged.get("mu").available,
+      `a merged PASS does not land its slice: ${JSON.stringify([...merged.values()])}`);
+
     const releasedBeta = await collectContext({ ...inLab, "flow-id": "beta", release: true });
     assert(releasedBeta.flow.released.length === 1 && !(await exists(claimedBeta.flow.claimed.directory)),
       "an abandoned, empty claim was not released");
@@ -923,9 +980,15 @@ const main = async () => {
   console.log(JSON.stringify(await collectContext(options), null, 2));
 };
 
-try {
-  await main();
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
+// slice-worktree.mjs imports the product-state helpers without running this CLI.
+const isMain = process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase();
+
+if (isMain) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }
