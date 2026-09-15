@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.10.0
+targetVersion: 0.11.0
 status: experimental
 date: 2026-09-15
 ---
 
-# `flow-debug` v0.10.0 acceptance criteria
+# `flow-debug` v0.11.0 acceptance criteria
 
 ## Hard gates
 
@@ -74,9 +74,13 @@ The source is acceptable when:
 16. a `visual-parity` failure is repaired against the contract's declared
     `appearance` and `layout` for the named surface, not against a fresh
     reading of the React source;
-17. a visual repair confirmed only in an isolated or injected fixture is not
-    recorded as `repaired`, because a fixture cannot show width, alignment or
-    spacing against the retained sibling sections.
+17. a visual repair confirmed only in an isolated or injected fixture, or
+    confirmed only through static/structural reasoning when the real host is
+    unreachable by this agent's own execution environment, is not recorded as
+    `repaired`, because neither can show width, alignment or spacing against
+    the retained sibling sections; the run instead asks a human operator to
+    confirm the rendered deviation in the real host, or records `parked` with
+    the unreachable host named as the limitation.
 18. it reads a file once at the range it needs, repeats no near-identical
     search, and reads no schema or script source in place of running the
     validator;
@@ -111,3 +115,9 @@ The source is acceptable when:
     `repaired`.
 29. a visual repair starts from the templates the surface's `styleSources`
     cite and never makes markup render through `bypassSecurityTrust*`.
+30. `debug-result.json`'s `repository.root` always equals
+    `flow-contract.json`'s own `repository.root`, never the `--product-root`
+    path passed on the command line, which may be a per-slice worktree.
+31. an attempt's `checkpoint` is omitted entirely when `checkpointPolicy.mode`
+    is `disabled` or no commit was made, never filled with an informal
+    placeholder object.

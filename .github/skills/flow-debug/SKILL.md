@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.10.0`.
+Skill version: `0.11.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -87,7 +87,13 @@ Report `BLOCKED` before any product write when:
    from the real host layout: a fixture cannot show width, alignment or
    spacing against the retained siblings, so a visual repair seen only there is
    not repaired. Record the measured deviation and the value after the repair,
-   as for a behavioral reproduction.
+   as for a behavioral reproduction. When this agent's own execution
+   environment cannot reach the real host the contract's `manualValidation`
+   names, a passing test/typecheck/build run is never enough on its own to
+   record `repaired`: either ask the human operator to confirm the specific
+   rendered deviation in the real host first, mirroring `flow-verify`'s own
+   `manualValidation` walkthrough, or record `parked` with the limitation
+   naming the unreachable real host and let a human decide.
 6. **Checkpoints.** When `checkpointPolicy.mode` is `auto-local` and the
    reproduction and declared validations are green, write a checkpoint
    manifest and run, in order,
@@ -106,7 +112,13 @@ Report `BLOCKED` before any product write when:
    and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,
    and validate it together with the four artifacts it consumed. Answering
    `verification-result-<N>.json`, name it `debug-result-<N>.json`: a later
-   verification hashes the earlier one. It carries the starting tier, the attempt ledger, the diagnosis, changed paths,
+   verification hashes the earlier one. `repository.root` always copies
+   `flow-contract.json`'s own `repository.root`, never the `--product-root`
+   path passed on the command line, which may be a per-slice worktree. Omit an
+   attempt's `checkpoint` entirely when `checkpointPolicy.mode` is `disabled`
+   or no commit was made — never fill it with an informal placeholder; the
+   schema only accepts the four commit-manifest fields when the key is
+   present. It carries the starting tier, the attempt ledger, the diagnosis, changed paths,
    validation and checkpoint evidence, remaining limitations and one status:
    - `repaired`: the targeted reproduction and declared validations pass,
      every changed path is allowlisted and the ledger is complete;
