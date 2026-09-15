@@ -57,6 +57,12 @@ the contract.
   from it. The slice is the allowlist's ceiling: the validator rejects a path
   outside its `paths`, their `__tests__` folders, its measured
   `angularTargets` and the target folders of the prerequisites it `requires`.
+  `map` is an object with exactly `path`, `sha256` (run
+  `hash-artifact.mjs <migration-map.json>` to get it, never compute it by
+  hand) and `runId`; `flowId` sits directly under `planSlice`, not under `map`.
+  Each prerequisite's ceiling folder is its own measured `target` from the
+  map or `style-sources.mjs`, never a broader folder shared by several
+  prerequisites: list the exact target string the tooling printed.
 - `renderedSurfaceInventory`: one cited entry per visible control, conditional
   branch, child component and action, each `migrate`, `retain-react` or
   `excluded`. It binds the migration: no component may replace a parent whose
@@ -82,9 +88,12 @@ the contract.
   framework is absent there, `required` is `true`, with the constants' package
   set and every file that set changes (manifest, lockfile, TypeScript
   configuration). Never write `false` on the assumption that an earlier slice
-  added it: that unchecked claim hides the migration's largest decision. With
-  `required: false`, leave `packages` and `paths` out and cite the manifest in
-  `note`, since listed packages read as work to do.
+  added it: that unchecked claim hides the migration's largest decision. The
+  schema requires at least one entry in both `packages` and `paths` regardless
+  of `required`'s value, so never leave either empty: with `required: false`,
+  list the already-installed package set the constants name and `paths: ["package.json"]`,
+  and cite the manifest showing they are already there in `note`; with
+  `required: true`, list the set to add and every file it changes.
 - `scenarios`: Given/When/Then observable outcomes, each with evidence pointers
   and concrete values a tester can act on.
 - `visualParity`: one entry per `migrate` inventory id and no other id (the

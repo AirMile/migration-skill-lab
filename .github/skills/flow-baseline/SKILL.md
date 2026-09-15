@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.32.0`.
+Skill version: `0.34.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -71,7 +71,12 @@ about most.
   every later command and the continuation. Take the product revision and
   status from
   `node "<lab>\scripts\run-context.mjs" --product-root <product> --save-status`
-  in that worktree. A refused create releases the claim and reports why.
+  in that worktree. A refused create releases the claim and reports why. When it
+  instead reports the integration branch itself missing, create that one branch
+  once, in the integration checkout, with
+  `git branch migration/angular <revision>` using the fixed revision
+  `docs\project-constants.md` names — a branch pointer only, never a checkout,
+  reset or commit — then retry `--create`.
 - An invocation that names a `migration-map.json` comes from `flow-plan`,
   where the user queued this slice. The `flowId` is that slice's `flowId`
   verbatim, from the invocation or the `--ready` entry the user confirmed,
@@ -108,6 +113,19 @@ about most.
 
 Every question this run asks has answerable options: no route the validator
 rejects, no command the safety boundary forbids, no value the run can derive.
+
+## Progress tracking
+
+When the host offers a session todo list, seed it before step 1 with the
+numbered Workflow steps below, in order and named as they are named here, and
+move each one to in_progress when it starts and to done or blocked when it
+ends. It exists so the user can see where a long run stands and which step
+stopped it.
+
+A todo is a progress marker and never evidence: it stands in for no citation,
+no validated contract and no reporting step, an unfinished step is never
+closed to keep the list tidy, and a host without the feature changes nothing
+about this workflow.
 
 ## Workflow
 
@@ -201,7 +219,11 @@ rejects, no command the safety boundary forbids, no value the run can derive.
    chat message pastes its whole output verbatim, the Story the user copies
    onto the board followed by the review facts, because the host collapses
    tool output and a run once showed neither. Paraphrasing drifts from what
-   `flow-verify` checks. After it, add in your own words only the
+   `flow-verify` checks. When the output is too large for inline display and
+   is instead saved to a file, open that file and copy its exact text into the
+   chat message; never substitute a summary, a translation or a bullet recap
+   for it, in that message or a later one — a run once did, and the User Story
+   never reached the user at all. After it, add in your own words only the
    `targetArchitecture` boundary and adapter in a few lines, and end by naming
    what would need a new run to change: the boundary, the write allowlist or a
    scenario. Neither part is a gate, asks for anything or changes the board.
@@ -235,8 +257,10 @@ Never:
 - edit, generate, format, stage, commit, stash, reset or check out product
   files; write tests or product code; install dependencies or alter lockfiles,
   configuration or environment files; start persistent services; or create any
-  checkpoint commit in this read-only phase. The one exception is the branch,
-  worktree and `npm ci` that `slice-worktree.mjs --create` makes for this run;
+  checkpoint commit in this read-only phase. The exceptions are the branch,
+  worktree and `npm ci` that `slice-worktree.mjs --create` makes for this run,
+  and, only when that command reports the integration branch missing, the one
+  `git branch migration/angular <revision>` pointer creation named in Inputs;
 - write a file other than the contract and the observation sidecar in the run
   directory, which `--claim` creates at the start;
 - take a slice the user did not confirm, or survey one before its claim
