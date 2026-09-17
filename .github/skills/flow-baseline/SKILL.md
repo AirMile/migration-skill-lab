@@ -216,7 +216,10 @@ about this workflow.
    then one `surfaces` entry per `visualParity` id, each with that `id` as
    `visualParityId`, the `selector` that finds the surface in the running host
    and the `counterpartSelector` of the retained sibling the entry already
-   names in `counterpart`. Prefer a `data-testid` over a generated class, which
+   names in `counterpart`. Never leave that counterpart out: measuring it now,
+   while React still renders beside it, is what later lets `flow-verify` tell a
+   deviation this migration introduced from one React already had. Prefer a
+   `data-testid` over a generated class, which
    changes between builds. Then run
    `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label before --out <run-dir> [--port <n>]`
    with the manual verification environment running, and check each surface

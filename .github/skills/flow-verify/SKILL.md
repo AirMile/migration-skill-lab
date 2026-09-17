@@ -127,7 +127,19 @@ outcome, a diagnosis and the next action.
    too, `node "<lab>\scripts\visual-measure.mjs" --compare <run-dir>\visual-measurement-before.json <run-dir>\visual-measurement-after.json`.
    Its `evidence` strings are already written for this field: paste the ones
    for a surface into that surface's `evidence` verbatim rather than
-   summarizing them, because a number a reader can check is the point. Read
+   summarizing them, because a number a reader can check is the point. Weigh
+   `introducedByMigration` and `preExistingDeviation` differently: only the
+   first is this slice's doing, and failing a surface for a deviation React
+   already had sends `flow-debug` after a defect this migration did not
+   create. A `counterpartBaseline` of `unknown` means the split could not be
+   made, so say in `diagnosis` that the cause is unproven rather than
+   assuming either way. Read the `screenshot` block too: matching numbers with
+   differing pixels is a real finding — a wrong icon or glyph moves no
+   computed property — so open both PNGs before calling such a surface a
+   `PASS`. A surface that came back `found: false` while the host answered is
+   a selector that no longer matches the migrated DOM: fix the selector and
+   measure again, and if it cannot be made to match, that surface is
+   `BLOCKED`, never a `PASS`. Read
    `fingerprint.status` first: on `drifted` the two runs saw different window
    sizes, so treat every before/after difference as indicative and say so in
    `diagnosis` instead of failing the surface on it; differences against the
