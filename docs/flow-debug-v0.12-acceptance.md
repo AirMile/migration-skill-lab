@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.11.0
+targetVersion: 0.12.0
 status: experimental
-date: 2026-09-15
+date: 2026-09-17
 ---
 
-# `flow-debug` v0.11.0 acceptance criteria
+# `flow-debug` v0.12.0 acceptance criteria
 
 ## Hard gates
 
@@ -121,3 +121,12 @@ The source is acceptable when:
 31. an attempt's `checkpoint` is omitted entirely when `checkpointPolicy.mode`
     is `disabled` or no commit was made, never filled with an informal
     placeholder object.
+32. `debug-result.json` is scaffolded with `new-result.mjs` rather than copied
+    from an example and filled in by hand, so the attempt it answers names the
+    file, the four consumed artifacts are hashed, `repository.root` comes from
+    the contract and a disabled `checkpoint` key is absent by construction
+    instead of by remembering four separate rules;
+33. no `TODO` the scaffold wrote survives into the validated result:
+    `new-result.mjs --check` passes before `validate-handoff.mjs` is run, so a
+    placeholder is caught by the tool that wrote it rather than read as a
+    finding by the next verification.

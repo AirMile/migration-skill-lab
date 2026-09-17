@@ -37,6 +37,8 @@ allowlist the slice does not need, or stores sensitive content.
   contract and the observation artifact, in
   the run directory `run-context.mjs --claim` created at the start.
 - A before/after Git-visible product worktree comparison.
+- One `visual-selectors.json` and the `visual-measurement-before.json` it
+  produced, or a one-line statement that no host answered.
 - A schema-valid observation artifact written after the primary artifacts,
   including an empty observation list when no concrete skill signal occurred.
 - The slice's User Story, printed by `render-user-story.mjs` from the
@@ -330,3 +332,45 @@ The source is acceptable when:
 106. `expectedRobot` is left out, never guessed, when the scan reports no robot
      dependence or the measurement recorded `activeRobot: null` because the
      surface sits off the routes that show the indicator.
+107. a missing integration branch is created once, as a branch pointer at the
+     revision `project-constants.md` fixes, and only when
+     `slice-worktree.mjs --create` reports it missing; this read-only phase
+     still never checks out, resets or commits, so the one write it may make
+     to the integration checkout is the one that cannot change a file;
+108. the numbered Workflow steps are seeded as the run's todo list when the
+     host offers one, each moved to in_progress when it starts and to done or
+     blocked when it ends, and an unfinished step is left open rather than
+     closed to tidy the list; a host without the feature changes nothing,
+     because a todo is a progress marker and is never cited as evidence;
+109. when `render-user-story.mjs` output is too large to display inline and
+     the host saves it to a file, that file is opened and its exact text
+     copied into the chat message; a summary, translation or bullet recap is
+     never substituted for it, in that message or a later one;
+110. a visual before-measurement is recorded while React still owns the
+     surface, since this is the only phase in which it can be: one
+     `visual-selectors.json` surface per `visualParity` id, carrying that id,
+     the selector that finds it in the running host and the
+     `counterpartSelector` of the retained sibling the entry names in
+     `counterpart`;
+111. the counterpart selector is never left out, because measuring the
+     retained sibling now is what later lets `flow-verify` separate a
+     deviation this migration introduced from one React already had;
+112. each surface selector matches exactly one element and prefers a
+     `data-testid` over a generated class; a selector matching nothing or
+     several elements is fixed before the measurement is accepted, rather than
+     recorded and rewritten later, which would make the before and the after
+     describe different things;
+113. a non-zero exit from `visual-measure.mjs` is treated as an unmeasured
+     surface naming itself, never as a measurement with a gap;
+114. a host that does not answer is reported in one line and the run
+     continues: the contract does not wait for the measurement, and
+     `flow-verify` then compares the migrated surface against its retained
+     counterpart alone and records that no before was taken, which is weaker
+     evidence but still measured;
+115. the before-measurement and its sidecar are found by name in the run
+     directory and never referenced from the contract, whose schema is closed;
+116. contract blocks are shaped from an example chain that passed at the
+     schemaVersion in force, and what an example cannot show — required
+     fields, enum values, an array that may not be empty — is taken from
+     `print-shape.mjs --schema` rather than inferred from the example's
+     content.
