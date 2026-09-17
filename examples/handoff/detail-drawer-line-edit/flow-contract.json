@@ -151,7 +151,7 @@
       "Change detection is zoneless via provideExperimentalZonelessChangeDetection(), per docs\\project-constants.md#Change-detection"
     ],
     "styling": [
-      "Templates are inline in @Component, never a separate .html file, per docs\\project-constants.md#Compilation",
+      "The template goes in <name>.component.html and the styles in <name>.component.css beside the component, reached by templateUrl and styleUrl, per docs\\project-constants.md#Compilation",
       "Field appearance matches the retained FocusNumberInput family using design tokens (EColors.*, theme.radius, theme.spacing) rather than literal values, see HoverInput.tsx:98-128 and NumberInput.tsx:46-60",
       "No additional padding is added on top of the existing FormWrapper vertical rhythm"
     ],

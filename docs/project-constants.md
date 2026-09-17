@@ -1,8 +1,8 @@
 ---
 document: project-constants
-version: 0.9.0
+version: 0.10.0
 status: decided
-date: 2026-09-15
+date: 2026-09-17
 ---
 
 # Project constants
@@ -99,22 +99,25 @@ repository root feeds the plugin the file set to compile
 
 - The plugin runs `fastCompile: true` with `disableTypeChecking: true`, the
   only configuration that compiled the first slice, so Angular template type
-  errors are caught by tests, not by the build.
-- The plugin is off under Vitest (`process.env.VITEST` guard in
-  `vite.config.ts`), because it broke unrelated tests; tests mount through the
-  same runtime `createApplication()`/`createComponent()` path as Embedding.
-- `templateUrl` and `styleUrl` work; splitting a large component's template or
-  styles into files is a per-component call.
+  errors are caught by a test that renders the template, never by a compiler.
+- The plugin runs under Vitest too, so a spec compiles its component the way
+  the build does. Tests still mount through the same
+  `createApplication()`/`createComponent()` path as Embedding.
+- A component keeps its template in `<name>.component.html` and its styles in
+  `<name>.component.css` beside it, reached by `templateUrl` and `styleUrl`,
+  per Angular Style 05-04. Both resolve on the build path and the test path.
 - `componentRef.setInput()` is possible under build-time compilation but not
   yet confirmed: `lineForm/angular/mount-line-fields.ts` keeps its
   `setAdapterInputs()` workaround until a slice settles it.
 
 Consequences for how components are written:
 
-- `styles` and `template` are static literals without `${...}`, because the
-  compiler analyzes them. Token values arrive as CSS custom properties set
-  through a dynamic `host: { "[style]": ... }` binding, as `hostTokenStyle` in
-  `lineForm/angular/line-fields.component.ts` shows;
+- the stylesheet is plain CSS and carries no interpolation, so token values
+  arrive as CSS custom properties read with `var(--foo)` and supplied at
+  runtime through a dynamic `host: { "[style]": ... }` binding, as
+  `hostTokenStyle` in `lineForm/angular/line-fields.component.ts` shows. The
+  same holds for any `styles` or `template` literal that stays inline: static,
+  without `${...}`, because the compiler analyzes it;
 - dependencies come from `inject()`, never constructor parameters, and inputs
   and outputs are `input()` and `output()`, never `@Input()`/`@Output()`:
   both are the project's style.

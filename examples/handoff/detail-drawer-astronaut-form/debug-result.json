@@ -8,19 +8,19 @@
   "status": "repaired",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
-    "sha256": "905e6c7d28cd27fff235e37e1abeb1bfa96ba7856e98d934de06328b5a5d848e"
+    "sha256": "470909ca6b44237c8f4ed9ce5776e712339fc518643d914b499c09b843f520ab"
   },
   "migrationResult": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
-    "sha256": "a3592a233e99ea832c6ef222561b23def922f64e2b8658bd01d49ea48ac88df5"
+    "sha256": "148b9cda538add14d35f43ec0e0004ebf4a3169554c253a291228ff38e62126f"
   },
   "verificationResult": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\verification-result.json",
-    "sha256": "ee187e19175664281d707362380a2d24448bd470a56b45196158699cc0d14c15"
+    "sha256": "f0dc163fb60da130297cf1d8456b117ec9327641f916e807422ff27fa3d12730"
   },
   "debugHandoff": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\debug-handoff.json",
-    "sha256": "fd42a48c295fec9d2420c417118fd6cac42f4c07e06d02ac68a93db545b8e9bf"
+    "sha256": "26ff5fa223d931f6d985414c8eb54b48c80e9d86d76897901d2f124632442ccb"
   },
   "repository": {
     "root": "C:\\Project\\frontend-slices\\detail-drawer-astronaut-form-baseline-1",

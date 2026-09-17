@@ -8,7 +8,7 @@
   "status": "completed",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
-    "sha256": "905e6c7d28cd27fff235e37e1abeb1bfa96ba7856e98d934de06328b5a5d848e"
+    "sha256": "470909ca6b44237c8f4ed9ce5776e712339fc518643d914b499c09b843f520ab"
   },
   "repository": {
     "root": "C:\\Project\\frontend-slices\\detail-drawer-astronaut-form-baseline-1",

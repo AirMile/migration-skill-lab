@@ -57,6 +57,8 @@ export const checkAngularSource = (source, filePath) => {
     if (!/ChangeDetectionStrategy\.OnPush\b/.test(decorator)) add(match.index, "on-push", CHANGE_DETECTION);
     for (const literal of decorator.matchAll(/\b(?:styles|template)\s*:\s*\[?\s*`((?:[^`\\]|\\.)*)`/g)) {
       if (literal[1].includes("${")) add(match.index + literal.index, "static-styles", COMPILATION);
+      // Angular Style 05-04: past three lines a literal belongs in its own file.
+      if (literal[1].trim().split("\n").length > 3) add(match.index + literal.index, "split-resources", COMPILATION);
     }
     // An unknown element is inline, so without it the island ignores the drawer's column width.
     if (!/\bstyleUrls?\s*:/.test(decorator) && !/:host\b[^{]*\{[^}]*\bdisplay\s*:/.test(decorator)) {
@@ -207,6 +209,22 @@ const runSelfTest = () => {
   ].join("\n");
   assert(rulesOf(checkAngularSource(leaky, "e.ts")) === "encapsulation:3,encapsulation:8",
     `styles that escape the island have findings ${rulesOf(checkAngularSource(leaky, "e.ts"))}`);
+
+  const sprawling = [
+    "@Component({",
+    "  changeDetection: ChangeDetectionStrategy.OnPush,",
+    '  styleUrl: "./sprawling.component.css",',
+    "  template: `",
+    "    <p>one</p>",
+    "    <p>two</p>",
+    "    <p>three</p>",
+    "    <p>four</p>",
+    "  `,",
+    "})",
+    "export class SprawlingComponent {}",
+  ].join("\n");
+  assert(rulesOf(checkAngularSource(sprawling, "f.ts")) === "split-resources:4",
+    `an inline template past three lines has findings ${rulesOf(checkAngularSource(sprawling, "f.ts"))}`);
 
   const service = 'import { Injectable } from "@angular/core";\nexport const resource = () => 1;\n@Injectable({ providedIn: "root" })\nexport class S {}\n';
   assert(checkAngularSource(service, "c.ts").length === 0,

@@ -59,6 +59,41 @@ Splitting a large component's template/styles into separate files is a
 reasonable readability improvement going forward, but is not mandated; it is a
 per-component call.
 
+Decided on 2026-09-17: splitting is mandated, per Angular Style 05-04, and the
+plugin now runs under Vitest as well. Between 2026-09-11 and that date the
+constants said splitting worked while every generated contract still forbade
+it, citing this same section — the flow contracts inherited the sentence from
+the examples, so each new baseline copied a rule its cited source no longer
+supported.
+
+Three measurements settled it, all on 2026-09-17 and all read-only on the
+product except the last:
+
+1. `docs\component-file-layout-research-prompt.md` inventoried the React side:
+   5 of 461 production components have their own style file, the median
+   component is about 45 lines, and no size distribution supports a threshold.
+2. `docs\split-resource-probe-prompt.md` reproduced the failure. Under Vitest
+   both `templateUrl` and `styleUrl` raised `Component ... is not resolved:
+   Did you run and wait for 'resolveComponentResources()'?`, while an
+   otherwise identical inline component passed.
+3. `docs\test-compilation-probe-prompt.md` found the cause. With the plugin
+   enabled under Vitest all three probes and all 15 existing Angular tests
+   passed; the only breakage was eight tests in
+   `src\state\__tests__\EditorSettingsManager.test.ts`, which called
+   `vi.stubGlobal("window", {...})` and so replaced the whole global. Angular
+   19.2.25 declares `resolveComponentResources` but does not export it at
+   runtime, so resolving resources by hand was never an option.
+
+`docs\test-compilation-adoption-prompt.md` then narrowed the mock to
+`vi.spyOn(window, ...)` on the two listeners the suite exercises, leaving all
+eight assertions untouched, and removed the `process.env.VITEST` guard. The
+full suite stayed green at 187 files and 3152 tests, and the probes passed
+with no resolver of any kind.
+
+So one over-broad test mock had been deciding the file layout of every
+migrated component. Reports for all four are in the Obsidian analyses folder,
+dated 2026-09-17.
+
 ### Passing inputs to a mounted component
 
 `componentRef.setInput()` was previously broken here because signal-based

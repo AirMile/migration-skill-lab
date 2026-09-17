@@ -135,7 +135,7 @@
       "Change detection is zoneless via provideExperimentalZonelessChangeDetection(), per docs\\project-constants.md#Change-detection"
     ],
     "styling": [
-      "Templates are inline in @Component, never a separate .html file, per docs\\project-constants.md#Compilation",
+      "The template goes in <name>.component.html and the styles in <name>.component.css beside the component, reached by templateUrl and styleUrl, per docs\\project-constants.md#Compilation",
       "The Model/Type Details header keeps the Summary caret-toggle layout and spacing (Details.tsx:55-63), and the CaretUp/CaretDown chevrons port as literal inline <svg> markup copied from @lely/icons (node_modules/@lely/icons/src/assets/caret-up.svg, caret-down.svg), never a bound [innerHTML], per docs\\project-constants.md#Styling",
       "RadioButtonGroup's bordered row (RadioButtonGroup.tsx:6-33) and RadioButton's row/label/circle/dot styling (RadioButton.tsx:28-54, RadioButtonBase.tsx:37-119) port declaration by declaration using design tokens (@lely/tokens/enums), not literal values",
       "No additional padding is added on top of the existing FormWrapper vertical rhythm (FormWrapper.tsx referenced by the retained index.tsx:29)"

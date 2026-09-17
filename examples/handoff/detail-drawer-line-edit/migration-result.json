@@ -8,7 +8,7 @@
   "status": "completed",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-line-edit\\flow-contract.json",
-    "sha256": "4fad5dcfc0639fdbbf8baefc1d9545f9cbdb8c37d70eb46de7dd89a57005268b"
+    "sha256": "e0461a11a5e2fa50ad6163ced00aad22d24811d998f56144010a7c29b89be34a"
   },
   "repository": {
     "root": "C:\\Project\\frontend",

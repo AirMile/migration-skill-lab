@@ -9,11 +9,11 @@
   "status": "PASS",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-line-edit\\flow-contract.json",
-    "sha256": "4fad5dcfc0639fdbbf8baefc1d9545f9cbdb8c37d70eb46de7dd89a57005268b"
+    "sha256": "e0461a11a5e2fa50ad6163ced00aad22d24811d998f56144010a7c29b89be34a"
   },
   "migrationResult": {
     "path": "examples\\handoff\\detail-drawer-line-edit\\migration-result.json",
-    "sha256": "d552c07d0f3b9d1d10a0431e52f6526675f9147d4de39b0b26348c6cfa54fd63"
+    "sha256": "06a414b211c90c34c6224056ddd464324ce35c23e4d48dd65fb8de6e978c0a07"
   },
   "criteria": [
     {

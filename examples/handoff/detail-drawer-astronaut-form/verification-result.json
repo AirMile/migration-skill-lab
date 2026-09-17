@@ -9,11 +9,11 @@
   "status": "FAIL",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
-    "sha256": "905e6c7d28cd27fff235e37e1abeb1bfa96ba7856e98d934de06328b5a5d848e"
+    "sha256": "470909ca6b44237c8f4ed9ce5776e712339fc518643d914b499c09b843f520ab"
   },
   "migrationResult": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
-    "sha256": "a3592a233e99ea832c6ef222561b23def922f64e2b8658bd01d49ea48ac88df5"
+    "sha256": "148b9cda538add14d35f43ec0e0004ebf4a3169554c253a291228ff38e62126f"
   },
   "criteria": [
     {
