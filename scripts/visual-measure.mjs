@@ -40,12 +40,15 @@ different window sizes or pixel ratios is reported as "drifted": the comparison
 is then indicative, never authoritative, because layout values are not
 comparable across viewports.
 
-A deviation from the counterpart is split in two, because React may have
-deviated in the same way before anything was migrated: "introducedByMigration"
-is what the before run did not show, "preExistingDeviation" is what it did.
-Only the first is this slice's doing. Without a before-measurement of the
-counterpart the split cannot be made, and the evidence says the cause is
-unproven rather than assuming it.
+A deviation from the counterpart is classified, because React may have deviated
+in the same way before anything was migrated. The class follows the whole
+relationship, not the property name: "introducedByMigration" is a property
+React matched its sibling on, "preExistingDeviation" is one that deviated
+identically before and after, and "changedExistingDeviation" is one that
+already deviated but deviates differently now -- this slice touched it.
+"unmeasuredBefore" is a property the before run never measured. Without a
+before-measurement of the counterpart no class can be assigned, and the
+evidence says the cause is unproven rather than assuming it.
 
 Never writes to the product repository. A missing element is recorded as
 found: false, never as a zero measurement.
@@ -56,6 +59,9 @@ Options:
   --target      substring of the page url or title to measure, needed only
                 when the host exposes more than one page
   --timeout     milliseconds to wait for the host, by default 10000
+  --allow-missing
+                report a surface that could not be measured instead of
+                failing; use for ad-hoc diagnosis, not in a skill step
   --help        print this text
   --self-test   run the built-in checks
 `;
@@ -137,14 +143,35 @@ const openSession = (url, timeout) =>
               handler(value);
             };
             pending.set(id, { resolve: settle(res), reject: settle(rej) });
-            socket.send(JSON.stringify({ id, method, params }));
+            // A socket in CLOSING or CLOSED throws here synchronously. Without
+            // this the rejection still happens, but the timer keeps the event
+            // loop alive for the full timeout and then fires at an entry that
+            // has already settled.
+            try {
+              socket.send(JSON.stringify({ id, method, params }));
+            } catch (error) {
+              pending.delete(id);
+              clearTimeout(commandTimer);
+              rej(new Error(`${method} could not be sent (${error.message}).`));
+            }
           }),
         close: () => socket.close(),
       });
     });
   });
 
-const internalSchemes = ["devtools://", "chrome://", "edge://", "about:"];
+// Extension pages report themselves as type "page" too. Leaving their schemes
+// out means one installed extension can make a single-application host look
+// ambiguous, and the run is refused for a page nobody asked about.
+const internalSchemes = [
+  "devtools://",
+  "chrome://",
+  "edge://",
+  "about:",
+  "chrome-extension://",
+  "edge-extension://",
+  "chrome-untrusted://",
+];
 
 const connect = async ({ host, port, timeout, target: wanted }) => {
   let targets;
@@ -267,6 +294,22 @@ const decodePng = buffer => {
 // renders, so a pixel counts as different only past a tolerance; the largest
 // channel delta is reported alongside, because that is what separates "the
 // text shifted" from "the icon is a different icon".
+//
+// The two runs can decode to different colour types -- a screenshot with
+// transparency gives RGBA, one without gives RGB -- and walking both with a
+// single stride reads the second image's alpha byte as the next pixel's red.
+// Each image therefore carries its own offset, and both are composited over
+// one opaque background before comparing: two fully transparent pixels look
+// identical to a human whatever their colour channels hold, and this script
+// exists to measure what the host paints.
+const COMPOSITE_BACKGROUND = 255;
+
+const overBackground = (value, alpha) => (
+  alpha === 255
+    ? value
+    : Math.round((value * alpha + COMPOSITE_BACKGROUND * (255 - alpha)) / 255)
+);
+
 const diffImages = (beforeBuffer, afterBuffer, tolerance = 4) => {
   let before;
   let after;
@@ -287,10 +330,16 @@ const diffImages = (beforeBuffer, afterBuffer, tolerance = 4) => {
   let differing = 0;
   let maxChannelDelta = 0;
   for (let pixel = 0; pixel < total; pixel += 1) {
+    const beforeAt = pixel * before.channels;
+    const afterAt = pixel * after.channels;
+    const beforeAlpha = before.channels === 4 ? before.pixels[beforeAt + 3] : 255;
+    const afterAlpha = after.channels === 4 ? after.pixels[afterAt + 3] : 255;
     let worst = 0;
     for (let channel = 0; channel < 3; channel += 1) {
-      const at = pixel * before.channels + channel;
-      const delta = Math.abs(before.pixels[at] - after.pixels[at]);
+      const delta = Math.abs(
+        overBackground(before.pixels[beforeAt + channel], beforeAlpha) -
+        overBackground(after.pixels[afterAt + channel], afterAlpha),
+      );
       if (delta > worst) worst = delta;
     }
     if (worst > maxChannelDelta) maxChannelDelta = worst;
@@ -312,19 +361,28 @@ const sha256 = buffer => createHash("sha256").update(buffer).digest("hex");
 // ------------------------------------------------------------------ measuring
 
 const measureExpression = (selector, properties) => `(() => {
-  const element = document.querySelector(${JSON.stringify(selector)});
+  const matches = document.querySelectorAll(${JSON.stringify(selector)});
   const view = {
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
     devicePixelRatio: window.devicePixelRatio,
   };
-  if (!element) return JSON.stringify({ found: false, view });
+  if (matches.length === 0) return JSON.stringify({ found: false, matches: 0, view });
+  // querySelector would quietly take the first of several. The before and
+  // after runs could then describe different elements while reporting on one
+  // id, so the count travels with the measurement and more than one is
+  // refused rather than resolved.
+  if (matches.length > 1) {
+    return JSON.stringify({ found: false, matches: matches.length, view });
+  }
+  const element = matches[0];
   const computed = getComputedStyle(element);
   const styles = {};
   for (const name of ${JSON.stringify(properties)}) styles[name] = computed[name];
   const box = element.getBoundingClientRect();
   return JSON.stringify({
     found: true,
+    matches: 1,
     view,
     styles,
     rect: {
@@ -381,6 +439,7 @@ const measureSurfaces = async (options, surfaces) => {
         visualParityId: surface.visualParityId,
         selector: surface.selector,
         found: own.found,
+        matches: own.matches ?? (own.found ? 1 : 0),
         styles: own.styles ?? null,
         rect: own.rect ?? null,
         text: own.text ?? null,
@@ -393,6 +452,7 @@ const measureSurfaces = async (options, surfaces) => {
         entry.counterpart = {
           selector: surface.counterpartSelector,
           found: other.found,
+          matches: other.matches ?? (other.found ? 1 : 0),
           styles: other.styles ?? null,
           rect: other.rect ?? null,
         };
@@ -441,6 +501,56 @@ const compareStyles = (before, after) => {
     }));
 };
 
+// "absent" means the spec never named a counterpart; "not-found" means it did
+// and the element was gone. Collapsing those two into one falsy value is how a
+// vanished sibling starts reading like a surface with nothing to compare.
+const counterpartStatus = surface => {
+  if (!surface?.counterpart) return "absent";
+  return surface.counterpart.found ? "measured" : "not-found";
+};
+
+// Which deviations from the retained sibling did this migration actually
+// cause? Matching on property name alone is not enough: a property that
+// already deviated in React and now deviates *differently* has still been
+// touched, yet the name was already on the list and the deviation gets filed
+// as inherited debt. Only an unchanged relationship -- same surface value and
+// same counterpart value -- is genuinely pre-existing. Everything else gets
+// its own class, so a real regression is never declared innocent.
+const classifyDeviation = (property, earlier, later) => {
+  const measured = styles =>
+    styles != null && Object.prototype.hasOwnProperty.call(styles, property);
+
+  if (!measured(earlier.styles) || !measured(earlier.counterpart?.styles)) {
+    return { deviationClass: "unmeasuredBefore" };
+  }
+
+  const beforeSurface = earlier.styles[property];
+  const beforeCounterpart = earlier.counterpart.styles[property];
+  const detail = { beforeSurface, beforeCounterpart };
+
+  if (beforeSurface === beforeCounterpart) {
+    return { deviationClass: "introducedByMigration", ...detail };
+  }
+  if (
+    beforeSurface === later.styles?.[property] &&
+    beforeCounterpart === later.counterpart?.styles?.[property]
+  ) {
+    return { deviationClass: "preExistingDeviation", ...detail };
+  }
+  return { deviationClass: "changedExistingDeviation", ...detail };
+};
+
+// Statuses that mean no comparison was made, as opposed to a comparison that
+// found something. Only the first kind should fail a run.
+const unusableStatuses = new Set([
+  "missing-after",
+  "missing-before",
+  "not-found",
+  "selector-changed",
+  "selector-ambiguous",
+  "counterpart-not-found",
+]);
+
 const compareMeasurements = (before, after, imageDiffs = new Map()) => {
   const fingerprint = compareFingerprints(before.fingerprint, after.fingerprint);
   const afterById = new Map(after.surfaces.map(s => [s.visualParityId, s]));
@@ -456,7 +566,37 @@ const compareMeasurements = (before, after, imageDiffs = new Map()) => {
       evidence.push(`${id}: measured before but not after`);
       continue;
     }
+    // One id has to mean one element in both runs. A selector edited between
+    // the runs -- to make a missing element resolve, say -- turns the
+    // comparison into two different elements reported under one name.
+    if (earlier.selector !== later.selector) {
+      surfaces.push({
+        visualParityId: id,
+        status: "selector-changed",
+        changed: [],
+        beforeSelector: earlier.selector,
+        afterSelector: later.selector,
+      });
+      evidence.push(
+        `${id}: measured as ${earlier.selector} before and ${later.selector} ` +
+        "after, so the two runs do not describe the same element",
+      );
+      continue;
+    }
     if (!earlier.found || !later.found) {
+      const ambiguous = [
+        earlier.matches > 1 ? `before (${earlier.matches} matches)` : null,
+        later.matches > 1 ? `after (${later.matches} matches)` : null,
+      ].filter(Boolean);
+      if (ambiguous.length > 0) {
+        surfaces.push({ visualParityId: id, status: "selector-ambiguous", changed: [] });
+        evidence.push(
+          `${id}: ${earlier.selector} matched more than one element in ` +
+          `${ambiguous.join(" and ")}; a selector that matches several ` +
+          "elements cannot identify the surface it measures",
+        );
+        continue;
+      }
       const which = !earlier.found && !later.found
         ? "before and after"
         : (!earlier.found ? "before" : "after");
@@ -470,36 +610,47 @@ const compareMeasurements = (before, after, imageDiffs = new Map()) => {
     // A surface can differ from its retained sibling without the migration
     // having caused it: React may have differed in exactly the same way. The
     // before run measured that counterpart too, so the deviation the migration
-    // introduced is the one that was not there before. Reporting every
+    // introduced is the one whose relationship changed. Reporting every
     // deviation as the migration's doing sends flow-debug after a defect it
-    // did not create.
-    const nowAgainstCounterpart = later.counterpart?.found
+    // did not create; reporting none of them lets a real one pass as debt.
+    const beforeCounterpart = counterpartStatus(earlier);
+    const afterCounterpart = counterpartStatus(later);
+    const comparable = afterCounterpart === "measured";
+    const baselineKnown = beforeCounterpart === "measured";
+
+    // null, not [], when the comparison could not run: an empty list reads as
+    // "no deviations found" to every consumer downstream.
+    const nowAgainstCounterpart = comparable
       ? compareStyles(later.counterpart.styles, later.styles)
-      : [];
-    const baselineKnown = Boolean(earlier.counterpart?.found);
-    const wasDeviating = new Set(
-      baselineKnown
-        ? compareStyles(earlier.counterpart.styles, earlier.styles)
-          .map(item => item.property)
-        : [],
-    );
-    const introduced = baselineKnown
-      ? nowAgainstCounterpart.filter(item => !wasDeviating.has(item.property))
-      : [];
-    const preExisting = baselineKnown
-      ? nowAgainstCounterpart.filter(item => wasDeviating.has(item.property))
-      : [];
+      : null;
+
+    const deviations = {
+      introducedByMigration: [],
+      preExistingDeviation: [],
+      changedExistingDeviation: [],
+      unmeasuredBefore: [],
+    };
+    if (comparable && baselineKnown) {
+      for (const item of nowAgainstCounterpart) {
+        const verdict = classifyDeviation(item.property, earlier, later);
+        deviations[verdict.deviationClass].push({ ...item, ...verdict });
+      }
+    }
 
     const image = imageDiffs.get(id) ?? null;
+    const counterpartLost = beforeCounterpart === "measured" &&
+      afterCounterpart === "not-found";
 
     surfaces.push({
       visualParityId: id,
-      status: changed.length === 0 ? "identical" : "changed",
+      status: counterpartLost
+        ? "counterpart-not-found"
+        : (changed.length === 0 ? "identical" : "changed"),
       changed,
       againstCounterpart: nowAgainstCounterpart,
-      counterpartBaseline: baselineKnown ? "measured" : "unknown",
-      introducedByMigration: introduced,
-      preExistingDeviation: preExisting,
+      beforeCounterpartStatus: beforeCounterpart,
+      afterCounterpartStatus: afterCounterpart,
+      ...deviations,
       screenshot: image,
     });
 
@@ -512,19 +663,45 @@ const compareMeasurements = (before, after, imageDiffs = new Map()) => {
         );
       }
     }
-    for (const item of introduced) {
+    if (counterpartLost) {
+      evidence.push(
+        `${id}: the retained counterpart (${later.counterpart?.selector ?? "unknown selector"}) ` +
+        "was measured before but could not be found after, so no parity " +
+        "comparison was made for this surface",
+      );
+    } else if (afterCounterpart === "not-found") {
+      evidence.push(
+        `${id}: the retained counterpart was not found in either run, so no ` +
+        "parity comparison was made for this surface",
+      );
+    }
+    for (const item of deviations.introducedByMigration) {
       evidence.push(
         `${id}: ${item.property} ${item.after} vs counterpart ${item.before} ` +
         "(deviation introduced by this migration; React matched its sibling here)",
       );
     }
-    for (const item of preExisting) {
+    for (const item of deviations.preExistingDeviation) {
       evidence.push(
         `${id}: ${item.property} ${item.after} vs counterpart ${item.before} ` +
-        "(React deviated here too; pre-existing, not caused by this migration)",
+        "(React deviated identically; pre-existing, not caused by this migration)",
       );
     }
-    if (!baselineKnown) {
+    for (const item of deviations.changedExistingDeviation) {
+      evidence.push(
+        `${id}: ${item.property} ${item.after} vs counterpart ${item.before} ` +
+        `(React already deviated here, ${item.beforeSurface} vs ` +
+        `${item.beforeCounterpart}, but this migration changed the deviation)`,
+      );
+    }
+    for (const item of deviations.unmeasuredBefore) {
+      evidence.push(
+        `${id}: ${item.property} ${item.after} vs counterpart ${item.before} ` +
+        "(this property was not measured before, so whether the migration " +
+        "caused the deviation is unproven)",
+      );
+    }
+    if (comparable && !baselineKnown) {
       for (const item of nowAgainstCounterpart) {
         evidence.push(
           `${id}: ${item.property} ${item.after} vs counterpart ${item.before} ` +
@@ -573,6 +750,8 @@ const compareMeasurements = (before, after, imageDiffs = new Map()) => {
   const anyChange = surfaces.some(
     s => s.status !== "identical" ||
       s.introducedByMigration?.length ||
+      s.changedExistingDeviation?.length ||
+      s.unmeasuredBefore?.length ||
       (s.screenshot && s.screenshot.status !== "identical"),
   );
   return {
@@ -593,11 +772,16 @@ const parseArguments = argumentsList => {
     timeout: 10000,
     properties: [],
     compare: [],
+    allowMissing: false,
   };
   for (let index = 0; index < argumentsList.length; index += 1) {
     const argument = argumentsList[index];
     if (argument === "--help" || argument === "--self-test") {
       options[argument.slice(2)] = true;
+      continue;
+    }
+    if (argument === "--allow-missing") {
+      options.allowMissing = true;
       continue;
     }
     if (argument === "--compare") {
@@ -642,20 +826,62 @@ const parseArguments = argumentsList => {
   return options;
 };
 
-const readSpec = async specPath => {
-  const raw = await readFile(path.resolve(specPath), "utf8");
-  const spec = JSON.parse(raw.replace(/^\uFEFF/, ""));
+// A spec is read once and then drives every measurement, so a flaw in it
+// becomes a flaw in the evidence. Duplicate ids are the dangerous case: the
+// comparison indexes surfaces by id, so the second one silently replaces the
+// first and a surface that was measured is never reported on.
+const validateSpec = (spec, origin) => {
   if (!Array.isArray(spec.surfaces) || spec.surfaces.length === 0) {
-    throw new Error(`${specPath} carries no surfaces array.`);
+    throw new Error(`${origin} carries no surfaces array.`);
   }
+  const seenIds = new Map();
+  const seenSelectors = new Map();
   for (const surface of spec.surfaces) {
     if (!surface.visualParityId || !surface.selector) {
       throw new Error(
-        `${specPath} has a surface without visualParityId or selector.`,
+        `${origin} has a surface without visualParityId or selector.`,
       );
+    }
+    if (seenIds.has(surface.visualParityId)) {
+      throw new Error(
+        `${origin} uses visualParityId ${surface.visualParityId} twice. The ` +
+        "comparison indexes surfaces by id, so one of them would never be " +
+        "reported on.",
+      );
+    }
+    seenIds.set(surface.visualParityId, true);
+    if (seenSelectors.has(surface.selector)) {
+      throw new Error(
+        `${origin} points ${surface.visualParityId} and ` +
+        `${seenSelectors.get(surface.selector)} at the same selector ` +
+        `${surface.selector}. Two ids on one element read as independent ` +
+        "evidence while they are one measurement.",
+      );
+    }
+    seenSelectors.set(surface.selector, surface.visualParityId);
+    if (surface.properties !== undefined) {
+      if (!Array.isArray(surface.properties) || surface.properties.length === 0) {
+        throw new Error(
+          `${origin}: surface ${surface.visualParityId} has an empty ` +
+          "properties list; leave it out to use the defaults.",
+        );
+      }
+      for (const name of surface.properties) {
+        if (typeof name !== "string" || name.trim() === "") {
+          throw new Error(
+            `${origin}: surface ${surface.visualParityId} lists a property ` +
+            "that is not a non-empty string.",
+          );
+        }
+      }
     }
   }
   return spec;
+};
+
+const readSpec = async specPath => {
+  const raw = await readFile(path.resolve(specPath), "utf8");
+  return validateSpec(JSON.parse(raw.replace(/^\uFEFF/, "")), specPath);
 };
 
 // ----------------------------------------------------------------- self-test
@@ -683,9 +909,43 @@ const runSelfTest = async () => {
   assert(rejected?.includes("positive integer"),
     "a non-numeric port is accepted");
 
+  assert(parseArguments(["--allow-missing"]).allowMissing === true &&
+    parseArguments([]).allowMissing === false,
+    "--allow-missing does not parse as a flag");
+
+  // A spec flaw becomes an evidence flaw, so it is refused before a single
+  // command reaches the host.
+  const refusesSpec = (spec, fragment, message) => {
+    let error;
+    try {
+      validateSpec(spec, "spec.json");
+    } catch (thrown) {
+      error = thrown.message;
+    }
+    assert(error?.includes(fragment), message);
+  };
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a" }, { visualParityId: "a", selector: "#b" }] },
+    "twice", "a duplicate visualParityId is accepted");
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a" }, { visualParityId: "b", selector: "#a" }] },
+    "same selector", "two ids on one selector are accepted");
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a", properties: [] }] },
+    "empty properties", "an empty properties list is accepted");
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a", properties: ["  "] }] },
+    "non-empty string", "a blank property name is accepted");
+  assert(
+    validateSpec({ surfaces: [{ visualParityId: "a", selector: "#a" }] }, "spec.json")
+      .surfaces.length === 1,
+    "a valid spec is refused");
+
   const expression = measureExpression("#a", ["paddingLeft"]);
   assert(expression.includes('"#a"') && expression.includes('"paddingLeft"'),
     "the measuring expression does not carry its selector and properties");
+  assert(expression.includes("querySelectorAll") && expression.includes("matches.length > 1"),
+    "the measuring expression still takes the first of several matches");
 
   const before = {
     fingerprint: { innerWidth: 1258, innerHeight: 675, devicePixelRatio: 1.25 },
@@ -727,8 +987,9 @@ const runSelfTest = async () => {
     "the before and after values are not carried");
   assert(rowA.againstCounterpart.length === 2,
     "a difference from the retained counterpart is not reported");
-  assert(rowA.counterpartBaseline === "measured",
-    "a measured before-counterpart is not recognised");
+  assert(rowA.beforeCounterpartStatus === "measured" &&
+    rowA.afterCounterpartStatus === "measured",
+    "a measured counterpart is not recognised on both sides");
   assert(rowA.introducedByMigration.length === 1 &&
     rowA.introducedByMigration[0].property === "paddingLeft",
     "the deviation this migration introduced is not isolated");
@@ -738,6 +999,75 @@ const runSelfTest = async () => {
   assert(comparison.evidence.some(line => line.includes("pre-existing, not caused")),
     "a pre-existing deviation is not labelled as such");
 
+  // The reason this classification exists: React deviated by 8px, the
+  // migration made it 0px. The property name was already on the deviating
+  // list, so a name-based check would clear a regression it caused.
+  const worsened = compareMeasurements(
+    {
+      ...before,
+      surfaces: [
+        {
+          ...before.surfaces[0],
+          styles: { paddingLeft: "8px", color: "rgb(51, 51, 51)" },
+        },
+        before.surfaces[1],
+      ],
+    },
+    after,
+  );
+  const worse = worsened.surfaces.find(s => s.visualParityId === "row-a");
+  assert(!worse.preExistingDeviation.some(item => item.property === "paddingLeft"),
+    "a deviation that got worse is still cleared as pre-existing");
+  assert(worse.changedExistingDeviation.length === 1 &&
+    worse.changedExistingDeviation[0].property === "paddingLeft" &&
+    worse.changedExistingDeviation[0].beforeSurface === "8px",
+    "a deviation the migration altered is not isolated");
+  assert(worsened.outcome === "differences-found",
+    "an altered deviation does not surface as a difference");
+
+  // A property nobody measured before cannot be blamed on anyone.
+  const newProperty = compareMeasurements(
+    {
+      ...before,
+      surfaces: [
+        {
+          ...before.surfaces[0],
+          styles: { color: "rgb(51, 51, 51)" },
+          counterpart: { found: true, styles: { color: "rgb(0, 0, 0)" } },
+        },
+        before.surfaces[1],
+      ],
+    },
+    after,
+  );
+  const fresh = newProperty.surfaces.find(s => s.visualParityId === "row-a");
+  assert(fresh.unmeasuredBefore.length === 1 &&
+    fresh.unmeasuredBefore[0].property === "paddingLeft",
+    "a property absent from the before run is silently blamed");
+  assert(fresh.introducedByMigration.length === 0,
+    "an unmeasured property is claimed as introduced by the migration");
+
+  // A counterpart that disappears must not read as "nothing deviates".
+  const lostCounterpart = compareMeasurements(before, {
+    ...after,
+    surfaces: [
+      { ...after.surfaces[0], counterpart: { found: false, selector: "#sibling" } },
+      after.surfaces[1],
+    ],
+  });
+  const lost = lostCounterpart.surfaces.find(s => s.visualParityId === "row-a");
+  assert(lost.status === "counterpart-not-found",
+    "a vanished counterpart does not change the surface status");
+  assert(lost.againstCounterpart === null,
+    "a comparison that could not run reports an empty list of deviations");
+  assert(lost.beforeCounterpartStatus === "measured" &&
+    lost.afterCounterpartStatus === "not-found",
+    "the two counterpart states are not reported separately");
+  assert(lostCounterpart.outcome === "differences-found",
+    "a vanished counterpart is reported as no differences");
+  assert(lostCounterpart.evidence.some(line => line.includes("could not be found after")),
+    "a vanished counterpart produces no evidence line");
+
   const noBaseline = compareMeasurements(
     {
       ...before,
@@ -746,11 +1076,37 @@ const runSelfTest = async () => {
     after,
   );
   const unproven = noBaseline.surfaces.find(s => s.visualParityId === "row-a");
-  assert(unproven.counterpartBaseline === "unknown" &&
+  assert(unproven.beforeCounterpartStatus === "absent" &&
     unproven.introducedByMigration.length === 0,
     "a missing before-counterpart still asserts migration blame");
   assert(noBaseline.evidence.some(line => line.includes("unproven")),
     "a missing before-counterpart does not say the cause is unproven");
+
+  // One id has to mean one element in both runs.
+  const movedSelector = compareMeasurements(before, {
+    ...after,
+    surfaces: [{ ...after.surfaces[0], selector: "#a2" }, after.surfaces[1]],
+  });
+  const moved = movedSelector.surfaces.find(s => s.visualParityId === "row-a");
+  assert(moved.status === "selector-changed",
+    "a selector edited between the runs is compared as one element");
+  assert(moved.beforeSelector === "#a" && moved.afterSelector === "#a2",
+    "a changed selector does not report both sides");
+  assert(unusableStatuses.has(moved.status),
+    "a changed selector does not count as an unusable comparison");
+
+  const several = compareMeasurements(before, {
+    ...after,
+    surfaces: [
+      { ...after.surfaces[0], found: false, matches: 3 },
+      after.surfaces[1],
+    ],
+  });
+  const ambiguousSurface = several.surfaces.find(s => s.visualParityId === "row-a");
+  assert(ambiguousSurface.status === "selector-ambiguous",
+    "a selector matching several elements is reported as simply not found");
+  assert(several.evidence.some(line => line.includes("3 matches")),
+    "an ambiguous selector does not report how many elements matched");
 
   const rowB = comparison.surfaces.find(s => s.visualParityId === "row-b");
   assert(rowB.status === "identical",
@@ -783,16 +1139,44 @@ const runSelfTest = async () => {
     "a missing element produces a measured-looking value");
 
   // A PNG built here rather than fetched, so the decoder is checked against
-  // bytes whose every pixel is known.
-  const buildPng = (width, height, paint) => {
-    const stride = width * 3;
-    const raw = Buffer.alloc(height * (stride + 1));
+  // bytes whose every pixel is known. It can emit any of the five scanline
+  // filters and both colour types, because the decoder has to survive all of
+  // them and a fixture that only ever uses filter None proves none of it.
+  const paethPredictor = (a, b, c) => {
+    const p = a + b - c;
+    const pa = Math.abs(p - a);
+    const pb = Math.abs(p - b);
+    const pc = Math.abs(p - c);
+    if (pa <= pb && pa <= pc) return a;
+    return pb <= pc ? b : c;
+  };
+
+  const buildPng = (width, height, paint, { channels = 3, filter = 0 } = {}) => {
+    const stride = width * channels;
+    const raw = Buffer.alloc(height * stride);
     for (let y = 0; y < height; y += 1) {
-      raw[y * (stride + 1)] = 0;
       for (let x = 0; x < width; x += 1) {
-        const [r, g, b] = paint(x, y);
-        const at = y * (stride + 1) + 1 + x * 3;
-        raw[at] = r; raw[at + 1] = g; raw[at + 2] = b;
+        const pixel = paint(x, y);
+        for (let c = 0; c < channels; c += 1) {
+          raw[y * stride + x * channels + c] = pixel[c] ?? 255;
+        }
+      }
+    }
+    const encoded = Buffer.alloc(height * (stride + 1));
+    for (let y = 0; y < height; y += 1) {
+      encoded[y * (stride + 1)] = filter;
+      for (let i = 0; i < stride; i += 1) {
+        const left = i >= channels ? raw[y * stride + i - channels] : 0;
+        const up = y > 0 ? raw[(y - 1) * stride + i] : 0;
+        const upLeft = y > 0 && i >= channels
+          ? raw[(y - 1) * stride + i - channels]
+          : 0;
+        let predictor = 0;
+        if (filter === 1) predictor = left;
+        else if (filter === 2) predictor = up;
+        else if (filter === 3) predictor = (left + up) >> 1;
+        else if (filter === 4) predictor = paethPredictor(left, up, upLeft);
+        encoded[y * (stride + 1) + 1 + i] = (raw[y * stride + i] - predictor) & 0xff;
       }
     }
     const chunk = (type, data) => {
@@ -806,11 +1190,13 @@ const runSelfTest = async () => {
     const header = Buffer.alloc(13);
     header.writeUInt32BE(width, 0);
     header.writeUInt32BE(height, 4);
-    header[8] = 8; header[9] = 2; header[10] = 0; header[11] = 0; header[12] = 0;
+    header[8] = 8;
+    header[9] = channels === 4 ? 6 : 2;
+    header[10] = 0; header[11] = 0; header[12] = 0;
     return Buffer.concat([
       Buffer.from("89504e470d0a1a0a", "hex"),
       chunk("IHDR", header),
-      chunk("IDAT", deflateSync(raw)),
+      chunk("IDAT", deflateSync(encoded)),
       chunk("IEND", Buffer.alloc(0)),
     ]);
   };
@@ -839,6 +1225,36 @@ const runSelfTest = async () => {
     "a resized capture is not reported");
   assert(diffImages(Buffer.from("not a png"), plain).status === "unreadable",
     "unreadable image data is not reported as such");
+
+  // Every scanline filter has to reconstruct to the same picture. A gradient
+  // is used because a flat fill decodes correctly even when a predictor is
+  // wrong: the differences it is supposed to undo are all zero.
+  const gradient = (x, y) => [x * 40 + y, 255 - x * 30, (x * y * 17) % 256];
+  const unfiltered = decodePng(buildPng(5, 4, gradient));
+  for (const filter of [1, 2, 3, 4]) {
+    const viaFilter = decodePng(buildPng(5, 4, gradient, { filter }));
+    assert(Buffer.compare(
+      Buffer.from(viaFilter.pixels), Buffer.from(unfiltered.pixels),
+    ) === 0, `PNG scanline filter ${filter} does not reconstruct`);
+  }
+
+  // RGB and RGBA of the same picture must compare equal. Walking both with one
+  // stride reads the second image's alpha byte as the next pixel's red, which
+  // showed up as a full-strength difference in an identical image.
+  const opaqueRgba = buildPng(4, 3, () => [10, 20, 30, 255], { channels: 4 });
+  const asRgba = decodePng(opaqueRgba);
+  assert(asRgba.channels === 4, "an RGBA PNG does not decode as four channels");
+  assert(diffImages(plain, opaqueRgba).status === "identical",
+    "the same picture as RGB and RGBA is reported as different");
+
+  // Transparency is judged by what it paints, not by the bytes behind it.
+  const transparent = buildPng(2, 1, () => [0, 0, 0, 0], { channels: 4 });
+  const opaqueBlack = buildPng(2, 1, () => [0, 0, 0, 255], { channels: 4 });
+  const otherTransparent = buildPng(2, 1, () => [255, 255, 255, 0], { channels: 4 });
+  assert(diffImages(transparent, opaqueBlack).status === "different",
+    "an invisible pixel and an opaque black pixel are treated as identical");
+  assert(diffImages(transparent, otherTransparent).status === "identical",
+    "two invisible pixels are reported as different");
 
   const withImages = compareMeasurements(before, after, new Map([
     ["row-a", oneChanged],
@@ -896,12 +1312,24 @@ const main = async () => {
         });
       }
     }
-    process.stdout.write(
-      `${JSON.stringify(compareMeasurements(before, after, imageDiffs), null, 2)}\n`,
+    const comparison = compareMeasurements(before, after, imageDiffs);
+    process.stdout.write(`${JSON.stringify(comparison, null, 2)}\n`);
+    // Finding differences is the job and stays exit 0. A comparison that could
+    // not be made is a different thing, and prose in a skill file is not a
+    // reliable place to catch it.
+    const unusable = comparison.surfaces.filter(
+      surface => unusableStatuses.has(surface.status),
     );
+    if (unusable.length > 0 && !options.allowMissing) {
+      console.error(
+        `${unusable.length} of ${comparison.surfaces.length} surfaces could ` +
+        `not be compared (${unusable.map(s => `${s.visualParityId}: ${s.status}`).join("; ")}). ` +
+        "Re-run with --allow-missing to report anyway.",
+      );
+      process.exitCode = 1;
+    }
     return;
   }
-
   if (!options.spec && !options.selector) {
     process.stdout.write(usage);
     process.exitCode = 1;
@@ -946,6 +1374,23 @@ const main = async () => {
     process.stdout.write(`${path.relative(process.cwd(), file)}\n`);
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+
+  // The measurement is written first: a run that found nothing is still worth
+  // reading. The exit code follows, because a surface that was not measured
+  // means the baseline it feeds has a hole in it.
+  const unmeasured = result.surfaces.filter(surface => !surface.found);
+  const ambiguous = unmeasured.filter(surface => surface.matches > 1);
+  if (unmeasured.length > 0 && !options.allowMissing) {
+    console.error(
+      `${unmeasured.length} of ${result.surfaces.length} surfaces were not ` +
+      `measured: ${unmeasured.map(s => s.visualParityId).join(", ")}.` +
+      (ambiguous.length > 0
+        ? ` ${ambiguous.map(s => `${s.visualParityId} matched ${s.matches} elements`).join("; ")}.`
+        : "") +
+      " Re-run with --allow-missing to record the gap anyway.",
+    );
+    process.exitCode = 1;
+  }
 };
 
 try {
