@@ -225,7 +225,15 @@ about this workflow.
    changes between builds, and give each surface a selector that matches
    exactly one element: `flow-verify` compares against this selector, so one
    that matches several elements, or that has to be rewritten later, makes the
-   two runs describe different things. Then run
+   two runs describe different things. When the surface, or anything it
+   renders, is gated on `hasCapability`, add `expectedRobot` with the robot
+   type the indicator shows, exactly as the host writes it. A capability gate
+   adds and removes whole sections, so a before measured under one robot and
+   an after measured under another describe two different forms; naming the
+   robot here makes `flow-verify` refuse that pair instead of reporting the
+   missing section as a regression. Leave `expectedRobot` out when the surface
+   does not sit on a route that shows the indicator, rather than guessing a
+   value. Then run
    `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label before --out <run-dir> [--port <n>]`
    with the manual verification environment running. The script exits non-zero
    when a surface could not be measured and names it: a selector that matches

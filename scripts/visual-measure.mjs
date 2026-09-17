@@ -25,8 +25,11 @@ Measures a surface in the running host and prints JSON.
 --spec runs every surface a spec file names and, with --out, writes
 visual-measurement-<label>.json and one PNG per surface beside it. The spec is
 flow-baseline's sidecar: { flowId, surfaces: [ { visualParityId, selector,
-counterpartSelector?, properties? } ] }. Without --out the measurement only
-goes to stdout.
+counterpartSelector?, properties? } ], expectedRobot? }. Without --out the
+measurement only goes to stdout. expectedRobot names the robot the indicator
+must show, and the run is refused on the first surface when the host shows
+another one, so a wrongly loaded package costs one evaluation rather than a
+set of screenshots of the wrong form.
 
 --selector measures one surface ad hoc, which is how a run checks a selector
 before a baseline commits to it.
@@ -38,7 +41,10 @@ comparison of the two screenshots, plus an
 visualCriteria.evidence, and a fingerprint verdict. A measurement pair taken at
 different window sizes or pixel ratios is reported as "drifted": the comparison
 is then indicative, never authoritative, because layout values are not
-comparable across viewports.
+comparable across viewports. A pair measured under different robots is
+"incompatible" and fails the run: capability gates add and remove whole
+sections, so the two runs described different forms rather than the same form
+imprecisely.
 
 A deviation from the counterpart is classified, because React may have deviated
 in the same way before anything was migrated. The class follows the whole
@@ -366,6 +372,16 @@ const measureExpression = (selector, properties) => `(() => {
     innerWidth: window.innerWidth,
     innerHeight: window.innerHeight,
     devicePixelRatio: window.devicePixelRatio,
+    // Fourteen production components render on the active robot's
+    // capabilities, and Collector and Juno are opposites for the two the
+    // line form gates on. Measuring before under one robot and after under
+    // another compares different forms, so the robot travels with the
+    // measurement the same way the viewport does. The indicator is read
+    // from the DOM rather than React state because the fiber tree
+    // disappears as the migration proceeds.
+    activeRobot: document
+      .querySelector('[data-testid="robot-indicator"]')
+      ?.textContent?.trim() || null,
   };
   if (matches.length === 0) return JSON.stringify({ found: false, matches: 0, view });
   // querySelector would quietly take the first of several. The before and
@@ -423,7 +439,7 @@ const captureElement = async (session, rect) => {
   return Buffer.from(shot.data, "base64");
 };
 
-const measureSurfaces = async (options, surfaces) => {
+const measureSurfaces = async (options, surfaces, expectedRobot = null) => {
   const { session, target } = await connect(options);
   const measured = [];
   let fingerprint = null;
@@ -434,6 +450,16 @@ const measureSurfaces = async (options, surfaces) => {
         : defaultProperties;
       const own = await measureSelector(session, surface.selector, properties);
       fingerprint ??= own.view;
+      // Checked on the first surface so a host left on the wrong package
+      // costs one evaluation rather than a whole run and a set of
+      // screenshots that quietly describe the wrong form.
+      if (expectedRobot && fingerprint.activeRobot !== expectedRobot) {
+        throw new Error(
+          `The spec expects the ${expectedRobot} robot but the host shows ` +
+          `${fingerprint.activeRobot ?? "no robot indicator"}. Load the ` +
+          "package this flow was recorded under and measure again.",
+        );
+      }
 
       const entry = {
         visualParityId: surface.visualParityId,
@@ -475,6 +501,15 @@ const measureSurfaces = async (options, surfaces) => {
 
 // ----------------------------------------------------------------- comparing
 
+// A window a few pixels wider makes the numbers approximate. A different
+// robot makes them describe a different form, because whole sections are
+// gated on the active robot's capabilities, so the two kinds of drift
+// cannot share one verdict.
+const compareRobots = (before, after) => {
+  if (before === after) return null;
+  return `activeRobot ${before ?? "none shown"} -> ${after ?? "none shown"}`;
+};
+
 const compareFingerprints = (before, after) => {
   if (!before || !after) {
     return { status: "unknown", differences: ["a measurement carries no fingerprint"] };
@@ -482,6 +517,12 @@ const compareFingerprints = (before, after) => {
   const differences = fingerprintKeys
     .filter(key => before[key] !== after[key])
     .map(key => `${key} ${before[key]} -> ${after[key]}`);
+  // The indicator only renders on two routes, so null on both sides is an
+  // ordinary measurement taken elsewhere rather than an unready host.
+  const robot = compareRobots(before.activeRobot ?? null, after.activeRobot ?? null);
+  if (robot) {
+    return { status: "incompatible", differences: [robot, ...differences] };
+  }
   return {
     status: differences.length === 0 ? "stable" : "drifted",
     differences,
@@ -747,6 +788,16 @@ const compareMeasurements = (before, after, imageDiffs = new Map()) => {
     );
   }
 
+  // Not a weaker claim about the same form but a different form: capability
+  // gates add and remove whole sections, so every surface below one shifts.
+  // Calling that indicative would invite reading it anyway.
+  if (fingerprint.status === "incompatible") {
+    evidence.push(
+      `fingerprint incompatible (${fingerprint.differences.join("; ")}): the ` +
+      "runs saw different robot contexts, so nothing here compares",
+    );
+  }
+
   const anyChange = surfaces.some(
     s => s.status !== "identical" ||
       s.introducedByMigration?.length ||
@@ -833,6 +884,13 @@ const parseArguments = argumentsList => {
 const validateSpec = (spec, origin) => {
   if (!Array.isArray(spec.surfaces) || spec.surfaces.length === 0) {
     throw new Error(`${origin} carries no surfaces array.`);
+  }
+  if (spec.expectedRobot !== undefined
+    && (typeof spec.expectedRobot !== "string" || spec.expectedRobot.trim() === "")) {
+    throw new Error(
+      `${origin} has an expectedRobot that is not a non-empty string. Use the ` +
+      "name the indicator shows, such as Collector or Juno Flex.",
+    );
   }
   const seenIds = new Map();
   const seenSelectors = new Map();
@@ -936,6 +994,12 @@ const runSelfTest = async () => {
   refusesSpec(
     { surfaces: [{ visualParityId: "a", selector: "#a", properties: ["  "] }] },
     "non-empty string", "a blank property name is accepted");
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a" }], expectedRobot: "" },
+    "non-empty string", "an empty expectedRobot is accepted");
+  refusesSpec(
+    { surfaces: [{ visualParityId: "a", selector: "#a" }], expectedRobot: 7 },
+    "non-empty string", "a numeric expectedRobot is accepted");
   assert(
     validateSpec({ surfaces: [{ visualParityId: "a", selector: "#a" }] }, "spec.json")
       .surfaces.length === 1,
@@ -946,6 +1010,8 @@ const runSelfTest = async () => {
     "the measuring expression does not carry its selector and properties");
   assert(expression.includes("querySelectorAll") && expression.includes("matches.length > 1"),
     "the measuring expression still takes the first of several matches");
+  assert(expression.includes("robot-indicator"),
+    "the measuring expression does not read the active robot");
 
   const before = {
     fingerprint: { innerWidth: 1258, innerHeight: 675, devicePixelRatio: 1.25 },
@@ -1125,6 +1191,45 @@ const runSelfTest = async () => {
     "a changed viewport is not reported as drift");
   assert(drifted.evidence.some(line => line.includes("indicative, not authoritative")),
     "drift does not warn that the comparison is indicative");
+
+  // Capability gates add and remove whole sections, so a robot that differs
+  // between the runs is not a weaker comparison but a different form.
+  const otherRobot = compareMeasurements(
+    { ...before, fingerprint: { ...before.fingerprint, activeRobot: "Collector" } },
+    { ...after, fingerprint: { ...after.fingerprint, activeRobot: "Juno Flex" } },
+  );
+  assert(otherRobot.fingerprint.status === "incompatible",
+    "two different robots are not reported as an incompatible pair");
+  assert(otherRobot.fingerprint.differences[0] ===
+    "activeRobot Collector -> Juno Flex",
+    "an incompatible fingerprint does not name both robots first");
+  assert(otherRobot.evidence.some(line => line.includes("nothing here compares")),
+    "an incompatible fingerprint is reported as merely indicative");
+
+  const sameRobot = compareMeasurements(
+    { ...before, fingerprint: { ...before.fingerprint, activeRobot: "Collector" } },
+    { ...after, fingerprint: { ...after.fingerprint, activeRobot: "Collector" } },
+  );
+  assert(sameRobot.fingerprint.status === "stable",
+    "the same robot on both sides is not reported stable");
+
+  // The indicator only renders on two routes, so a surface measured anywhere
+  // else legitimately reports none on both sides.
+  assert(compareMeasurements(before, after).fingerprint.status === "stable",
+    "a measurement taken away from the indicator is refused");
+
+  const appeared = compareMeasurements(
+    before,
+    { ...after, fingerprint: { ...after.fingerprint, activeRobot: "Juno Flex" } },
+  );
+  assert(appeared.fingerprint.status === "incompatible",
+    "a robot named on one side only is not refused");
+  assert(appeared.fingerprint.differences[0].includes("none shown"),
+    "an absent indicator is not named in the difference");
+
+  assert(validateSpec({ surfaces: [{ visualParityId: "a", selector: "#a" }],
+    expectedRobot: "Juno Flex" }, "spec").expectedRobot === "Juno Flex",
+    "a spec naming the robot it expects is refused");
 
   const missing = compareMeasurements(before, {
     fingerprint: after.fingerprint,
@@ -1320,6 +1425,16 @@ const main = async () => {
     const unusable = comparison.surfaces.filter(
       surface => unusableStatuses.has(surface.status),
     );
+    // A robot mismatch invalidates every surface at once, so it fails the run
+    // even when each individual surface compared cleanly.
+    if (comparison.fingerprint.status === "incompatible" && !options.allowMissing) {
+      console.error(
+        `The runs saw different robot contexts ` +
+        `(${comparison.fingerprint.differences.join("; ")}). Measure both ` +
+        "under the same robot, or re-run with --allow-missing to report anyway.",
+      );
+      process.exitCode = 1;
+    }
     if (unusable.length > 0 && !options.allowMissing) {
       console.error(
         `${unusable.length} of ${comparison.surfaces.length} surfaces could ` +
@@ -1354,7 +1469,9 @@ const main = async () => {
     await mkdir(options.outDirectory, { recursive: true });
   }
 
-  const measured = await measureSurfaces(options, spec.surfaces);
+  const measured = await measureSurfaces(
+    options, spec.surfaces, spec.expectedRobot ?? null,
+  );
   const result = {
     artifactType: "visual-measurement",
     label: options.label,

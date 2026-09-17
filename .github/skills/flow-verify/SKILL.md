@@ -130,7 +130,10 @@ outcome, a diagnosis and the next action.
    summarizing them, because a number a reader can check is the point. The
    script exits non-zero when a surface could not be measured or compared, so
    treat a non-zero exit as a result to act on, not as noise; `--allow-missing`
-   is for ad-hoc diagnosis and has no place in this step. Weigh the four
+   is for ad-hoc diagnosis and has no place in this step. When it refuses
+   because the host shows a robot the spec did not record, load the robot the
+   baseline named and measure again: that is a wrongly prepared host, not a
+   finding about the migration. Weigh the four
    deviation classes differently: `introducedByMigration` is this slice's
    doing, `changedExistingDeviation` is a deviation React already had that
    this slice then altered — also this slice's doing — while
@@ -153,7 +156,12 @@ outcome, a diagnosis and the next action.
    different selectors is reported as `selector-changed` and is worthless.
    Re-measure only when the baseline's selector is provably the same element;
    otherwise that surface is `BLOCKED`. Read
-   `fingerprint.status` first: on `drifted` the two runs saw different window
+   `fingerprint.status` first. On `incompatible` the two runs saw different
+   robots: capability gates add and remove whole sections, so the runs
+   described different forms and nothing in the comparison means anything.
+   Every surface is `BLOCKED`, never a `PASS` and never a `FAIL`; say in
+   `diagnosis` which robots the two runs saw, and re-measure the after under
+   the robot the baseline used. On `drifted` the two runs saw different window
    sizes, so treat every before/after difference as indicative and say so in
    `diagnosis` instead of failing the surface on it; differences against the
    retained counterpart in the same run stay authoritative. A missing
