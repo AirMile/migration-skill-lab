@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.25.0`.
+Skill version: `0.26.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -136,6 +136,10 @@ outcome, a diagnosis and the next action.
    `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label after --out <run-dir> [--port <n>]`
    against the real host, then, when `visual-measurement-before.json` exists
    too, `node "<lab>\scripts\visual-measure.mjs" --compare <run-dir>\visual-measurement-before.json <run-dir>\visual-measurement-after.json`.
+   The label is a file name, so attempt N from 2 on measures as `after-<N>` and
+   compares that file instead; a plain `after` would overwrite the measurement
+   and the screenshots the earlier attempt failed on. The `before` is measured
+   once and every attempt compares against it.
    Its `evidence` strings are already written for this field: paste the ones
    for a surface into that surface's `evidence` verbatim rather than
    summarizing them, because a number a reader can check is the point. The

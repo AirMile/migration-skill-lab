@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.12.0
+targetVersion: 0.13.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-debug` v0.12.0 acceptance criteria
+# `flow-debug` v0.13.0 acceptance criteria
 
 ## Hard gates
 
@@ -130,3 +130,13 @@ The source is acceptable when:
     `new-result.mjs --check` passes before `validate-handoff.mjs` is run, so a
     placeholder is caught by the tool that wrote it rather than read as a
     finding by the next verification.
+34. the repair is refused before any product write when
+    `baseline-freshness.mjs` reports `STALE` or `INVALID`, with the changed
+    paths named, because a repair measured against a contract that no longer
+    describes today's React fixes the wrong thing — the same reason
+    `flow-migrate` and `flow-verify` stop on it;
+35. a visual-parity repair is measured with `visual-measure.mjs` under its own
+    `--label repair`, which leaves `flow-verify`'s `before` and `after`
+    intact, and the spec's `expectedRobot` therefore refuses a host showing a
+    robot the baseline did not use; the human confirmation stays the route
+    when no host answers, not the first resort.

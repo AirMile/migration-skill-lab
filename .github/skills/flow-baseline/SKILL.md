@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.38.0`.
+Skill version: `0.39.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -214,11 +214,14 @@ about this workflow.
    exited it; a skill never enters or leaves plan mode.
 8. **Visual baseline.** React still owns the surface here, and only here, so
    this is the one phase that can record what the host paints before the
-   migration. Write `visual-selectors.json` in the run directory: `flowId`,
-   then one `surfaces` entry per `visualParity` id, each with that `id` as
-   `visualParityId`, the `selector` that finds the surface in the running host
-   and the `counterpartSelector` of the retained sibling the entry already
-   names in `counterpart`. Never leave that counterpart out: measuring it now,
+   migration. Scaffold `visual-selectors.json` in the run directory with
+   `node "<lab>\scripts\new-result.mjs" --artifact visual-selectors --run-dir <run-dir> <flow-contract.json>`,
+   which opens one `surfaces` entry per `visualParity` id so none is left out —
+   a surface missing from the spec is simply never measured, and nothing else
+   notices. Then replace each surface's two `TODO` selectors: the `selector`
+   that finds it in the running host, and the `counterpartSelector` of the
+   retained sibling the entry already names in `counterpart`. Never leave that
+   counterpart out: measuring it now,
    while React still renders beside it, is what later lets `flow-verify` tell a
    deviation this migration introduced from one React already had. Prefer a
    `data-testid` over a generated class, which

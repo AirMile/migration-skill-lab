@@ -11,14 +11,16 @@ This lab contains:
 - experimental `flow-plan` v0.5.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.38.0, `flow-migrate` v0.23.0 and
-  `flow-verify` v0.25.0 source skills;
-- experimental `flow-debug` v0.12.0 source skill;
+- experimental `flow-baseline` v0.39.0, `flow-migrate` v0.23.0 and
+  `flow-verify` v0.26.0 source skills;
+- experimental `flow-debug` v0.13.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
-  dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
-  a complete chain from a run that passed end to end, at the versions in force,
-  which is the shape reference every skill copies from;
+  dependency-free validator, including `examples\handoff\detail-drawer-astronaut-form`:
+  a complete chain from a run that passed and landed, at the versions in force,
+  which is the shape reference every skill copies from. The older
+  `examples\handoff\detail-drawer-line-edit` chain is kept for the runs that
+  cite it, but it sits two schemaVersions back and is no longer the reference;
 - `scripts\hash-artifact.mjs`, which prints the path-and-sha256 pointer block
   one artifact needs to reference another;
 - the deterministic steps every flow skill used to do by hand, each with
@@ -40,11 +42,16 @@ This lab contains:
   through a capability gate or a robot-type branch, so a baseline pins the
   robot down before a comparison spans two of them),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
-  whole file), `render-user-story.mjs` (the slice's User Story from a
+  whole file, and with `--schema` the rules an example cannot show: which
+  fields are required, every enum value, where an array may not be empty),
+  `render-user-story.mjs` (the slice's User Story from a
   validated contract, then its review facts),
   `continuation.mjs` (the next phase's invocation, refused when its artifacts
   are not the set that phase validates), `new-observations.mjs`
-  (the observation sidecar), `migration-map.mjs` (a first or seeded
+  (the observation sidecar), `new-result.mjs` (the migration, verification,
+  debug-handoff and debug results, and the visual-selectors spec, each opened
+  with every field that follows from the artifacts it consumes and a `TODO`
+  wherever the run has to say what it found), `migration-map.mjs` (a first or seeded
   migration map, and the product's value-import graph measured against it)
   and `angular-structure.mjs` (the library that applies the Angular target
   structure, which `migration-map.mjs --measure` uses);

@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.12.0`.
+Skill version: `0.13.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -47,6 +47,10 @@ Report `BLOCKED` before any product write when:
   does not match the validated artifacts;
 - `verification-result.json` is `PASS`, or `debug-handoff.json` is
   `external-blocked`;
+- `node "<lab>\scripts\baseline-freshness.mjs" --contract <flow-contract.json> --product-root <product> --run-dir <run-dir>`
+  reports `STALE` or `INVALID`. Name the changed paths: repairing against a
+  contract that no longer describes today's React fixes the wrong thing, which
+  is why `flow-migrate` and `flow-verify` both stop on it too;
 - this is not a fresh chat opened from `flow-verify`: debug context never
   mixes with verification context.
 
@@ -86,14 +90,21 @@ Report `BLOCKED` before any product write when:
    there instead of searching the tree again. The evidence comes
    from the real host layout: a fixture cannot show width, alignment or
    spacing against the retained siblings, so a visual repair seen only there is
-   not repaired. Record the measured deviation and the value after the repair,
-   as for a behavioral reproduction. When this agent's own execution
-   environment cannot reach the real host the contract's `manualValidation`
-   names, a passing test/typecheck/build run is never enough on its own to
-   record `repaired`: either ask the human operator to confirm the specific
-   rendered deviation in the real host first, mirroring `flow-verify`'s own
-   `manualValidation` walkthrough, or record `parked` with the limitation
-   naming the unreachable real host and let a human decide.
+   not repaired. Measure it rather than describe it: with the run directory's
+   `visual-selectors.json`, run
+   `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label repair --out <run-dir> [--port <n>]`
+   and then `--compare <run-dir>\visual-measurement-before.json <run-dir>\visual-measurement-repair.json`.
+   Its own label keeps `flow-verify`'s before and after intact, and the spec's
+   `expectedRobot` makes the host refuse to measure under a robot the baseline
+   did not use — a section a capability gate removes is not a deviation to
+   repair. Record the measured deviation and the value after the repair, as for
+   a behavioral reproduction. When this agent's own execution environment
+   cannot reach the real host the contract's `manualValidation` names, a passing
+   test/typecheck/build run is never enough on its own to record `repaired`:
+   either ask the human operator to confirm the specific rendered deviation in
+   the real host first, mirroring `flow-verify`'s own `manualValidation`
+   walkthrough, or record `parked` with the limitation naming the unreachable
+   real host and let a human decide.
 6. **Checkpoints.** When `checkpointPolicy.mode` is `auto-local` and the
    reproduction and declared validations are green, write a checkpoint
    manifest and run, in order,

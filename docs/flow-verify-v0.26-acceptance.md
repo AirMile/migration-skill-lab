@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.25.0
+targetVersion: 0.26.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-verify` v0.25.0 acceptance criteria
+# `flow-verify` v0.26.0 acceptance criteria
 
 ## Hard gates
 
@@ -155,3 +155,6 @@ The source is acceptable when:
     remove whole sections and the two runs therefore described different
     forms; a non-zero exit from `visual-measure.mjs` is acted on rather than
     re-run with `--allow-missing`.
+53. attempt N from 2 on measures as `--label after-<N>` and compares that file
+    against the one `before`, so a re-verification does not overwrite the
+    measurement and the screenshots the attempt it answers failed on.

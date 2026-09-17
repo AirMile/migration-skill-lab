@@ -35,6 +35,12 @@ Artifacts and the upstream files each one needs:
                         debug-handoff
   verification-result   flow-contract, migration-result, and debug-result after
                         a repair
+  visual-selectors      flow-contract; the spec visual-measure.mjs reads, which
+                        carries no status, so --status and --skill-version do
+                        not apply. One surface per declared visualParity id,
+                        both selectors left to the run; expectedRobot is left
+                        out, because flow-baseline takes it from the robot the
+                        running host showed
 
 Upstream files are recognized by their own artifactType, so their order does not
 matter. Derived from them: the schemaVersion, the artifact type, skill and ids,
@@ -109,6 +115,15 @@ const specifications = {
     statuses: ["repaired", "parked", "blocked"],
     needs: ["flow-contract", "migration-result", "verification-result", "debug-handoff"],
     fileName: "debug-result",
+  },
+  // Not a handoff artifact and carries no status: it is the spec
+  // visual-measure.mjs reads. It is here because the same thing is derivable
+  // and the same thing is not — which surfaces exist is the contract's, which
+  // element each one is is the run's. A surface left out of it is never
+  // measured, and nothing else notices.
+  "visual-selectors": {
+    needs: ["flow-contract"],
+    fileName: "visual-selectors",
   },
 };
 
@@ -240,7 +255,11 @@ const buildVerificationResult = (sources, options) => {
       summary: TODO,
       evidenceSource: "not-run",
     },
-    diagnosis: [],
+    // Nothing in the schema or the validator couples this to the status, so an
+    // empty list on a non-PASS reads as "nothing to say" and still validates.
+    // On the two routes flow-verify now blocks on — a stale baseline, two
+    // robots — the diagnosis is the whole finding, so open one to fill.
+    diagnosis: passing ? [] : [TODO],
     push: {
       policy: contract.checkpointPolicy?.pushPolicy ?? "never",
       status: "not-requested",
@@ -374,11 +393,29 @@ const buildDebugResult = (sources, options) => {
   };
 };
 
+const buildVisualSelectors = sources => {
+  const contract = sources["flow-contract"].value;
+  return {
+    flowId: contract.flowId,
+    // One per declared surface. visual-measure.mjs refuses two surfaces that
+    // name the same selector, so each placeholder carries its own id; they are
+    // the element this run has to find, and nobody else can.
+    surfaces: (contract.visualParity ?? []).map(surface => ({
+      visualParityId: surface.id,
+      selector: `${TODO}-selector-${surface.id}`,
+      counterpartSelector: `${TODO}-counterpart-${surface.id}`,
+    })),
+  };
+  // expectedRobot is deliberately absent: flow-baseline adds it after the
+  // before-measurement, from the robot the running host actually showed.
+};
+
 const builders = {
   "migration-result": buildMigrationResult,
   "verification-result": buildVerificationResult,
   "debug-handoff": buildDebugHandoff,
   "debug-result": buildDebugResult,
+  "visual-selectors": buildVisualSelectors,
 };
 
 const loadSource = async file => {
@@ -407,8 +444,10 @@ const attemptSuffixFor = (artifact, sources, document) => {
 
 const placeholdersIn = (value, location = "$", found = []) => {
   if (typeof value === "string") {
-    if (value === TODO || value === TODO.toLowerCase() || value === NO_REVISION ||
-      value === "0".repeat(64)) {
+    // startsWith, not equality: a placeholder that has to be unique within its
+    // file, such as a selector, carries its id after the marker.
+    if (value.startsWith(TODO) || value === TODO.toLowerCase() ||
+      value === NO_REVISION || value === "0".repeat(64)) {
       found.push(location);
     }
   } else if (Array.isArray(value)) {
@@ -429,16 +468,22 @@ const createResult = async options => {
       `${artifact ?? "(none)"} is not an artifact this writes; use ${Object.keys(specifications).join(", ")}.`,
     );
   }
-  for (const name of ["status", "skill-version"]) {
-    if (!options[name]) throw new Error(`--${name} is required.\n\n${usage}`);
-  }
-  if (!specification.statuses.includes(options.status)) {
-    throw new Error(
-      `${options.status} is not a ${artifact} outcome; use ${specification.statuses.join(", ")}.`,
-    );
-  }
-  if (!/^\d+\.\d+\.\d+$/.test(options["skill-version"])) {
-    throw new Error(`--skill-version must be x.y.z, not ${options["skill-version"]}.`);
+  // A spec carries neither a status nor the writing skill's version; the
+  // handoff artifacts carry both.
+  if (specification.statuses) {
+    for (const name of ["status", "skill-version"]) {
+      if (!options[name]) throw new Error(`--${name} is required.\n\n${usage}`);
+    }
+    if (!specification.statuses.includes(options.status)) {
+      throw new Error(
+        `${options.status} is not a ${artifact} outcome; use ${specification.statuses.join(", ")}.`,
+      );
+    }
+    if (!/^\d+\.\d+\.\d+$/.test(options["skill-version"])) {
+      throw new Error(`--skill-version must be x.y.z, not ${options["skill-version"]}.`);
+    }
+  } else if (options.status) {
+    throw new Error(`${artifact} carries no status, so --status does not apply.`);
   }
 
   const loaded = await Promise.all(options.positional.map(loadSource));
@@ -635,6 +680,43 @@ ${handoffValidation.output}`);
     assert(secondVerification.document.criteria.every(entry => entry.status === "PASS"),
       "a PASS does not set its criteria to PASS");
 
+    // The validator has no rule about diagnosis, so only the scaffold can make
+    // an empty one on a non-PASS visible.
+    assert(placeholdersIn(verificationResult.document).includes("$.diagnosis[0]"),
+      "a non-PASS verification-result does not open a diagnosis to fill");
+    assert(secondVerification.document.diagnosis.length === 0,
+      "a PASS verification-result is given a diagnosis placeholder it does not need");
+
+    const spec = await createResult({
+      artifact: "visual-selectors",
+      "run-dir": temporary,
+      positional: [contract],
+    });
+    assert(path.basename(spec.resultPath) === "visual-selectors.json",
+      "the spec is not named visual-selectors.json");
+    assert(spec.document.flowId === contractValue.flowId,
+      "the spec does not carry the contract's flowId");
+    const declaredIds = contractValue.visualParity.map(surface => surface.id);
+    assert(JSON.stringify(spec.document.surfaces.map(s => s.visualParityId)) ===
+      JSON.stringify(declaredIds),
+      "the spec does not carry one surface per declared visualParity id");
+    assert(spec.document.expectedRobot === undefined,
+      "the spec guesses an expectedRobot instead of leaving it to the measurement");
+    assert(placeholdersIn(spec.document).length === declaredIds.length * 2,
+      "the spec does not leave both selectors of every surface to fill");
+    // The tool that reads the spec is the one that validates it, so a scaffold
+    // that drifts from it is the failure this whole script exists to prevent.
+    // Getting as far as the host means the spec itself was accepted.
+    const measured = spawnSync(
+      process.execPath,
+      [path.join(rootDirectory, "scripts", "visual-measure.mjs"),
+        "--spec", spec.resultPath, "--label", "before", "--out", temporary],
+      { encoding: "utf8" },
+    );
+    const measuredOutput = measured.stderr || measured.stdout;
+    assert(/No host answered/.test(measuredOutput),
+      `visual-measure rejected the scaffolded spec instead of reaching the host:\n${measuredOutput}`);
+
     assert(placeholdersIn(migrationResult.document).includes("$.coverageDelta.summary"),
       "--check does not find a placeholder the scaffold wrote");
     assert(placeholdersIn({ a: "measured" }).length === 0,
@@ -671,6 +753,14 @@ ${handoffValidation.output}`);
       }),
       "must be x.y.z",
       "a malformed skill version was accepted",
+    );
+    await expectFailure(
+      () => createResult({
+        artifact: "visual-selectors", status: "PASS",
+        "run-dir": temporary, positional: [contract],
+      }),
+      "carries no status",
+      "a status was accepted for an artifact that has none",
     );
   } finally {
     await rm(temporary, { recursive: true, force: true });
@@ -720,7 +810,11 @@ const main = async () => {
       // run asserted, and the validator would reject any other value beside it.
       // That makes them the run's claim, not the scaffold's.
       ...(asserted ? [`Derived from --status ${options.status}, so check each one against what actually happened: ${asserted}.`] : []),
-      `Then validate the chain: node "${validatorPath}" <upstream artifacts> "${resultPath}"`,
+      // A spec is not part of the handoff chain; the tool that reads it is the
+      // one that checks it.
+      options.artifact === "visual-selectors"
+        ? `Then measure with it: node "${path.join(rootDirectory, "scripts", "visual-measure.mjs")}" --spec "${resultPath}" --label before --out "${path.dirname(resultPath)}"`
+        : `Then validate the chain: node "${validatorPath}" <upstream artifacts> "${resultPath}"`,
     ].join("\n"),
   );
 };

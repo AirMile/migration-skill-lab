@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.38.0
+targetVersion: 0.39.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-baseline` v0.38.0 acceptance criteria
+# `flow-baseline` v0.39.0 acceptance criteria
 
 ## Hard gates
 
@@ -374,3 +374,9 @@ The source is acceptable when:
      fields, enum values, an array that may not be empty — is taken from
      `print-shape.mjs --schema` rather than inferred from the example's
      content.
+41. `visual-selectors.json` is scaffolded with
+    `new-result.mjs --artifact visual-selectors`, so it opens one surface per
+    declared `visualParity` id and a surface cannot be left out — nothing
+    downstream notices a surface that is simply never measured. Both selectors
+    of every surface are replaced before the measurement, and `expectedRobot`
+    is still added afterwards from the robot the running host showed.
