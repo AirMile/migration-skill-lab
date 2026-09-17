@@ -8,12 +8,12 @@ React-to-Angular migration research workflow.
 This lab contains:
 
 - the preserved source reference for `migration-analyze` v0.1.0;
-- experimental `flow-plan` v0.4.0 source skill, which keeps the migration map
+- experimental `flow-plan` v0.5.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.32.0, `flow-migrate` v0.21.0 and
-  `flow-verify` v0.21.0 source skills;
-- experimental `flow-debug` v0.10.0 source skill;
+- experimental `flow-baseline` v0.33.0, `flow-migrate` v0.22.0 and
+  `flow-verify` v0.22.0 source skills;
+- experimental `flow-debug` v0.11.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
@@ -33,6 +33,12 @@ This lab contains:
   `visualParity` surface actually paints in the running host, read over CDP so
   `flow-baseline` records a before and `flow-verify` compares numbers instead
   of recollections),
+  `baseline-freshness.mjs` (whether the React sources a contract relied on
+  changed on the integration branch since the baseline, since the migration is
+  additive and such a change merges without a conflict to warn anyone),
+  `robot-context.mjs` (whether a set of files renders differently per robot,
+  through a capability gate or a robot-type branch, so a baseline pins the
+  robot down before a comparison spans two of them),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `render-user-story.mjs` (the slice's User Story from a
   validated contract, then its review facts),

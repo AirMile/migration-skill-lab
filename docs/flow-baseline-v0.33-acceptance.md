@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.32.0
+targetVersion: 0.33.0
 status: experimental
-date: 2026-09-15
+date: 2026-09-17
 ---
 
-# `flow-baseline` v0.32.0 acceptance criteria
+# `flow-baseline` v0.33.0 acceptance criteria
 
 ## Hard gates
 
@@ -321,3 +321,12 @@ The source is acceptable when:
      never filled with a placeholder — when the survey found no citable route;
 104. `validationPlan.manualValidation.userPath` is never required for
      approval and never invented when the source gives no route.
+105. `visual-selectors.json` carries `expectedRobot` whenever
+     `robot-context.mjs`, run over the files `style-sources.mjs` walked rather
+     than the slice's own files, reports `robotSensitive`, and the value is the
+     `view.activeRobot` string the before-measurement recorded rather than one
+     derived from the source, since one `ERobotType.Juno` displays as
+     `Juno Basic` or `Juno Flex` depending on settings;
+106. `expectedRobot` is left out, never guessed, when the scan reports no robot
+     dependence or the measurement recorded `activeRobot: null` because the
+     surface sits off the routes that show the indicator.

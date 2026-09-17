@@ -88,7 +88,18 @@ Derive everything else, state each value in one line and continue:
    a parent while a child it renders is still React. Give each candidate a
    `flowId` that stays its name for good, since `flow-baseline` names its runs
    after it, and judge all four criteria with a one-line note; `unknown` is
-   the honest verdict where only `flow-baseline`'s survey can tell. Fix every
+   the honest verdict where only `flow-baseline`'s survey can tell. For
+   `boundedBranches`, do not judge by reading: run
+   `node "<lab>\scripts\robot-context.mjs" --product-root <product> --path <p> [--path ...]`
+   over the candidate's `paths` and copy its `note` into
+   `criteria.boundedBranches.note`. The rendering of this product depends on
+   the loaded robot, and the gate that decides it is often a capability the
+   file receives rather than one it names, so a reading misses it. Two thirds
+   of the robot-dependent files branch on the robot type without naming a
+   capability at all, which is why the script looks for both. A `robotSensitive`
+   candidate is not `fail` on that ground alone — it is a slice whose
+   measurement has to pin the robot down, which step 7 ranks on and
+   `flow-baseline` records. Fix every
    slice the measure lists under `slicesWithMissingPaths`. Then run
    `node "<lab>\scripts\migration-map.mjs" --land --map <migration-map.json> --lab-root <lab>`:
    a slice cut now may already have a `PASS` the seed could not see.
@@ -111,7 +122,12 @@ Derive everything else, state each value in one line and continue:
    them in this order: reuses `built` counterparts; leaves the fewest
    prerequisites to build, naming each one it would build, a `copies` entry
    included; smaller, by the measured file count; lower risk, naming any
-   drawlib, history or host-boundary contact. Put up to five to the user as
+   drawlib, history or host-boundary contact, and any robot dependence
+   `boundedBranches.note` records. A robot-dependent slice ranks below an
+   equivalent neutral one because its before and after have to be measured
+   under the same robot, which `visual-measure` enforces and a reader has to
+   arrange; say which robots differ when you offer it, so the user chooses
+   with that cost in view rather than meeting it at verification. Put up to five to the user as
    plain text, each with the unbuilt prerequisites it shares with an `active`
    slice or, from `unbuiltSharedByAvailable`, with another one offered, since
    two baselines that build one counterpart side by side collide at its

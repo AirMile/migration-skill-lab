@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-plan
-targetVersion: 0.4.0
+targetVersion: 0.5.0
 status: experimental
-date: 2026-09-14
+date: 2026-09-17
 ---
 
-# `flow-plan` v0.4.0 acceptance criteria
+# `flow-plan` v0.5.0 acceptance criteria
 
 ## Hard gates
 
@@ -46,15 +46,21 @@ The source is acceptable when:
 4. new candidate slices are cut only for the feature being worked on, leaf
    first, with a parent's `dependsOn` naming every child slice;
 5. every candidate records all four `flow-baseline` criteria with a verdict
-   and a note, and `unknown` is used where only a survey could tell;
+   and a note, `unknown` is used where only a survey could tell, and
+   `boundedBranches.note` carries `robot-context.mjs` output over the
+   candidate's `paths` rather than a judgement made by reading, since the gate
+   that decides the rendering is often a capability the file receives instead
+   of one it names;
 6. every `unmappedShared` file becomes a prerequisite of kind
    `shared-component` or `adapter`, and each existing Angular file is matched
    as `built` at the prerequisite's measured target or recorded as a copy, a
    drifted counterpart included;
 7. the recommendation offers only slices `run-context.mjs --ready` marks
    `available`, ranked by reuse of built counterparts, prerequisites left to
-   build, size and risk, and names every prerequisite the option would build
-   and every unbuilt one it shares with an active or another offered slice;
+   build, size and risk, robot dependence included, and names every
+   prerequisite the option would build and every unbuilt one it shares with an
+   active or another offered slice, and says which robots differ for a
+   robot-dependent option;
 8. a flow the user names instead of an offered one joins the map as a slice
    and the queue;
 9. it records no board ID for a feature and asks for none;

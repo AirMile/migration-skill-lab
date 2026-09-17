@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.21.0
+targetVersion: 0.22.0
 status: experimental
-date: 2026-09-15
+date: 2026-09-17
 ---
 
-# `flow-verify` v0.21.0 acceptance criteria
+# `flow-verify` v0.22.0 acceptance criteria
 
 ## Hard gates
 
@@ -145,3 +145,13 @@ The source is acceptable when:
 50. a `visualParity` walkthrough item covers every element the surface's
     `styleSources` paint against the counterpart in one view, so every visible
     deviation of that surface lands in the same `debug-handoff.json`.
+51. a `baseline-freshness.mjs` result of `STALE` or `INVALID` makes the run
+    `BLOCKED` with the changed paths named, never a `PASS` and never a `FAIL`,
+    because a baseline that moved is not the migration's defect; the check is
+    run with `--run-dir` so an already-landed slice is recognized as a call
+    made out of order;
+52. a `fingerprint.status` of `incompatible` makes every surface `BLOCKED`
+    with both robots named in the diagnosis, since capability gates add and
+    remove whole sections and the two runs therefore described different
+    forms; a non-zero exit from `visual-measure.mjs` is acted on rather than
+    re-run with `--allow-missing`.

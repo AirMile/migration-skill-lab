@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.21.0
+targetVersion: 0.22.0
 status: experimental
-date: 2026-09-15
+date: 2026-09-17
 ---
 
-# `flow-migrate` v0.21.0 acceptance criteria
+# `flow-migrate` v0.22.0 acceptance criteria
 
 ## Hard gates
 
@@ -150,3 +150,7 @@ The source is acceptable when:
 49. an icon or other markup reaches the template as markup or a component,
     never as a string through `[innerHTML]` or `bypassSecurityTrust*`, which
     `angular-conventions.mjs` reports as `inner-html`.
+50. `baseline-freshness.mjs` is run before any Angular is written, and a
+    `STALE` or `INVALID` result stops the run with the changed paths reported,
+    because building against a contract whose React sources have moved spends
+    the migration on a description of code that no longer exists.

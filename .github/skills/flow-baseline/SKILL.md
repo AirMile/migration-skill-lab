@@ -225,20 +225,32 @@ about this workflow.
    changes between builds, and give each surface a selector that matches
    exactly one element: `flow-verify` compares against this selector, so one
    that matches several elements, or that has to be rewritten later, makes the
-   two runs describe different things. When the surface, or anything it
-   renders, is gated on `hasCapability`, add `expectedRobot` with the robot
-   type the indicator shows, exactly as the host writes it. A capability gate
-   adds and removes whole sections, so a before measured under one robot and
-   an after measured under another describe two different forms; naming the
-   robot here makes `flow-verify` refuse that pair instead of reporting the
-   missing section as a regression. Leave `expectedRobot` out when the surface
-   does not sit on a route that shows the indicator, rather than guessing a
-   value. Then run
+   two runs describe different things. Then run
    `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label before --out <run-dir> [--port <n>]`
    with the manual verification environment running. The script exits non-zero
    when a surface could not be measured and names it: a selector that matches
    nothing, or that matches several elements, is a selector to fix now, not a
-   measurement. The sidecar and its
+   measurement. Then settle the robot, after the measurement rather than
+   before it, because the value comes from the run. Do not judge robot
+   dependence by reading: run
+   `node "<lab>\scripts\robot-context.mjs" --product-root <product> --path <p> [--path ...]`
+   over the files `style-sources.mjs` walked for this surface, not over the
+   slice's own files — the walk from `LineForm.tsx` reaches a robot-type branch
+   in `RiskItem.tsx`, which sits outside the slice and a narrower scan misses.
+   Two thirds of the robot-dependent files in this product branch on the robot
+   type without naming a capability, so a search for `hasCapability` alone is
+   not the check. When it reports `robotSensitive`, add `expectedRobot` to the
+   sidecar with the `view.activeRobot` string the measurement just recorded,
+   and say in one line which robots the note says differ. Never derive that
+   string from the source: one `ERobotType.Juno` shows as `Juno Basic` or
+   `Juno Flex` depending on settings, so the running host is the only
+   trustworthy source. A capability gate adds and removes whole sections, so a
+   before measured under one robot and an after measured under another
+   describe two different forms; naming the robot makes `flow-verify` refuse
+   that pair instead of reporting the missing section as a regression. Leave
+   `expectedRobot` out when the run reports no robot dependence, or when
+   `activeRobot` came back `null` because the surface does not sit on a route
+   that shows the indicator, rather than guessing a value. The sidecar and its
    `visual-measurement-before.json` are found by name in the run directory,
    not by a contract pointer, because the contract schema is closed.
    When no host answers, say so in one line and continue. The contract does not
