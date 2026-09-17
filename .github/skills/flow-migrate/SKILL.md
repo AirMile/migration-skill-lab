@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.21.0`.
+Skill version: `0.22.0`.
 
 Recommended model: Claude Sonnet 5.
 
@@ -127,21 +127,19 @@ as an established Lely standard.
     finding by the project-constants heading it names and run the check
     again; one that remains keeps the result from `completed`. Never merge, push or
     publish.
-11. **Write `migration-result.json`** in the run directory, copying the shape
-    from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\migration-result.json"`,
-    at schemaVersion 5, and validate it together with the contract; it never
-    validates alone. The example predates `characterization`: add one
-    `{ id, outcome, test, note }` entry per `characterizationRequired` id.
-    Record every committed, skipped or blocked checkpoint. When
-    `scope.partialMount.nested` is set, record the step 2 comparison as
-    `renderedSurfaceComparison` with `evidenceSource: real-parent-tree`, the
-    sibling sections compared against and concrete style and layout
-    observations. Record one `surfaces` entry per `visualParity` id as
-    `addressed` or `not-addressed` with the `styleSources` you ported and what
-    you did, never what you did not render and see, and never `matches`: the
-    visual verdict is `flow-verify`'s, and jsdom evidence is disqualified for a
-    nested mount. A `completed` result cannot skip a surface or leave one
-    `not-addressed`. Use `completed`, `failed` or `blocked` honestly.
+11. **Write `migration-result.json`.** Scaffold it with
+    `node "<lab>\scripts\new-result.mjs" --artifact migration-result --status <completed|failed|blocked> --skill-version <this skill's version> --run-dir <run-dir> --revision-before <sha> --revision-after <sha> <flow-contract.json>`,
+    which fills every field that follows from the contract and leaves a `TODO`
+    wherever this run has to say what it found. Replace each one, then run it
+    again with `--check <migration-result.json>`: a placeholder left behind is a
+    claim nobody made. Validate it together with the contract; it never
+    validates alone.
+    What is left is judgement, and the scaffold states the outcome it assumed:
+    a `characterization` outcome is `disproved` where the test disproved it, and
+    a disproved hypothesis is a finding, not a failure. A `surfaces` verdict
+    records what you rendered and saw, never `matches`: the visual verdict is
+    `flow-verify`'s, and jsdom evidence is disqualified for a nested mount. Use
+    `completed`, `failed` or `blocked` honestly.
 12. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json>`,
     then offer exactly three routes and perform only the chosen one:

@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 8,
+  "artifactType": "flow-contract",
+  "skill": "flow-baseline",
+  "skillVersion": "0.32.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1",
+  "flowId": "detail-drawer-astronaut-form",
+  "repository": {
+    "root": "C:\\Project\\frontend-slices\\detail-drawer-astronaut-form-baseline-1",
+    "revision": "03bb7e90a09b1e56b75801d03d7eb349828f0b59"
+  },
+  "planSlice": {
+    "map": {
+      "path": "runs\\2026-09-14-migration-map-2\\migration-map.json",
+      "sha256": "8c940e16ffaafd090cfcc19732869abcc2aff675d49357e8a23a60f2acbaae84",
+      "runId": "migration-map-2"
+    },
+    "flowId": "detail-drawer-astronaut-form",
+    "remainder": "AstronautForm (index.tsx) as the mounting host and FormWrapper drawer shell, AstronautSide's Configuration (Left/Right) radios, CanvasObjectAngleInput, the Distances/Coordinates sections (gated on properties.isPlaced), DoneButton and NavbarDeleteMapElement stay React in this slice; a later slice can migrate them once their shared prerequisites (canvas-object-angle-input, canvas-object-coordinates-details, map-object-distances, done-button, form-wrapper, navbar-delete-map-element, element-creation-manager, lely-red-rules for AstronautSide's LabelText import from chargerForm) are built."
+  },
+  "scope": {
+    "startState": "An astronaut is selected in the Floor Plan Creator, so AstronautForm renders AstronautModel's Model section with the astronaut's current model selected (AstronautModel.tsx:100-124, index.tsx:34).",
+    "endState": "The edited Model (and, where applicable, Type) is applied to the selected astronaut's canvas object, a Move history entry is recorded, and the map editor can still use the retained Configuration, Angle, Distances/Coordinates, Done and Delete controls to finish editing (AstronautModel.tsx:19-25,28-34, index.tsx:30-45).",
+    "allowedWritePaths": [
+      "src/features/floorPlanCreator/detailDrawer/astronautForm/AstronautModel.tsx",
+      "src/features/floorPlanCreator/detailDrawer/astronautForm/index.tsx",
+      "src/features/floorPlanCreator/detailDrawer/astronautForm/AngularAstronautModelHost.tsx",
+      "src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__",
+      "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form",
+      "src/angular/shared/components/details",
+      "src/angular/shared/components/radio-button",
+      "src/angular/shared/components/icons",
+      "src/angular/shared/components/flex.component.ts",
+      "src/angular/shared/components/text.component.ts",
+      "src/angular/shared/components/__tests__",
+      "src/angular/core/store/floor-plan-stores.store.ts",
+      "src/angular/core/store/__tests__/floor-plan-stores.store.spec.ts",
+      "src/angular/core/bridges/drawlib/floor-plan-maker/element-creation-manager"
+    ],
+    "partialMount": {
+      "nested": true,
+      "retainedParent": "AstronautForm",
+      "siblingSections": [
+        "Configuration (AstronautSide)",
+        "Angle",
+        "Distances and Coordinates",
+        "Done button",
+        "Delete control"
+      ]
+    }
+  },
+  "renderedSurfaceInventory": [
+    {
+      "id": "configuration-side",
+      "surface": "Configuration (Left/Right) RadioButtonGroup (AstronautSide)",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:30"
+    },
+    {
+      "id": "angle-field",
+      "surface": "Angle FocusNumberInput (CanvasObjectAngleInput)",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:32"
+    },
+    {
+      "id": "astronaut-model",
+      "surface": "Model (A5/A4/A3) and, where applicable, Type (I-Flow/J-flow/Jersey or Regular/Next) collapsible RadioButtonGroup sections (AstronautModel)",
+      "status": "migrate",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:98-129"
+    },
+    {
+      "id": "distances-and-coordinates",
+      "surface": "MapObjectDistances plus Coordinates Details, gated on properties.isPlaced",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:37-42"
+    },
+    {
+      "id": "done-button",
+      "surface": "DoneButton",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:43"
+    },
+    {
+      "id": "delete-control",
+      "surface": "NavbarDeleteMapElement",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:44"
+    },
+    {
+      "id": "form-wrapper-shell",
+      "surface": "FormWrapper drawer shell",
+      "status": "retain-react",
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:29"
+    }
+  ],
+  "targetArchitecture": {
+    "boundary": {
+      "angularOwns": [
+        "Model RadioButtonGroup (A5/A4/A3) bound to astronaut.properties.model (AstronautModel.tsx:98-124)",
+        "Type RadioButtonGroup, rendered only for an A5 or A3 model, bound to the same property (AstronautModel.tsx:37-96)",
+        "The Model and Type sections' own collapse/expand state (Details.isOpen), reset to expanded on every mount (AstronautModel.tsx:15-16)"
+      ],
+      "reactRetains": [
+        "index.tsx (AstronautForm) as the mounting host and FormWrapper drawer shell",
+        "AstronautSide's Configuration (Left/Right) radios",
+        "Angle field (CanvasObjectAngleInput)",
+        "Distances and Coordinates sections, gated on properties.isPlaced",
+        "DoneButton",
+        "NavbarDeleteMapElement"
+      ]
+    },
+    "adapter": {
+      "inputs": [
+        "model: Model | undefined (astronaut.properties.model, AstronautModel.tsx:14, Model enum in AstronautConfig.ts:26-33)",
+        "hasSelection: boolean (whether store.selectedObject exists at all, AstronautModel.tsx:38 and the optional-chained checks at AstronautModel.tsx:107,113,119)"
+      ],
+      "commands": [
+        "updateModel(model: Model)",
+        "updateModelType(model: Model)"
+      ],
+      "events": [
+        "modelChanged"
+      ],
+      "nonSuccessOutcome": "There is no invalid input to reject: every Model radio always supplies one of the enum's fixed values. Clicking the A5 or A3 group radio while a different subtype of that same group is already active always resets Type to the group's first option (A5IFlow or A3Regular) rather than keeping the previously selected subtype (AstronautModel.tsx:108,120); this is existing behavior to preserve, not an error case.",
+      "forbiddenAccess": [
+        "DOM queries outside the mounted host node",
+        "Stores.* global state beyond the selected astronaut's model, passed in as the adapter input",
+        "FloorPlanMaker.history and ElementCreationManager.astronautCreator APIs directly from outside the migrated component; history recording stays behind the same FloorPlanMaker history bridge this flow builds, and placement/Done handling stays in the retained index.tsx (see decisions)"
+      ]
+    },
+    "lifecycle": [
+      "The Angular application is created with createApplication() and mounted with createComponent() from a React effect on a ref in AngularAstronautModelHost.tsx, per docs\\project-constants.md#Embedding",
+      "The same React effect destroys the Angular application on unmount",
+      "The host effect re-supplies the model input and forces a resync whenever the selected astronaut's id changes, since CanvasObject identity is not itself an Angular input, matching the FormWrapper key remount at index.tsx:29 (which today resets AstronautModel's local isOpen state to expanded on every astronaut selection change)",
+      "Change detection is zoneless via provideExperimentalZonelessChangeDetection(), per docs\\project-constants.md#Change-detection"
+    ],
+    "styling": [
+      "Templates are inline in @Component, never a separate .html file, per docs\\project-constants.md#Compilation",
+      "The Model/Type Details header keeps the Summary caret-toggle layout and spacing (Details.tsx:55-63), and the CaretUp/CaretDown chevrons port as literal inline <svg> markup copied from @lely/icons (node_modules/@lely/icons/src/assets/caret-up.svg, caret-down.svg), never a bound [innerHTML], per docs\\project-constants.md#Styling",
+      "RadioButtonGroup's bordered row (RadioButtonGroup.tsx:6-33) and RadioButton's row/label/circle/dot styling (RadioButton.tsx:28-54, RadioButtonBase.tsx:37-119) port declaration by declaration using design tokens (@lely/tokens/enums), not literal values",
+      "No additional padding is added on top of the existing FormWrapper vertical rhythm (FormWrapper.tsx referenced by the retained index.tsx:29)"
+    ],
+    "dependencyChanges": {
+      "required": false,
+      "packages": [
+        "@angular/core@19.2.25",
+        "@angular/common@19.2.25",
+        "@angular/compiler@19.2.25",
+        "@angular/platform-browser@19.2.25"
+      ],
+      "paths": [
+        "package.json"
+      ],
+      "note": "These packages are already present in package.json at revision 03bb7e90a09b1e56b75801d03d7eb349828f0b59 (added by the first migrated slice); this flow needs no new dependency or config change."
+    }
+  },
+  "scenarios": [
+    {
+      "id": "select-a5-model",
+      "given": "An astronaut is selected with any model other than an A5 variant.",
+      "when": "The map editor selects the A5 radio in the Model section.",
+      "then": [
+        "astronaut.properties.model is set to A5IFlow, regardless of which A5 subtype (I-Flow/J-flow/Jersey) may have been active before.",
+        "A Move history entry is added for the astronaut (FloorPlanMaker.history.addCanvasObjectItem)."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:19-25",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:107-108"
+      ]
+    },
+    {
+      "id": "select-a3-model",
+      "given": "An astronaut is selected with any model other than an A3 variant.",
+      "when": "The map editor selects the A3 radio in the Model section.",
+      "then": [
+        "astronaut.properties.model is set to A3Regular, regardless of which A3 subtype (Regular/Next) may have been active before.",
+        "A Move history entry is added for the astronaut."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:19-25",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:119-120"
+      ]
+    },
+    {
+      "id": "select-a4-model-hides-type",
+      "given": "An astronaut is selected.",
+      "when": "The map editor selects the A4 radio in the Model section.",
+      "then": [
+        "astronaut.properties.model is set to A4 and a Move history entry is added.",
+        "No Type section renders: showTypeOptions falls through both the A5 and A3 branches and returns null."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:113-114",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:40,69,95"
+      ]
+    },
+    {
+      "id": "select-type-within-a5",
+      "given": "An astronaut is selected with an A5 model (I-Flow, J-flow or Jersey), so the Type section shows I-Flow/J-flow/Jersey radios.",
+      "when": "The map editor selects a different Type radio.",
+      "then": [
+        "astronaut.properties.model is set to the chosen A5 subtype (A5IFlow, A5JFlow or A5Jersey).",
+        "A Move history entry is added for the astronaut."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:40-68",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:28-34"
+      ]
+    },
+    {
+      "id": "select-type-within-a3",
+      "given": "An astronaut is selected with an A3 model (Regular or Next), so the Type section shows Regular/Next radios.",
+      "when": "The map editor selects a different Type radio.",
+      "then": [
+        "astronaut.properties.model is set to the chosen A3 subtype (A3Regular or A3Next).",
+        "A Move history entry is added for the astronaut."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:69-92",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:28-34"
+      ]
+    },
+    {
+      "id": "no-selection-shows-no-active-option",
+      "given": "No astronaut is currently selected (store.selectedObject is undefined).",
+      "when": "AstronautModel renders.",
+      "then": [
+        "No Model radio shows active (the optional-chained checks are all false).",
+        "The Type section renders nothing (showTypeOptions returns null on its own selectedObject guard)."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:107,113,119",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:38"
+      ]
+    },
+    {
+      "id": "sections-reset-open-on-reselect",
+      "given": "The Model or Type section has been collapsed for the currently selected astronaut.",
+      "when": "The map editor selects a different astronaut (or the same astronaut again after deselecting), remounting the form via its selectedObject-id key.",
+      "then": [
+        "Both the Model and Type sections render expanded again, since modelOpen/typeOpen are local state initialized to true on every mount."
+      ],
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:15-16",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:29"
+      ]
+    }
+  ],
+  "visualParity": [
+    {
+      "id": "astronaut-model",
+      "surface": "Model and Type collapsible sections in the astronautForm drawer",
+      "counterpart": "AstronautSide's retained Configuration RadioButtonGroup, the sibling immediately above Model in the same form, for the radio-button family's appearance; no other Details-wrapped section exists in this same form to compare the collapsible header chrome against, since Model/Type are this form's only Details usage (AstronautModel.tsx source is itself the authority for that chrome)",
+      "appearance": [
+        "Collapsible header (Details' Summary) with the label left-aligned and the CaretUp/CaretDown chevron right-aligned, flipping between the two on toggle (Details.tsx:39-52).",
+        "Bordered fieldset row per radio group with the theme's neutral hover/active background (RadioButtonGroup.tsx:6-33).",
+        "Each radio shows a 24x24 circle-and-dot control left of its label, using theme border/background colors for default, hover, focus-visible and disabled states (RadioButtonBase.tsx:37-119).",
+        "Label text uses the project's base font family/size/line-height and light/dark text color tokens (RadioButton.tsx:44-54)."
+      ],
+      "layout": [
+        "Section width matches the retained Configuration section directly above it and the parent FormWrapper's content width.",
+        "Column direction: radios stack vertically within each group, matching direction=\"column\" (AstronautModel.tsx:47,76,105).",
+        "The migrated sections add no additional padding on top of the existing FormWrapper vertical rhythm.",
+        "Tab order continues from the retained Configuration/Angle fields: Model radios use tabIndex 2-4, Type radios reuse tabIndex 5-7 within whichever branch renders (AstronautModel.tsx:110,116,122,52,58,64,81,87)."
+      ],
+      "reference": "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:98-129",
+      "styleSources": [
+        "src/components/details/Details.tsx:55-63",
+        "src/components/details/Details.tsx:39",
+        "src/components/radioButton/RadioButton.tsx:28-42",
+        "src/components/radioButton/RadioButton.tsx:48-54",
+        "src/components/radioButton/RadioButtonGroup.tsx:6-33",
+        "src/components/Flex.tsx:10-15",
+        "src/components/icons/Icon.tsx:81-127",
+        "src/components/radioButton/RadioButtonBase.tsx:37-43",
+        "src/components/radioButton/RadioButtonBase.tsx:46-58",
+        "src/components/radioButton/RadioButtonBase.tsx:84-93",
+        "src/components/radioButton/RadioButtonBase.tsx:112-119",
+        "src/components/Text.tsx:17-21",
+        "src/components/Text.tsx:41-47",
+        "src/components/BaseText.tsx:21-27",
+        "src/components/BaseDiv.tsx:43-54"
+      ],
+      "sharedComponents": [
+        "details",
+        "flex",
+        "icon",
+        "radio-button",
+        "radio-button-group",
+        "text"
+      ]
+    }
+  ],
+  "characterizationRequired": [
+    {
+      "id": "a5-a3-group-radio-resets-type",
+      "hypothesis": "Clicking the A5 (or A3) group radio always forces Type back to the group's first subtype (A5IFlow / A3Regular), even when a different subtype of that same group was already active; this must be reproduced exactly, since it looks like an easy 'fix' to instead keep the current subtype.",
+      "proveBefore": "select-a5-model, select-a3-model",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:108",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:120"
+      ]
+    },
+    {
+      "id": "sections-reset-open-on-remount",
+      "hypothesis": "The Model/Type Details sections must re-expand on every remount (new astronaut selection) rather than remembering a collapsed state across selections, since useState(true) is re-initialized on each mount of AstronautModel.",
+      "proveBefore": "sections-reset-open-on-reselect",
+      "evidence": [
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\AstronautModel.tsx:15-16",
+        "C:\\Project\\frontend\\src\\features\\floorPlanCreator\\detailDrawer\\astronautForm\\index.tsx:29"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "topic": "Slice boundary for the Detail Drawer AstronautForm flow",
+      "decision": "Angular owns only AstronautModel (the Model and, where applicable, Type sections); index.tsx (as the mounting host and FormWrapper shell), AstronautSide's Configuration radios, the Angle field, the Distances/Coordinates sections, DoneButton and NavbarDeleteMapElement stay in React.",
+      "rationale": "A whole-form swap was rejected: FormWrapper, DoneButton, CanvasObjectAngleInput, CanvasObjectCoordinatesDetails and MapObjectDistances are each shared by many other not-yet-migrated detail-drawer forms (matching the precedent set for detail-drawer-straight-strip-form), so pulling their Angular counterparts into this slice's write allowlist would violate one owner and no-shared-infrastructure and leave no retain-react sibling to compare against. AstronautSide was also excluded from the migrate scope, even though it is equally self-contained, because it imports LabelText from ../chargerForm/LabelText.tsx (chargerForm/LabelText.tsx:1-5) - a cross-folder React file the migration map's astronaut-form entry does not list as a prerequisite and that detail-drawer-charger-form and detail-drawer-dump-station-form also depend on (migration-map.json openQuestions). Migrating AstronautSide now would force a decision about LabelText's ownership that belongs to a slice that actually touches chargerForm; AstronautModel needs no such file. AstronautModel is also the largest cut that still satisfies boundedBranches on its own: its only conditional is showTypeOptions' three-way model-group switch, fully contained inside the file.",
+      "followUp": "A later slice may migrate AstronautSide once the LabelText ownership question is resolved (ideally by the chargerForm/dumpStationForm slice that already flags it), and/or the Angle field, Distances/Coordinates sections, DoneButton and NavbarDeleteMapElement once every detail-drawer form that shares them has moved."
+    },
+    {
+      "topic": "Map correction: Icon is an undeclared transitive prerequisite of Details",
+      "decision": "migration-map.json's requires list for detail-drawer-astronaut-form does not include \"icon\", but Details.tsx renders an Icon for its caret toggle (Details.tsx:44-46), confirmed by style-sources.mjs's sharedComponents output. This slice builds icon's Angular counterpart at its measured target (src/angular/shared/components/icons/icon.component.ts) alongside details, radio-button, radio-button-group, flex and text, all six also confirmed unbuilt (angular.status: \"none\") by the same trace.",
+      "rationale": "AstronautModel cannot render its actual pixels without Angular-native versions of every shared UI atom Details/RadioButton/RadioButtonGroup compose (Details itself renders Flex, Icon and Text). Per docs\\project-constants.md#Styling, the two caret icons port as literal inline <svg> markup copied from @lely/icons's raw source files (node_modules/@lely/icons/src/assets/caret-up.svg, caret-down.svg) rather than porting Icon.tsx's whole runtime icon registry.",
+      "followUp": "Every later slice that needs details, radio-button, radio-button-group, flex, text or icon reuses these six Angular counterparts at their measured targets rather than rebuilding them."
+    },
+    {
+      "topic": "floor-plan-stores and the FloorPlanMaker history call (via element-creation-manager) are also being built by detail-drawer-straight-strip-form",
+      "decision": "This flow builds Angular counterparts for floor-plan-stores (src/angular/core/store/floor-plan-stores.store.ts, its measured target) and the FloorPlanMaker.history.addCanvasObjectItem bridge inside element-creation-manager's measured target (src/angular/core/bridges/drawlib/floor-plan-maker/element-creation-manager), since migration-map.json lists element-creation-manager, not floor-plan-maker-facade, as this flow's prerequisite for that call. detail-drawer-straight-strip-form's in-flight baseline already claims the same two targets.",
+      "rationale": "Per docs\\project-constants.md#Branches-and-worktrees, two slices building the same unbuilt prerequisite in parallel worktrees is an accepted, already-documented risk (--ready's sharesUnbuiltWithActive) that only surfaces as a merge conflict for whichever slice lands second; it is not this baseline's job to resolve, only to flag it.",
+      "followUp": "Whichever of detail-drawer-straight-strip-form or detail-drawer-astronaut-form lands first establishes the canonical floor-plan-stores.store.ts and history bridge; the second to land resolves the merge conflict by reusing the already-landed files instead of re-adding its own copy."
+    }
+  ],
+  "testGaps": [
+    "astronautForm has no __tests__ folder today; neither AstronautModel.tsx's updateModel/updateModelType/showTypeOptions branching nor AstronautSide's/index.tsx's wiring has any automated test (confirmed by directory listing).",
+    "The existing undoRedo/__test__/index.test.ts and MapMakerManager.test.ts tests exercise Move-history recording and object selection generically across canvas object types (including Astronaut) but never through AstronautModel's own updateModel/updateModelType handlers, so they do not cover this flow's specific branching or the A5/A3 subtype-reset behavior.",
+    "Per-flow coverage for this folder was not retrieved this run; CI computes it via npm run test:ci and uploads coverage/lcov.info to the Lely-Route-Assistant-Frontend SonarQube project."
+  ],
+  "openQuestions": [],
+  "userStory": {
+    "title": "Migrate the Astronaut detail drawer's Model selection to Angular",
+    "userValue": "As a map editor, I want to change a placed astronaut's model and type so that the map matches the physical robot installed in the barn.",
+    "currentBehavior": "React's AstronautModel renders the Model (A5/A4/A3) section and, for an A5 or A3 model, a matching Type section, alongside the retained Configuration, Angle, Distances/Coordinates, Done and Delete controls.",
+    "desiredBehavior": "Angular renders the Model and Type sections inside the retained React drawer with the same selection, history-recording and subtype-reset behavior, matching the retained Configuration section's radio-button appearance."
+  },
+  "checkpointPolicy": {
+    "mode": "disabled",
+    "pushPolicy": "never"
+  },
+  "validationPlan": {
+    "testCommands": [
+      "npm run test -- run src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx",
+      "npm run test -- run src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts"
+    ],
+    "installCommand": "npm install",
+    "typecheckCommand": "npx tsc --noEmit",
+    "buildCommand": "npm run build",
+    "browserValidation": {
+      "required": false,
+      "scenarios": []
+    },
+    "manualValidation": {
+      "required": true,
+      "environment": "Route Assistant desktop application running the local frontend and local backend, title bar showing 'localhost' and 'react mode: development' badges, per docs\\project-constants.md#Manual-verification-environment.",
+      "userPath": "Open the Floor Plan Creator and place (or select) an Astronaut object on the map; its detail drawer opens automatically (detailDrawer/index.tsx:200-203).",
+      "scenario": "Select an existing astronaut (or place a new one) and change its Model between A5, A4 and A3: confirm the map astronaut's image updates for each model; for A5 and A3, expand the Type section and switch subtypes, confirming the correct subtype image and radio state; confirm switching from one group to another always lands on that group's first subtype; confirm collapsing then reselecting a different astronaut re-expands both sections; confirm the retained Configuration, Angle, Distances/Coordinates, Done button and Delete key beside it still behave and look the same; confirm undo/redo still restores each model/type change."
+    }
+  },
+  "rollback": "Revert only the files listed in scope.allowedWritePaths (astronautForm/AstronautModel.tsx, index.tsx, AngularAstronautModelHost.tsx, any additions under astronautForm/__tests__, the new astronaut-form Angular folder, the new shared/components details/radio-button/icons/flex/text files, and the new core/store and core/bridges/drawlib/floor-plan-maker/element-creation-manager files) to their state at revision 03bb7e90a09b1e56b75801d03d7eb349828f0b59. Do not revert any other detail-drawer form, AstronautSide.tsx, chargerForm/LabelText.tsx, CanvasObjectAngleInput.tsx, or NavbarDeleteMapElement.tsx, since this slice never touches them. No package.json changes are made, so no npm install is needed after reverting."
+}

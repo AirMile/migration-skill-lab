@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "debug-result",
+  "skill": "flow-debug",
+  "skillVersion": "0.10.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1-debug-result-1",
+  "flowId": "detail-drawer-astronaut-form",
+  "status": "repaired",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
+    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
+    "sha256": "e8f2868faaef546121fdf8cad407016a46e02e40bb6a9a3e932454ce05230192"
+  },
+  "verificationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\verification-result.json",
+    "sha256": "5af56d2f1a999e014ba7ac9df557eb8ffe979cfc03265233762d4d146b37d893"
+  },
+  "debugHandoff": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\debug-handoff.json",
+    "sha256": "dd0b680b83b8c7c4997f61d6388bb3074c7db58f18721c4b8f695fb886ce7411"
+  },
+  "repository": {
+    "root": "C:\\Project\\frontend-slices\\detail-drawer-astronaut-form-baseline-1",
+    "revisionBefore": "03bb7e90a09b1e56b75801d03d7eb349828f0b59",
+    "revisionAfter": "03bb7e90a09b1e56b75801d03d7eb349828f0b59"
+  },
+  "selectedStartTier": "immediate",
+  "selectionReason": "debug-handoff.json's 'radio-row-missing-left-padding' failure already diagnosed a confirmed, local root cause with a targeted reproduction: radio-button-group.component.ts's `.rbg > app-radio-button { padding-inline: var(--rbg-padding-x); }` is scoped to the group component's own ViewEncapsulation.Emulated attribute, but the `<app-radio-button>` elements it targets are projected content declared in astronaut-model.component.ts's template and carry that component's `_ngcontent` scope instead, so the descendant selector can never match. No competing hypothesis and no cross-boundary uncertainty, so 'immediate' was used and never a higher tier.",
+  "attempts": [
+    {
+      "tier": "immediate",
+      "status": "repaired",
+      "hypothesis": "Confirmed: the `.rbg > app-radio-button` padding rule in radio-button-group.component.ts's own Emulated-encapsulation style scope can never match `<app-radio-button>` elements that astronaut-model.component.ts projects into `<ng-content />`, since those elements carry astronaut-model's `_ngcontent` scope attribute, not radio-button-group's. The same applies to the group's `:hover`/`:active` background rules on the same selector, which were already dead for the same reason but were not part of the named failure and were left untouched.",
+      "reproductionEvidence": [
+        "Static/structural: confirmed by reading the compiled selector's scope requirement against Angular's documented Emulated view-encapsulation behavior for `<ng-content>`-projected elements — a projected element keeps the `_ngcontent` attribute of the component whose template declared it, never the projecting component's, so a parent-scoped descendant selector can only ever match content declared in the parent's own template.",
+        "Real-host manual reproduction (Route Assistant desktop app placing a Collector-map Astronaut and comparing Model/Type against Configuration) named in debug-handoff.json could not be run in this headless environment: no Route Assistant desktop build, robot/backend simulation or browser-automation tooling is available here. This is recorded as a limitation below for /flow-verify to re-check in the real host, which is that phase's own authoritative evidence source per flow-contract.json's manualValidation."
+      ],
+      "changedPaths": [
+        "src/angular/shared/components/radio-button/radio-button-group.component.ts",
+        "src/angular/shared/components/radio-button/radio-button.component.ts"
+      ],
+      "validation": [
+        {
+          "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts",
+          "status": "passed",
+          "summary": "2 test files, 14 tests passed."
+        },
+        {
+          "command": "npx tsc --noEmit",
+          "status": "passed",
+          "summary": "No type errors."
+        },
+        {
+          "command": "npm run build",
+          "status": "passed",
+          "summary": "tsc --noEmit && vite build succeeded (only a pre-existing 'chunks larger than 500 kB' informational warning, unrelated to this change)."
+        }
+      ],
+      "summary": "Moved the row's left/right inline padding off radio-button-group.component.ts's dead `.rbg > app-radio-button` descendant selector and onto radio-button.component.ts's own `.rb-row`, sourced from a new `--rb-padding-x` host-bound token owned by RadioButtonComponent itself (same LelySpacing.LG value RadioButtonGroup.tsx used on its `> label` rule), so the padding now applies within the component that actually declares `.rb-row`'s scope instead of relying on a projected-content selector match that Angular's Emulated encapsulation can never satisfy. The group's now-defunct `--rbg-padding-x` token and `paddingX` field were removed; the equally-defunct (but not-in-scope) `:hover`/`:active` background rules on the same broken selector were left untouched."
+    }
+  ],
+  "nextAction": "reverify",
+  "limitations": [
+    "No checkpoint commit was made: flow-contract.json's checkpointPolicy.mode is 'disabled', so per the skill's instructions no commit is created for this repair.",
+    "The manual real-host reproduction named in debug-handoff.json (Route Assistant desktop app, Collector-map Astronaut placement, comparing Model/Type against the Configuration sibling) could not be executed in this environment; the repair is based on structural analysis of Angular's Emulated view-encapsulation rules for projected content plus the declared automated test/typecheck/build validations, all of which pass. A fresh /flow-verify must confirm the actual rendered left inset in the real host before this can be treated as PASS.",
+    "radio-button-group.component.ts's `.rbg:not(:disabled) > app-radio-button:hover`/`:active` background rules rely on the exact same broken parent-scoped selector as the repaired padding rule and are equally unreachable, but they were not part of the named 'radio-row-missing-left-padding' failure and were left unchanged to keep this repair minimal; a future flow-baseline or flow-debug run should address them if they surface as a visual-parity failure."
+  ]
+}

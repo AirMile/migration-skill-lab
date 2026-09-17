@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "artifactType": "debug-handoff",
+  "skill": "flow-verify",
+  "skillVersion": "0.21.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1-debug-handoff-1",
+  "flowId": "detail-drawer-astronaut-form",
+  "status": "repairable",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
+    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
+    "sha256": "e8f2868faaef546121fdf8cad407016a46e02e40bb6a9a3e932454ce05230192"
+  },
+  "verificationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\verification-result.json",
+    "sha256": "5af56d2f1a999e014ba7ac9df557eb8ffe979cfc03265233762d4d146b37d893"
+  },
+  "failures": [
+    {
+      "id": "radio-row-missing-left-padding",
+      "source": "visual-parity",
+      "visualParityId": "astronaut-model",
+      "expected": "The Model and Type radio groups' bordered rows show the same left/right inline padding around each 24x24 circle-and-dot control as the retained React Configuration group directly above them, per flow-contract.json's visualParity 'astronaut-model' (RadioButtonGroup.tsx:6-33 ported token-by-token, no additional padding beyond FormWrapper's own rhythm).",
+      "actual": "In the running Route Assistant desktop application (Collector robot, real placed Astronaut object), the Model and Type radio circles sit flush against the left edge of their bordered row, with no left inset, unlike Configuration's Left/Right radios shown directly above them.",
+      "evidence": [
+        "Manual (real-host-layout): two screenshots compared side by side - the current Angular Model/Type sections showing the radios flush left, versus the Configuration section (and an equivalent prior-generation render) showing the expected left inset before the circles.",
+        "radio-button-group.component.ts declares `.rbg > app-radio-button { padding-inline: var(--rbg-padding-x); }`, a parent-scoped selector targeting the group's own direct children.",
+        "astronaut-model.component.ts's template declares every `<app-radio-button>` element itself and passes it as projected content into `<app-radio-button-group>` (see its class doc comment on imperative @ViewChild()-based composition), so under Angular's default ViewEncapsulation.Emulated those elements carry astronaut-model's own `_ngcontent` scope attribute, not radio-button-group's, and the compiled `.rbg[_ngcontent-X] > app-radio-button[_ngcontent-X]` selector can never match them."
+      ],
+      "reproduction": [
+        "Start the Route Assistant desktop application against this slice's worktree (copy the untracked .env from C:\\Project\\frontend first if missing, then npm run dev in the worktree; title bar must show 'localhost' and 'react mode: development').",
+        "Create a new route package with robot type 'Collector' (Astronaut objects require ERobotCapability.CollectorMapMaking, not present on Juno/Brownie maps).",
+        "Place or select an Astronaut object so its detail drawer opens.",
+        "Compare the left inset of the Model/Type radio circles against the Configuration (Left/Right) radio circles directly above them: Model/Type's circles sit against the row's left edge while Configuration's do not."
+      ],
+      "suspectedBoundary": "src/angular/shared/components/radio-button/radio-button-group.component.ts's `.rbg > app-radio-button` CSS rule, which relies on Angular emulated view encapsulation matching a projected child - a scope that content projected from a different component's template never carries.",
+      "candidatePaths": [
+        "src/angular/shared/components/radio-button/radio-button-group.component.ts",
+        "src/angular/shared/components/radio-button/radio-button.component.ts"
+      ],
+      "recommendedStartTier": "immediate",
+      "recommendationReason": "The failure is deterministic, fully local to two already-identified files within this flow's own allowlist, and the root cause (a projected-content CSS scope mismatch under emulated encapsulation) is already diagnosed; the fix is to source the inline padding from within RadioButtonComponent's own template/styles (for example as a `--rb-padding-x` host-bound token consumed by `.rb-row`, matching how `radio-button-group.component.ts` already passes `--rbg-gap`/`--rbg-border-color` etc. as CSS custom properties) rather than a parent-scoped descendant selector, then re-verify against the Configuration sibling in the real host."
+    }
+  ],
+  "summary": "Start a fresh /flow-debug chat for the local, repairable 'radio-row-missing-left-padding' failure: RadioButtonGroupComponent's `.rbg > app-radio-button` padding rule never matches content projected from a consuming component's own template under Angular's emulated view encapsulation, so every Model/Type radio in this flow (and any future flow nesting app-radio-button-group the same way) renders without its intended left/right inset. The fix is scoped to the two shared radio-button component files already in this flow's allowlist; no contract change is needed."
+}

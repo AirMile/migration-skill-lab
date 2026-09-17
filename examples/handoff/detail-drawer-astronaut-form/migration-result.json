@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 5,
+  "artifactType": "migration-result",
+  "skill": "flow-migrate",
+  "skillVersion": "0.21.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1",
+  "flowId": "detail-drawer-astronaut-form",
+  "status": "completed",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
+    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+  },
+  "repository": {
+    "root": "C:\\Project\\frontend-slices\\detail-drawer-astronaut-form-baseline-1",
+    "revisionBefore": "03bb7e90a09b1e56b75801d03d7eb349828f0b59",
+    "revisionAfter": "03bb7e90a09b1e56b75801d03d7eb349828f0b59"
+  },
+  "changedPaths": [
+    "src/features/floorPlanCreator/detailDrawer/astronautForm/AstronautModel.tsx",
+    "src/features/floorPlanCreator/detailDrawer/astronautForm/AngularAstronautModelHost.tsx",
+    "src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx",
+    "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/astronaut-model.component.ts",
+    "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/astronaut-model.types.ts",
+    "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/mount-astronaut-model.ts",
+    "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts",
+    "src/angular/shared/components/details/details.component.ts",
+    "src/angular/shared/components/flex.component.ts",
+    "src/angular/shared/components/text.component.ts",
+    "src/angular/shared/components/icons/icon.component.ts",
+    "src/angular/shared/components/radio-button/radio-button.component.ts",
+    "src/angular/shared/components/radio-button/radio-button-group.component.ts",
+    "src/angular/core/store/floor-plan-stores.store.ts",
+    "src/angular/core/store/__tests__/floor-plan-stores.store.spec.ts",
+    "src/angular/core/bridges/drawlib/floor-plan-maker/element-creation-manager/canvas-object-history.bridge.ts"
+  ],
+  "validation": [
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx",
+      "status": "passed",
+      "summary": "8 tests: mounts the Angular Model/Type sections alongside every retained React sibling (real AstronautForm/index.tsx parent tree, AstronautSide rendered for real, not stubbed); Distances/Coordinates gating on isPlaced; select-a5-model (with a checked-state refresh assertion); an undo/redo-style external model change on the same still-mounted astronaut; select-type-within-a5; select-a4-model-hides-type."
+    },
+    {
+      "command": "npm run test -- run src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts",
+      "status": "passed",
+      "summary": "8 tests covering AstronautModelComponent in isolation: no-selection state, A5/A3 group + subtype checked states, A4 hides Type, modelChanged emission for group and subtype clicks, sections-reset-open-on-remount, and independent Model/Type toggle."
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "status": "passed",
+      "summary": "No type errors across the product."
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "summary": "vite build succeeded (pre-existing >500kB vendor chunk size warning only, unrelated to this slice)."
+    }
+  ],
+  "coverageDelta": {
+    "status": "not-measured",
+    "summary": "Per testGaps, per-flow coverage is computed by CI (npm run test:ci, uploaded to the Lely-Route-Assistant-Frontend SonarQube project) and was not reproduced in this run."
+  },
+  "rollback": {
+    "status": "available",
+    "instructions": "Revert only the files listed in scope.allowedWritePaths (astronautForm/AstronautModel.tsx, index.tsx, AngularAstronautModelHost.tsx, any additions under astronautForm/__tests__, the new astronaut-form Angular folder, the new shared/components details/radio-button/icons/flex/text files, and the new core/store and core/bridges/drawlib/floor-plan-maker/element-creation-manager files) to their state at revision 03bb7e90a09b1e56b75801d03d7eb349828f0b59. No package.json changes were made, so no npm install is needed after reverting."
+  },
+  "limitations": [
+    "Every shared Angular component (details, radio-button, radio-button-group, flex, text, icon) exposes plain public signal fields (e.g. `isOpen`, `active`) and classic @ViewChild()-based composition from ngAfterViewChecked(), instead of this project's usual input()/output() signal helpers, for genuine component-to-component composition: empirically (confirmed against this exact component during this run, evidenced by NG0303 template-binding failures and a modelChanged/checked-state that silently never refreshed), a *nested* Angular component's signal-based input()/output() fields never receive their compiled metadata under this repository's actual pure-JIT compilation (no ngtsc/AOT build step is installed), so a parent template's [prop]/(event) binding to them never resolves, and a signal effect() reading a later-materializing @ViewChild is not reliable either. input()/output() remain correct for AstronautModelComponent's own adapter boundary (set via setAdapterInputs(), read via modelChanged.subscribe() from mount-astronaut-model.ts, matching line-fields.component.ts's precedent), since that is never bound to from another Angular template. This is a repository-level constraint every future slice that composes more than one Angular component will also hit, not something specific to this flow; the project-constants.md#Compilation `hostTokenStyle`/hostTokenStyle-based static-styles convention was likewise never observed anywhere in the existing lineForm/angular/ code and was implemented here as CSS custom properties bound through `host` instead of `${...}` template interpolation.",
+    "A manually created and `applicationRef.attachView()`-attached root component (this project's only mounting pattern, since there is no Analog/AOT build step) does not reliably re-run change detection on its own once a signal changes after the first check; mount-astronaut-model.ts's applyInputs() forces two synchronous componentRef.changeDetectorRef.detectChanges() passes on every setAdapterInputs() call (initial mount, host-driven updates, and its own modelChanged-triggered self-refresh) to make this deterministic rather than depend on the zoneless scheduler's own timing.",
+    "Only the light-mode design token variant is ported for every new shared component (no dark theme), matching this repository's only other Angular slice, line-fields.component.ts, which does not support dark mode either.",
+    "RadioButtonGroupComponent's hover/active background suppression while `disabled` was simplified to omit the `:not([aria-disabled=\"true\"])` exclusion RadioButtonGroup.tsx has, since this flow's seven radios never pass `disabled`.",
+    "Per-flow coverage was not retrieved this run (testGaps); CI computes it via npm run test:ci.",
+    "floor-plan-stores.store.ts and the element-creation-manager history bridge are also being built in parallel by detail-drawer-straight-strip-form in its own worktree (flow-contract.json decisions); whichever of the two lands second resolves the merge conflict by reusing the already-landed files."
+  ],
+  "characterization": [
+    {
+      "id": "a5-a3-group-radio-resets-type",
+      "outcome": "confirmed",
+      "test": "src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AstronautModel.characterization.test.tsx (run against the pre-migration React AstronautModel.tsx before it was replaced by the Angular-hosting wrapper, then removed once the replacement landed; the same reset-to-first-subtype behavior is re-asserted post-migration in astronaut-model.component.spec.ts's A5/A3 subtype tests and AngularAstronautModelHost.test.tsx's select-a5-model test)",
+      "note": "Clicking the A5 (or A3) group radio unconditionally sets the model to A5IFlow (or A3Regular), confirmed by switching away to A4 first (so the click actually fires a change event) and back, even though a different A5/A3 subtype was active before switching away."
+    },
+    {
+      "id": "sections-reset-open-on-remount",
+      "outcome": "confirmed",
+      "test": "src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AstronautModel.characterization.test.tsx (run against the pre-migration React AstronautModel.tsx, then removed; re-asserted post-migration in astronaut-model.component.spec.ts's sections-reset-open-on-remount test, which mounts a fresh AstronautModelComponent instance and checks both Details start expanded)",
+      "note": "Collapsing the Model/Type sections and then remounting (a fresh component instance, matching the host's astronautId-keyed remount) always re-expands both sections, since AstronautModelComponent's modelOpen/typeOpen signals are freshly initialized to true on every construction, matching AstronautModel.tsx's useState(true)."
+    }
+  ],
+  "renderedSurfaceComparison": {
+    "evidenceSource": "real-parent-tree",
+    "comparedAgainst": [
+      "Configuration (AstronautSide)",
+      "Angle",
+      "Done button",
+      "Delete control"
+    ],
+    "observations": [
+      "AngularAstronautModelHost.test.tsx renders the real AstronautForm (index.tsx) parent tree with AstronautSide's Configuration Left/Right radios rendered for real (not stubbed), confirming the migrated Model/Type sections sit directly below Configuration without displacing it, matching index.tsx:29-45's existing order.",
+      "The retained Angle/Done/Delete siblings (stubbed for isolation) and the isPlaced-gated Distances/Coordinates stubs all continue to render alongside the Angular host in every scenario, confirming the migrated slice never returns early from or hides the parent form.",
+      "The Angular radios reuse the same tabIndex sequence as the pre-migration React radios (2-4 for Model, 5-7/5-6 for Type), continuing tab order from the retained Configuration/Angle fields per visualParity.layout."
+    ],
+    "surfaces": [
+      {
+        "visualParityId": "astronaut-model",
+        "verdict": "addressed",
+        "observations": [
+          "Details' Summary header ported declaration by declaration from Details.tsx:55-63/39 (cursor:pointer, list-style:none, user-select:none, margin-bottom:8px, margin-top:16px) plus the caret-up/caret-down chevron swap on toggle, using literal inline <svg> markup copied from @lely/icons/src/assets/caret-up.svg and caret-down.svg (fill hardcoded to currentColor), never a bound [innerHTML], per Icon.tsx:81-127 and the flow contract's decision that Icon is an undeclared transitive prerequisite of Details.",
+          "RadioButtonGroup's bordered fieldset row (border, 4px radius, white background, neutral._99/._90 hover/active backgrounds) and RadioButton/RadioButtonBase's 24x24 circle-and-dot control (border width/radius, background, hover/focus-visible/disabled border colors, checked dot) are ported token-by-token from RadioButtonGroup.tsx:6-33 and RadioButtonBase.tsx:37-119 via @lely/tokens/enums, applied as CSS custom properties through a host binding rather than interpolated into the static styles string, per project-constants.md#Compilation.",
+          "Label text uses LelyFontFamily.UBUNTU/LelyFontWeight.REGULAR/LelyFontSize.BASE/LelyLineHeight.XL/LelyTextColorLight.DEFAULT, matching RadioButton.tsx:44-54's token set (light-mode only, see limitations).",
+          "Column direction (radios stack vertically per group) and no additional padding beyond the existing FormWrapper vertical rhythm were both preserved: RadioButtonGroupComponent defaults to direction 'column' and DetailsComponent adds only the 8px/16px margins Details.tsx itself declares.",
+          "Not independently re-verified against the manual Route Assistant desktop environment in this run: per-pixel appearance in the real WebView, and Section width matching the retained Configuration section's content width, are flow-verify's manual validation to confirm."
+        ]
+      }
+    ]
+  },
+  "checkpoints": []
+}

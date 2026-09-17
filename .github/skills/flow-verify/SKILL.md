@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.22.0`.
+Skill version: `0.23.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -127,19 +127,32 @@ outcome, a diagnosis and the next action.
    too, `node "<lab>\scripts\visual-measure.mjs" --compare <run-dir>\visual-measurement-before.json <run-dir>\visual-measurement-after.json`.
    Its `evidence` strings are already written for this field: paste the ones
    for a surface into that surface's `evidence` verbatim rather than
-   summarizing them, because a number a reader can check is the point. Weigh
-   `introducedByMigration` and `preExistingDeviation` differently: only the
-   first is this slice's doing, and failing a surface for a deviation React
-   already had sends `flow-debug` after a defect this migration did not
-   create. A `counterpartBaseline` of `unknown` means the split could not be
-   made, so say in `diagnosis` that the cause is unproven rather than
-   assuming either way. Read the `screenshot` block too: matching numbers with
-   differing pixels is a real finding — a wrong icon or glyph moves no
-   computed property — so open both PNGs before calling such a surface a
-   `PASS`. A surface that came back `found: false` while the host answered is
-   a selector that no longer matches the migrated DOM: fix the selector and
-   measure again, and if it cannot be made to match, that surface is
-   `BLOCKED`, never a `PASS`. Read
+   summarizing them, because a number a reader can check is the point. The
+   script exits non-zero when a surface could not be measured or compared, so
+   treat a non-zero exit as a result to act on, not as noise; `--allow-missing`
+   is for ad-hoc diagnosis and has no place in this step. Weigh the four
+   deviation classes differently: `introducedByMigration` is this slice's
+   doing, `changedExistingDeviation` is a deviation React already had that
+   this slice then altered — also this slice's doing — while
+   `preExistingDeviation` is unchanged inherited debt, and failing a surface
+   for it sends `flow-debug` after a defect this migration did not create.
+   `unmeasuredBefore` means the before run never measured that property, so
+   nothing can be concluded about cause. When `beforeCounterpartStatus` is not
+   `measured` the classification could not be made at all, so say in
+   `diagnosis` that the cause is unproven rather than assuming either way.
+   A surface whose `status` is `counterpart-not-found` lost the sibling it is
+   compared against between the runs: no parity comparison exists for it, so
+   it is `BLOCKED`, never a `PASS`. Read the `screenshot` block too: matching
+   numbers with differing pixels is a real finding — a wrong icon or glyph
+   moves no computed property — so open both PNGs before calling such a
+   surface a `PASS`. A surface that came back `found: false` while the host
+   answered is a selector that no longer matches the migrated DOM, and a
+   `matches` above one is a selector that matches several elements and so
+   cannot identify anything. Neither is repaired by quietly editing the
+   selector: the before run measured the old one, and a comparison across two
+   different selectors is reported as `selector-changed` and is worthless.
+   Re-measure only when the baseline's selector is provably the same element;
+   otherwise that surface is `BLOCKED`. Read
    `fingerprint.status` first: on `drifted` the two runs saw different window
    sizes, so treat every before/after difference as indicative and say so in
    `diagnosis` instead of failing the surface on it; differences against the
@@ -173,14 +186,14 @@ outcome, a diagnosis and the next action.
    checkpoints or `pushPolicy` is `confirm-after-pass`, read
    `references/push.md`. Otherwise record `push` as `not-requested` with the
    reason.
-8. **Write `verification-result.json`**, named for the attempt, in the run
-   directory, copying the shape from `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\verification-result.json"`.
-   It references the exact hashes of the consumed contract and migration
-   result. `push` always carries `remote`, `branch`, `commitShas` and
-   `upstreamSet`, even with nothing to push, and `browserValidation.status`
-   has `not-run`, not `not-applicable`. Write no prose report: the JSON is
-   canonical. In the chat, show one line per scenario and per visual criterion
-   and the overall status.
+8. **Write `verification-result.json`.** Scaffold it with
+   `node "<lab>\scripts\new-result.mjs" --artifact verification-result --status <PASS|FAIL|BLOCKED> --skill-version <this skill's version> --run-dir <run-dir> <flow-contract.json> <migration-result.json> [<debug-result.json>]`.
+   It names the file for the attempt, hashes the artifacts it consumed and
+   writes one criterion per scenario and per `visualParity` surface. Replace
+   every `TODO` with this run's evidence and diagnosis, then confirm none is
+   left with `--check`. Write no prose report: the JSON is canonical. In the
+   chat, show one line per scenario and per visual criterion and the overall
+   status.
 9. Validate the complete chain, debug artifacts included, with
    `validate-handoff.mjs`. Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`

@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 4,
+  "artifactType": "verification-result",
+  "skill": "flow-verify",
+  "skillVersion": "0.21.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1-verification-1",
+  "flowId": "detail-drawer-astronaut-form",
+  "verificationAttempt": 1,
+  "status": "FAIL",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
+    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
+    "sha256": "e8f2868faaef546121fdf8cad407016a46e02e40bb6a9a3e932454ce05230192"
+  },
+  "criteria": [
+    {
+      "scenarioId": "select-a5-model",
+      "status": "PASS",
+      "evidence": [
+        "Automated: AngularAstronautModelHost.test.tsx's '[select-a5-model]' test (re-run this attempt: 6 tests passed) asserts model becomes A5IFlow, addCanvasObjectItem is called with 'Move', and the A5 radio's own checked state refreshes.",
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): clicked A5 from an A3 Next selection; A5 became checked, Type showed I-Flow checked, and the astronaut image on the map updated to the A5 I-Flow variant."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    },
+    {
+      "scenarioId": "select-a3-model",
+      "status": "PASS",
+      "evidence": [
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): starting from A5 Jersey, clicked A3; A3 became checked, the Type section switched to Regular/Next with Regular checked (not the prior A5 subtype), and the astronaut image updated to the A3 Regular variant.",
+        "No automated test exercises this scenario directly (see diagnosis note); the manual walkthrough is this scenario's only direct evidence."
+      ],
+      "diagnosis": "Matches the contract's stated outcome. Neither AngularAstronautModelHost.test.tsx nor astronaut-model.component.spec.ts contains a test that clicks the A3 group radio and asserts the resulting model/history, unlike its A5 counterpart ('[select-a5-model]'); this is a real automated-coverage gap, not a product defect, since the manual run confirms the behavior directly."
+    },
+    {
+      "scenarioId": "select-a4-model-hides-type",
+      "status": "PASS",
+      "evidence": [
+        "Automated: AngularAstronautModelHost.test.tsx's '[select-a4-model-hides-type]' and astronaut-model.component.spec.ts's '[select-a4-model-hides-type]' both assert no Type radios render for A4.",
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): clicked A4; A4 became checked, the Type section disappeared entirely, and the astronaut image updated to the A4 variant."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    },
+    {
+      "scenarioId": "select-type-within-a5",
+      "status": "PASS",
+      "evidence": [
+        "Automated: AngularAstronautModelHost.test.tsx's '[select-type-within-a5]' test asserts the model becomes A5Jersey after clicking the Jersey radio.",
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): with A5 I-Flow selected, clicked Jersey; Jersey became checked and the astronaut image updated to the Jersey variant."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    },
+    {
+      "scenarioId": "select-type-within-a3",
+      "status": "PASS",
+      "evidence": [
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): with A3 Regular selected, clicked Next; Next became checked and the astronaut image updated to the A3 Next variant.",
+        "No automated test exercises this scenario directly (see diagnosis note); the manual walkthrough is this scenario's only direct evidence."
+      ],
+      "diagnosis": "Matches the contract's stated outcome. astronaut-model.component.spec.ts's A3 test only asserts checked state from a preset input, it never dispatches a click on the Regular/Next radios and asserts the emitted model, unlike '[select-type-within-a5]'; this is a real automated-coverage gap, not a product defect, since the manual run confirms the behavior directly."
+    },
+    {
+      "scenarioId": "no-selection-shows-no-active-option",
+      "status": "PASS",
+      "evidence": [
+        "Automated: astronaut-model.component.spec.ts's 'shows no active Model radio and no Type section when there is no selection' test asserts every Model radio is unchecked and no Type radios render when hasSelection is false."
+      ],
+      "diagnosis": "Matches the contract's stated outcome. Not independently reproduced manually: this state is only reachable in the running product as a transient moment during deselection (the retained index.tsx/FormWrapper unmounts the whole drawer once nothing is selected), so the automated unit test is the only stable way to observe it; this is not a validation gap for this flow."
+    },
+    {
+      "scenarioId": "sections-reset-open-on-reselect",
+      "status": "PASS",
+      "evidence": [
+        "Automated: astronaut-model.component.spec.ts's '[sections-reset-open-on-remount]' test asserts both details elements start with the `open` attribute on a fresh mount.",
+        "Manual (Route Assistant desktop, Collector robot, real astronaut object): collapsed the Model section, then selected a different astronaut; both Model and Type re-rendered expanded."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    }
+  ],
+  "visualCriteria": [
+    {
+      "visualParityId": "astronaut-model",
+      "status": "FAIL",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (Route Assistant desktop, Collector robot, real parent form tree): the Model and Type radio groups' 24x24 circle-and-dot controls sit flush against the left edge of their bordered row, with no left inset, while the retained React Configuration group directly above them (Left/Right) shows the token-specified left padding before its own circles. Two screenshots were provided: one of the current Angular Model/Type sections showing the missing left padding, and one of the Configuration section (and a prior-generation render) showing the padding present.",
+        "Source inspection confirms the mechanism: radio-button-group.component.ts's stylesheet declares `.rbg > app-radio-button { padding-inline: var(--rbg-padding-x); }`, but every `<app-radio-button>` element is written inside astronaut-model.component.ts's own template (as content projected into `<app-radio-button-group>`), so under Angular's default ViewEncapsulation.Emulated it carries astronaut-model's `_ngcontent` attribute, not radio-button-group's. The compiled selector requires both the ancestor and the descendant to carry radio-button-group's own scope attribute, so it never matches the projected `<app-radio-button>` elements and the padding rule silently never applies."
+      ],
+      "diagnosis": "FAIL: a genuine, reproducible visual regression, not a documented styling limitation. RadioButtonGroupComponent's left/right inset for its radio rows depends on a parent-scoped CSS rule targeting projected content, which Angular's emulated view encapsulation never lets match; every current and future consumer of app-radio-button-group nested inside another component's template (as this flow's Model/Type sections are) will render its radios without the intended inline padding. The fix belongs inside RadioButtonComponent's own template/styles (for example moving the padding onto `.rb-row` itself, sourced from a value the group passes down some other way) rather than the group's projected-child selector."
+    }
+  ],
+  "validation": [
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx",
+      "status": "passed",
+      "summary": "Re-run this attempt in the slice worktree: 1 test file, 6 tests passed. migration-result.json's validation entry for this same command claims '8 tests'; the file itself (and this re-run) contains only 6 `it(...)` cases. This is a reporting inaccuracy in the migration result, not a functional failure - all 6 actual tests pass and cover their named scenarios."
+    },
+    {
+      "command": "npm run test -- run src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts",
+      "status": "passed",
+      "summary": "Re-run this attempt in the slice worktree: 1 test file, 8 tests passed, matching migration-result.json's claimed count."
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "status": "passed",
+      "summary": "Re-run this attempt in the slice worktree: no type errors across the product."
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "summary": "Re-run this attempt in the slice worktree: vite build succeeded, same pre-existing >500kB vendor chunk size warning only, unrelated to this slice."
+    }
+  ],
+  "coverageDelta": {
+    "status": "not-measured",
+    "summary": "Per flow-contract.json's testGaps and migration-result.json's coverageDelta, per-flow coverage is computed by CI (npm run test:ci, uploaded to the Lely-Route-Assistant-Frontend SonarQube project) and was not reproduced in this run."
+  },
+  "manualValidation": {
+    "status": "failed",
+    "summary": "The declared userPath and scenario were performed directly in the running Route Assistant desktop application (title bar showing 'localhost' and 'react mode: development' badges, after copying the untracked .env into the slice worktree so Auth0 login worked there), by the same person acting as tester, using a real Collector-robot map and a real placed Astronaut object. All 7 contract scenarios (including select-a3-model and select-type-within-a3, which had no automated test) were confirmed behaving as specified, and undo restored a prior model change. However, the astronaut-model visualParity surface failed: the Model/Type radio rows render without their left inline padding, unlike the retained Configuration sibling directly above them (see visualCriteria)."
+  },
+  "browserValidation": {
+    "status": "not-run",
+    "summary": "validationPlan.browserValidation.required is false and declares no scenarios for this flow; not exercised.",
+    "evidenceSource": "not-run"
+  },
+  "diagnosis": [
+    "visualParity 'astronaut-model' FAILs: the Model/Type radio groups render without the left inline padding their token-based styling declares, because RadioButtonGroupComponent's `.rbg > app-radio-button` CSS rule targets content projected from a different component's template, which Angular's ViewEncapsulation.Emulated never lets that selector match. See visualCriteria for the full mechanism and evidence.",
+    "migration-result.json's validation entry for AngularAstronautModelHost.test.tsx claims '8 tests' but the file contains and runs only 6; this is a reporting inaccuracy to correct in the next migration-result, not a functional defect (all 6 pass and the claimed scenario coverage in the summary text is otherwise accurate).",
+    "flow-contract.json's scenarios 'select-a3-model' and 'select-type-within-a3' have no automated test in either AngularAstronautModelHost.test.tsx or astronaut-model.component.spec.ts, unlike their A5 counterparts; both were confirmed only through this run's manual walkthrough. This is a real gap for a future automated-coverage pass, not a blocker for this verification."
+  ],
+  "push": {
+    "policy": "never",
+    "status": "not-requested",
+    "remote": "origin",
+    "branch": "N/A",
+    "commitShas": [],
+    "upstreamSet": false,
+    "summary": "checkpointPolicy.mode is 'disabled' and checkpointPolicy.pushPolicy is 'never' in the Flow Contract; migration-result.checkpoints is empty, and overall status is FAIL, so no push was performed or requested."
+  }
+}

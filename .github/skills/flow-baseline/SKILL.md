@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.35.0`.
+Skill version: `0.36.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -202,9 +202,11 @@ about this workflow.
    `checkpointPolicy`, `validationPlan` and `rollback` as it specifies.
 7. **Write and validate** `flow-contract.json` at schemaVersion 8 in the run
    directory. Copy each block's shape from
-   `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-line-edit\flow-contract.json" [--block <name>]`,
-   a real chain that passed end to end at schemaVersion 6, then leave out its
-   `workItemContext` and add `userStory`. Run
+   `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\handoff\detail-drawer-astronaut-form\flow-contract.json" [--block <name>]`,
+   a real chain that passed end to end at this schemaVersion, and take what an
+   example cannot show — required fields, enum values, an array that may not be
+   empty — from `node "<lab>\scripts\print-shape.mjs" --schema flow-contract [--block <name>]`.
+   Run
    `node "<lab>\scripts\validate-handoff.mjs" <contract>`. The contract is
    final when written: it has no `status`, `approval` or
    `targetArchitecture.status`, no draft state and no approval gate. When the
@@ -220,11 +222,15 @@ about this workflow.
    while React still renders beside it, is what later lets `flow-verify` tell a
    deviation this migration introduced from one React already had. Prefer a
    `data-testid` over a generated class, which
-   changes between builds. Then run
+   changes between builds, and give each surface a selector that matches
+   exactly one element: `flow-verify` compares against this selector, so one
+   that matches several elements, or that has to be rewritten later, makes the
+   two runs describe different things. Then run
    `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label before --out <run-dir> [--port <n>]`
-   with the manual verification environment running, and check each surface
-   came back `found: true`: a selector that matches nothing is a selector to
-   fix now, not a measurement. The sidecar and its
+   with the manual verification environment running. The script exits non-zero
+   when a surface could not be measured and names it: a selector that matches
+   nothing, or that matches several elements, is a selector to fix now, not a
+   measurement. The sidecar and its
    `visual-measurement-before.json` are found by name in the run directory,
    not by a contract pointer, because the contract schema is closed.
    When no host answers, say so in one line and continue. The contract does not

@@ -2,13 +2,13 @@
 
 Read this only when the overall result is `FAIL` or `BLOCKED`.
 
-Write `debug-handoff.json` after `verification-result.json`, copying the shape
-from `print-shape.mjs` on `examples\debug\demo-line-drawer\debug-handoff.json`
-and letting the validator correct it. It points to the exact consumed
-artifacts by hash and carries, for the failed criterion, the scenario, command
-or manual observation; the expected behavior; the actual evidence; a
-reproduction; the suspected boundary; the allowlisted candidate paths; the
-smallest recommended next action; and a tier recommendation.
+Write `debug-handoff.json` after `verification-result.json`, scaffolded with
+`new-result.mjs --artifact debug-handoff --status <repairable|external-blocked>`
+and the three artifacts it consumes. It hashes them, names the file for the
+attempt and opens one failure per criterion the verification did not pass.
+Fill in, for each, the expected behavior; the actual evidence; a reproduction;
+the suspected boundary; the candidate paths, narrowed from the allowlist it
+starts with; and the tier recommendation with its reason.
 
 Classify it:
 

@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 4,
+  "artifactType": "verification-result",
+  "skill": "flow-verify",
+  "skillVersion": "0.21.0",
+  "runId": "detail-drawer-astronaut-form-baseline-1-verification-2",
+  "flowId": "detail-drawer-astronaut-form",
+  "verificationAttempt": 2,
+  "status": "PASS",
+  "flowContract": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
+    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+  },
+  "migrationResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
+    "sha256": "e8f2868faaef546121fdf8cad407016a46e02e40bb6a9a3e932454ce05230192"
+  },
+  "debugResult": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\debug-result.json",
+    "sha256": "49d52af08d0ed06d8af00aa2c0b04646ea5d99569c6753a6c762e822fbb263b5"
+  },
+  "criteria": [
+    {
+      "scenarioId": "select-a5-model",
+      "status": "PASS",
+      "evidence": [
+        "Automated (this attempt): AngularAstronautModelHost.test.tsx's select-a5-model test passed as part of the 14-test targeted re-run (npm run test -- run AngularAstronautModelHost.test.tsx astronaut-model.component.spec.ts), asserting model becomes A5IFlow, addCanvasObjectItem('Move') is called, and the A5 radio's checked state refreshes.",
+        "Carried forward from verification attempt 1 (unchanged since: the debug repair touched only radio-button.component.ts/radio-button-group.component.ts CSS, not AstronautModel/adapter logic): manual (Route Assistant desktop, real astronaut object) confirmed A5 selection updates model, Type and map image."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression from the CSS-only repair."
+    },
+    {
+      "scenarioId": "select-a3-model",
+      "status": "PASS",
+      "evidence": [
+        "Manual (this attempt, Route Assistant desktop, real astronaut object, real-host walkthrough of the repair): clicked A3 in the Model section; A3 became checked, Type switched to Regular/Next with Regular checked, and the map astronaut image updated to the A3 Regular variant.",
+        "Automated: no test exercises select-a3-model directly (same coverage gap noted in attempt 1); the manual run is this scenario's direct evidence."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; the CSS repair (moving padding-inline from radio-button-group's dead descendant selector to radio-button's own .rb-row) introduced no functional regression."
+    },
+    {
+      "scenarioId": "select-a4-model-hides-type",
+      "status": "PASS",
+      "evidence": [
+        "Automated (this attempt): AngularAstronautModelHost.test.tsx's and astronaut-model.component.spec.ts's select-a4-model-hides-type tests passed in the 14-test re-run, asserting no Type radios render for A4."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    },
+    {
+      "scenarioId": "select-type-within-a5",
+      "status": "PASS",
+      "evidence": [
+        "Automated (this attempt): AngularAstronautModelHost.test.tsx's select-type-within-a5 test passed in the 14-test re-run, asserting the model becomes A5Jersey after clicking the Jersey radio."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    },
+    {
+      "scenarioId": "select-type-within-a3",
+      "status": "PASS",
+      "evidence": [
+        "Carried forward from verification attempt 1 (unchanged since: no business-logic file was touched by the debug repair): manual (Route Assistant desktop, real astronaut object) confirmed switching from A3 Regular to Next updates the checked state and the map image.",
+        "Automated: no test exercises select-type-within-a3 directly (same coverage gap noted in attempt 1)."
+      ],
+      "diagnosis": "Matches the contract's stated outcome. Same real automated-coverage gap as attempt 1, not a product defect."
+    },
+    {
+      "scenarioId": "no-selection-shows-no-active-option",
+      "status": "PASS",
+      "evidence": [
+        "Automated (this attempt): astronaut-model.component.spec.ts's 'shows no active Model radio and no Type section when there is no selection' test passed in the 14-test re-run."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; not independently reproducible manually as a stable state (same as attempt 1), which is not a validation gap for this flow."
+    },
+    {
+      "scenarioId": "sections-reset-open-on-reselect",
+      "status": "PASS",
+      "evidence": [
+        "Automated (this attempt): astronaut-model.component.spec.ts's sections-reset-open-on-remount test passed in the 14-test re-run, asserting both Details start expanded on a fresh mount."
+      ],
+      "diagnosis": "Matches the contract's stated outcome; no regression detected."
+    }
+  ],
+  "visualCriteria": [
+    {
+      "visualParityId": "astronaut-model",
+      "status": "PASS",
+      "evidenceSource": "real-host-layout",
+      "evidence": [
+        "Manual (this attempt, Route Assistant desktop, real astronaut object, real drawer reached through the product's own Floor Plan Creator navigation): the tester confirmed the Model/Type radio rows' 24x24 circle-and-dot controls now show the same left inset as the retained Configuration (Left/Right) radios directly above them, which was the exact regression debug-result.json's repair targeted (radio-row-missing-left-padding).",
+        "Manual (this attempt): re-clicked a Model radio (A3) after the repair and confirmed checked-state refresh, Type-section switch and map-image update still behave correctly, i.e. moving the padding from radio-button-group.component.ts's dead `.rbg > app-radio-button` selector onto radio-button.component.ts's own `.rb-row` (sourced from a new `--rb-padding-x` host token) introduced no functional or further visual regression.",
+        "Source inspection (unchanged since debug-result.json's diagnosis): radio-button.component.ts now declares `--rb-padding-x` as its own host-bound token, consumed by its own `.rb-row { padding-inline: var(--rb-padding-x); }`, so the padding no longer depends on a parent-scoped selector matching content projected under Angular's Emulated view encapsulation."
+      ],
+      "diagnosis": "PASS: the previously reported visual regression (missing left inset on the Model/Type radio rows versus the retained Configuration sibling) is resolved and confirmed in the real host. Note (carried from debug-result.json's limitations, not part of the named failure and left unaddressed by design): radio-button-group.component.ts's `.rbg:not(:disabled) > app-radio-button:hover`/`:active` background rules rely on the same broken projected-content selector and are still dead; this was never part of the failing visualParity criterion (the appearance list does not name a hover/active background deviation) and is not observable as a difference from the retained Configuration sibling in this contract's declared appearance/layout, so it does not block this criterion, but is flagged for a future flow to fix if it surfaces as its own failure."
+    }
+  ],
+  "validation": [
+    {
+      "command": "npm run test -- run src/features/floorPlanCreator/detailDrawer/astronautForm/__tests__/AngularAstronautModelHost.test.tsx",
+      "status": "passed",
+      "summary": "Re-run this attempt against the repaired radio-button component files, together with the astronaut-model.component.spec.ts command below in one invocation: 2 test files, 14 tests passed."
+    },
+    {
+      "command": "npm run test -- run src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form/__tests__/astronaut-model.component.spec.ts",
+      "status": "passed",
+      "summary": "Re-run this attempt together with the AngularAstronautModelHost.test.tsx command above in one invocation: 2 test files, 14 tests passed."
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "status": "passed",
+      "summary": "No type errors across the product (re-run this attempt)."
+    },
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "summary": "tsc --noEmit && vite build succeeded (re-run this attempt; only the pre-existing >500kB vendor chunk size warning, unrelated to this slice)."
+    }
+  ],
+  "coverageDelta": {
+    "status": "not-measured",
+    "summary": "Per flow-contract.json's testGaps, per-flow coverage is computed by CI (npm run test:ci, uploaded to the Lely-Route-Assistant-Frontend SonarQube project) and was not reproduced in this run."
+  },
+  "manualValidation": {
+    "status": "passed",
+    "summary": "Conducted live in the Route Assistant desktop application (localhost / react mode: development badges confirmed), local frontend served from this worktree, with a real astronaut object selected in the Floor Plan Creator. Focused on re-verifying debug-handoff.json's 'radio-row-missing-left-padding' failure: the Model/Type radio rows now show the same left inset as the retained Configuration radios, and an A3 model click continues to update checked state, the Type section and the map image correctly. The remaining scenario evidence not re-walked this attempt (select-a3-model, select-type-within-a3, select-a5-model, no-selection, sections-reset-open-on-reselect) is unchanged from verification attempt 1, since the debug repair touched only radio-button.component.ts and radio-button-group.component.ts CSS, never AstronautModel/adapter business logic; attempt 1's manual and automated evidence for those scenarios still applies and was corroborated again this attempt where automated (14/14 tests re-run passed)."
+  },
+  "browserValidation": {
+    "status": "not-run",
+    "summary": "validationPlan.browserValidation.required is false and no browserValidation.scenarios are declared.",
+    "evidenceSource": "real-host-layout"
+  },
+  "diagnosis": [],
+  "push": {
+    "policy": "never",
+    "status": "not-requested",
+    "remote": "origin",
+    "branch": "N/A",
+    "commitShas": [],
+    "upstreamSet": false,
+    "summary": "flow-contract.json's checkpointPolicy.mode is 'disabled' and pushPolicy is 'never'; migration-result.json and debug-result.json record no checkpoints. Nothing to push."
+  }
+}

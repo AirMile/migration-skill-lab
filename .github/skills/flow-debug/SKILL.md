@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.11.0`.
+Skill version: `0.12.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -107,19 +107,15 @@ Report `BLOCKED` before any product write when:
    changes. A path under `comparison.outsideAllowlist` is a write outside the
    boundary, and the result cannot be `repaired`; neither can a remaining
    `angularConventions` finding.
-8. **Write `debug-result.json`** in the run directory, copying the shape from
-   `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\debug\demo-line-drawer\debug-result.json"`
-   and every pointer from `node "<lab>\scripts\hash-artifact.mjs" <file>...`,
-   and validate it together with the four artifacts it consumed. Answering
-   `verification-result-<N>.json`, name it `debug-result-<N>.json`: a later
-   verification hashes the earlier one. `repository.root` always copies
-   `flow-contract.json`'s own `repository.root`, never the `--product-root`
-   path passed on the command line, which may be a per-slice worktree. Omit an
-   attempt's `checkpoint` entirely when `checkpointPolicy.mode` is `disabled`
-   or no commit was made — never fill it with an informal placeholder; the
-   schema only accepts the four commit-manifest fields when the key is
-   present. It carries the starting tier, the attempt ledger, the diagnosis, changed paths,
-   validation and checkpoint evidence, remaining limitations and one status:
+8. **Write `debug-result.json`.** Scaffold it with
+   `node "<lab>\scripts\new-result.mjs" --artifact debug-result --status <repaired|blocked|parked> --skill-version <this skill's version> --run-dir <run-dir> --revision-before <sha> --revision-after <sha> <flow-contract.json> <migration-result.json> <verification-result.json> <debug-handoff.json>`.
+   It names the file for the attempt it answers, hashes all four artifacts,
+   copies `repository.root` from the contract and leaves the `checkpoint` key
+   out while checkpoints are disabled. Replace every `TODO`, confirm none is
+   left with `--check`, and validate it together with the four artifacts it
+   consumed. It carries the starting tier, the attempt ledger, the diagnosis,
+   changed paths, validation and checkpoint evidence, remaining limitations and
+   one status:
    - `repaired`: the targeted reproduction and declared validations pass,
      every changed path is allowlisted and the ledger is complete;
    - `blocked`: the issue is external or unreproducible, or needs a contract

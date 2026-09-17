@@ -2,8 +2,10 @@
 
 Read this at step 6 of `flow-baseline`, when the run starts recording the
 contract. It says what each field carries. Copy each field's exact shape from
-`print-shape.mjs` on `examples\handoff\detail-drawer-line-edit\flow-contract.json`
-and let `validate-handoff.mjs` name anything missing.
+`print-shape.mjs` on `examples\handoff\detail-drawer-astronaut-form\flow-contract.json`,
+a chain that passed and landed at this schemaVersion, and take what an example
+cannot show — which fields are required, what an enum allows, where an array
+may not be empty — from `print-shape.mjs --schema flow-contract`.
 
 ## Carry or cite
 
@@ -57,9 +59,8 @@ the contract.
   from it. The slice is the allowlist's ceiling: the validator rejects a path
   outside its `paths`, their `__tests__` folders, its measured
   `angularTargets` and the target folders of the prerequisites it `requires`.
-  `map` is an object with exactly `path`, `sha256` (run
-  `hash-artifact.mjs <migration-map.json>` to get it, never compute it by
-  hand) and `runId`; `flowId` sits directly under `planSlice`, not under `map`.
+  Run `hash-artifact.mjs <migration-map.json>` for `map`'s `sha256`, never
+  compute it by hand.
   Each prerequisite's ceiling folder is its own measured `target` from the
   map or `style-sources.mjs`, never a broader folder shared by several
   prerequisites: list the exact target string the tooling printed.
@@ -88,12 +89,11 @@ the contract.
   framework is absent there, `required` is `true`, with the constants' package
   set and every file that set changes (manifest, lockfile, TypeScript
   configuration). Never write `false` on the assumption that an earlier slice
-  added it: that unchecked claim hides the migration's largest decision. The
-  schema requires at least one entry in both `packages` and `paths` regardless
-  of `required`'s value, so never leave either empty: with `required: false`,
-  list the already-installed package set the constants name and `paths: ["package.json"]`,
-  and cite the manifest showing they are already there in `note`; with
-  `required: true`, list the set to add and every file it changes.
+  added it: that unchecked claim hides the migration's largest decision.
+  Neither `packages` nor `paths` is ever empty, whichever way `required` goes:
+  with `required: false` they name the already-installed set and the manifest
+  that shows it, cited in `note`; with `required: true`, the set to add and
+  every file it changes.
 - `scenarios`: Given/When/Then observable outcomes, each with evidence pointers
   and concrete values a tester can act on.
 - `visualParity`: one entry per `migrate` inventory id and no other id (the
@@ -117,8 +117,7 @@ the contract.
   from the prose. A shared component whose counterpart is not built is built
   by this slice at its measured `target`, which joins the allowlist: a
   restyled copy inside the slice drifts from the component it copies, and the
-  validator rejects a contract that leaves the target out. Both fields are
-  new at schemaVersion 8, so `print-shape.mjs` cannot show them.
+  validator rejects a contract that leaves the target out.
 - `characterizationRequired`: `id`, `hypothesis`, `proveBefore` as an array of
   the scenario ids it blocks, and `evidence`, an array even for one citation.
   `flow-migrate` records an outcome per id and `flow-verify` re-examines the
@@ -145,8 +144,7 @@ the contract.
   criteria and attention points come from `scenarios`, `visualParity`,
   `characterizationRequired`, `openQuestions`, `planSlice` and the manual
   validation environment, so none of them is repeated here. Record no board
-  IDs. These four strings are the whole block, and the schemaVersion 6
-  example has none, so `print-shape.mjs` cannot show it.
+  IDs. These four strings are the whole block.
 - `checkpointPolicy`: `mode: disabled` with `pushPolicy: never`. Only a user who
   asks for `auto-local` unprompted changes that, and supplies
   `expectedBranch`, `externalRef` and `milestones`; `authorizedByRole` and
@@ -166,8 +164,7 @@ the contract.
   opens to see the surveyed surface running today, so they can check current
   behavior and visuals without reading source. Write it only from a citable
   router, menu or navigation configuration the survey found; leave it out
-  rather than guess one. Not in the canonical example, so `print-shape.mjs`
-  cannot show it.
+  rather than guess one.
 - `rollback`: which files return to which state, and what a revert must not
   disturb. Restating that `migration-result.json` records the checkpoint SHAs
   answers nothing.

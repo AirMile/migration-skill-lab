@@ -15,7 +15,7 @@ const validatorPath = path.join(rootDirectory, "scripts", "validate-handoff.mjs"
 
 const usage = `Usage: node scripts/render-user-story.mjs <flow-contract.json>
 
-Validates a schemaVersion 7 flow-contract and prints its User Story as
+Validates a flow-contract from schemaVersion 7 on and prints its User Story as
 copy/paste text blocks: title, user value, current and desired behavior,
 acceptance criteria from the scenarios and visual parity surfaces, and
 attention points from the characterization hypotheses, open questions, the
@@ -40,7 +40,7 @@ const readContract = async contractPath => {
     throw new Error(`${absolute} is a ${contract.artifactType}, not a flow-contract.`);
   }
   if (!contract.userStory) {
-    throw new Error(`${absolute} is schemaVersion ${contract.schemaVersion} and carries no userStory; a User Story is rendered from schemaVersion 7.`);
+    throw new Error(`${absolute} is schemaVersion ${contract.schemaVersion} and carries no userStory; a User Story is rendered from schemaVersion 7 on.`);
   }
   return contract;
 };
