@@ -1,0 +1,3102 @@
+{
+  "generatedAt": "2026-09-14T07:44:15.510Z",
+  "productRoot": "C:\\Project\\frontend",
+  "revision": "03bb7e90a09b1e56b75801d03d7eb349828f0b59",
+  "reactPackages": [
+    "react",
+    "react-dom",
+    "styled-components",
+    "@auth0/auth0-react"
+  ],
+  "threshold": 10,
+  "fileTotals": {
+    "sourceFiles": 959,
+    "testAndStoryFiles": 198,
+    "reactBoundFiles": 692,
+    "typeOnlyImports": 28,
+    "unresolvedImports": 11
+  },
+  "structure": {
+    "path": "docs\\angular-structure.json",
+    "sha256": "a0e2c0061b1d6929980cb2fe9d156abdeed2c04d1d96aac809843d8fbdddbb29",
+    "root": "src/angular",
+    "counts": {
+      "merge": 2,
+      "move": 859,
+      "retire": 6,
+      "stay": 290
+    },
+    "unmatched": [],
+    "collisions": []
+  },
+  "units": [
+    {
+      "unit": "(src)",
+      "files": 1,
+      "tsxFiles": 0,
+      "importsIn": 0,
+      "importsOut": 0,
+      "agnosticShare": 1
+    },
+    {
+      "unit": "app",
+      "files": 37,
+      "tsxFiles": 37,
+      "importsIn": 223,
+      "importsOut": 260,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "auth",
+      "files": 8,
+      "tsxFiles": 3,
+      "importsIn": 6,
+      "importsOut": 11,
+      "agnosticShare": 0.25
+    },
+    {
+      "unit": "components",
+      "files": 131,
+      "tsxFiles": 108,
+      "importsIn": 952,
+      "importsOut": 8,
+      "agnosticShare": 0.038
+    },
+    {
+      "unit": "features/(loose)",
+      "files": 9,
+      "tsxFiles": 7,
+      "importsIn": 30,
+      "importsOut": 60,
+      "agnosticShare": 0.111
+    },
+    {
+      "unit": "features/about",
+      "files": 10,
+      "tsxFiles": 9,
+      "importsIn": 9,
+      "importsOut": 40,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/annotationPopup",
+      "files": 2,
+      "tsxFiles": 1,
+      "importsIn": 4,
+      "importsOut": 9,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/breadCrumbs",
+      "files": 2,
+      "tsxFiles": 2,
+      "importsIn": 11,
+      "importsOut": 18,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/copy",
+      "files": 12,
+      "tsxFiles": 9,
+      "importsIn": 3,
+      "importsOut": 101,
+      "agnosticShare": 0.167
+    },
+    {
+      "unit": "features/editPage",
+      "files": 92,
+      "tsxFiles": 69,
+      "importsIn": 32,
+      "importsOut": 860,
+      "agnosticShare": 0.076
+    },
+    {
+      "unit": "features/floorPlanCreator",
+      "files": 82,
+      "tsxFiles": 63,
+      "importsIn": 11,
+      "importsOut": 567,
+      "agnosticShare": 0.037
+    },
+    {
+      "unit": "features/formComponents",
+      "files": 1,
+      "tsxFiles": 1,
+      "importsIn": 1,
+      "importsOut": 6,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/navbar",
+      "files": 24,
+      "tsxFiles": 24,
+      "importsIn": 19,
+      "importsOut": 207,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/newPackagePage",
+      "files": 3,
+      "tsxFiles": 3,
+      "importsIn": 4,
+      "importsOut": 42,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/overviewPage",
+      "files": 10,
+      "tsxFiles": 10,
+      "importsIn": 4,
+      "importsOut": 93,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/recoveryRoute",
+      "files": 2,
+      "tsxFiles": 2,
+      "importsIn": 1,
+      "importsOut": 33,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/robot",
+      "files": 1,
+      "tsxFiles": 1,
+      "importsIn": 1,
+      "importsOut": 10,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/sideBarFilled",
+      "files": 3,
+      "tsxFiles": 3,
+      "importsIn": 1,
+      "importsOut": 21,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/startPage",
+      "files": 10,
+      "tsxFiles": 9,
+      "importsIn": 5,
+      "importsOut": 75,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "features/undoRedo",
+      "files": 1,
+      "tsxFiles": 1,
+      "importsIn": 1,
+      "importsOut": 12,
+      "agnosticShare": 0
+    },
+    {
+      "unit": "modules/drawlib",
+      "files": 242,
+      "tsxFiles": 3,
+      "importsIn": 496,
+      "importsOut": 226,
+      "agnosticShare": 0.488
+    },
+    {
+      "unit": "services",
+      "files": 64,
+      "tsxFiles": 5,
+      "importsIn": 358,
+      "importsOut": 49,
+      "agnosticShare": 0.719
+    },
+    {
+      "unit": "shared",
+      "files": 208,
+      "tsxFiles": 89,
+      "importsIn": 746,
+      "importsOut": 329,
+      "agnosticShare": 0.385
+    },
+    {
+      "unit": "state",
+      "files": 4,
+      "tsxFiles": 0,
+      "importsIn": 144,
+      "importsOut": 25,
+      "agnosticShare": 0.5
+    }
+  ],
+  "featureDirectoriesNotInMap": [],
+  "angularFiles": [
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/AngularLineFieldsHost.tsx",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.component.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/line-fields.types.ts",
+    "src/features/floorPlanCreator/detailDrawer/lineForm/angular/mount-line-fields.ts"
+  ],
+  "sharedFiles": [
+    {
+      "file": "src/components/EColors.ts",
+      "crossUnitImporters": 166,
+      "importingUnits": 21,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/state/FloorPlanStores.ts",
+      "crossUnitImporters": 127,
+      "importingUnits": 8,
+      "reactBound": "direct",
+      "prerequisite": "floor-plan-stores",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/icons/EIconNames.ts",
+      "crossUnitImporters": 126,
+      "importingUnits": 18,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/services/restApi/types/CollectorPackage.ts",
+      "crossUnitImporters": 101,
+      "importingUnits": 10,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/app/providers/useCollectorPackage.tsx",
+      "crossUnitImporters": 83,
+      "importingUnits": 12,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/styled.ts",
+      "crossUnitImporters": 77,
+      "importingUnits": 17,
+      "reactBound": "direct",
+      "prerequisite": "styled",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/Text.tsx",
+      "crossUnitImporters": 75,
+      "importingUnits": 15,
+      "reactBound": "direct",
+      "prerequisite": "text",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/LelyRedRules.tsx",
+      "crossUnitImporters": 65,
+      "importingUnits": 11,
+      "reactBound": "direct",
+      "prerequisite": "lely-red-rules",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+      "crossUnitImporters": 52,
+      "importingUnits": 6,
+      "reactBound": "transitive",
+      "prerequisite": "floor-plan-maker-facade",
+      "angular": "none"
+    },
+    {
+      "file": "src/services/restApi/client.ts",
+      "crossUnitImporters": 52,
+      "importingUnits": 11,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/services/restApi/endpoints.ts",
+      "crossUnitImporters": 51,
+      "importingUnits": 11,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+      "crossUnitImporters": 46,
+      "importingUnits": 4,
+      "reactBound": "transitive",
+      "prerequisite": "history-types",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/types/ERoutes.ts",
+      "crossUnitImporters": 46,
+      "importingUnits": 13,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/notifications/useNotify.ts",
+      "crossUnitImporters": 45,
+      "importingUnits": 11,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/ERobotType.ts",
+      "crossUnitImporters": 43,
+      "importingUnits": 7,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/routeManager/index.ts",
+      "crossUnitImporters": 41,
+      "importingUnits": 8,
+      "reactBound": "transitive",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/sharedApis/index.ts",
+      "crossUnitImporters": 37,
+      "importingUnits": 7,
+      "reactBound": "transitive",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/hooks/routing/useLocation.ts",
+      "crossUnitImporters": 36,
+      "importingUnits": 12,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/app/providers/useRobotManager.tsx",
+      "crossUnitImporters": 35,
+      "importingUnits": 6,
+      "reactBound": "direct",
+      "prerequisite": "use-robot-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/types/Actions.ts",
+      "crossUnitImporters": 35,
+      "importingUnits": 3,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/icons/Icon.tsx",
+      "crossUnitImporters": 34,
+      "importingUnits": 13,
+      "reactBound": "direct",
+      "prerequisite": "icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/Flex.tsx",
+      "crossUnitImporters": 33,
+      "importingUnits": 13,
+      "reactBound": "direct",
+      "prerequisite": "flex",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/button/index.ts",
+      "crossUnitImporters": 32,
+      "importingUnits": 12,
+      "reactBound": "transitive",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/services/restApi/types/IPackagePlot.ts",
+      "crossUnitImporters": 29,
+      "importingUnits": 6,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/breadCrumbs/BreadCrumbStore.ts",
+      "crossUnitImporters": 28,
+      "importingUnits": 10,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/radioButton/RadioButtonGroup.tsx",
+      "crossUnitImporters": 28,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": "radio-button-group",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/types/routes/commands/IBaseCommand.ts",
+      "crossUnitImporters": 28,
+      "importingUnits": 6,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/floatingDrawer/FloatingDrawerStore.ts",
+      "crossUnitImporters": 27,
+      "importingUnits": 7,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/routes/EStopReason.ts",
+      "crossUnitImporters": 26,
+      "importingUnits": 3,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/utils/risks/Risks.ts",
+      "crossUnitImporters": 26,
+      "importingUnits": 8,
+      "reactBound": "transitive",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/hooks/useManageCollectorPackage.ts",
+      "crossUnitImporters": 23,
+      "importingUnits": 6,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/dynamicDrawer/useDynamicDrawer.tsx",
+      "crossUnitImporters": 22,
+      "importingUnits": 4,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+      "crossUnitImporters": 22,
+      "importingUnits": 3,
+      "reactBound": "transitive",
+      "prerequisite": "distance-line-api",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/utils/safe.ts",
+      "crossUnitImporters": 21,
+      "importingUnits": 8,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/app/providers/useSelectedActions.tsx",
+      "crossUnitImporters": 20,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/input/NumberInput.tsx",
+      "crossUnitImporters": 20,
+      "importingUnits": 4,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/types/RichFloorPlan.ts",
+      "crossUnitImporters": 20,
+      "importingUnits": 5,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/useHotKeys/index.ts",
+      "crossUnitImporters": 19,
+      "importingUnits": 7,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+      "crossUnitImporters": 18,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": "element-creation-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/editPage/rightDrawer/getDrawerControls.ts",
+      "crossUnitImporters": 17,
+      "importingUnits": 4,
+      "reactBound": "transitive",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/routeManager/eventCenter/EEventNames.ts",
+      "crossUnitImporters": 16,
+      "importingUnits": 7,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/app/providers/useUndoRedo.tsx",
+      "crossUnitImporters": 15,
+      "importingUnits": 6,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/radioButton/RadioButton.tsx",
+      "crossUnitImporters": 15,
+      "importingUnits": 2,
+      "reactBound": "direct",
+      "prerequisite": "radio-button",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+      "crossUnitImporters": 15,
+      "importingUnits": 5,
+      "reactBound": "transitive",
+      "prerequisite": "map-maker-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/details/Details.tsx",
+      "crossUnitImporters": 14,
+      "importingUnits": 2,
+      "reactBound": "direct",
+      "prerequisite": "details",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/radioButton/RadioButtonWithIcon.tsx",
+      "crossUnitImporters": 14,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": "radio-button-with-icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/routeManager/RouteColorsApi.ts",
+      "crossUnitImporters": 14,
+      "importingUnits": 7,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/ui/ModalBottomButtonGroup.tsx",
+      "crossUnitImporters": 14,
+      "importingUnits": 7,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/ui/ModalTypes.tsx",
+      "crossUnitImporters": 14,
+      "importingUnits": 7,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/utils/toNumber.ts",
+      "crossUnitImporters": 14,
+      "importingUnits": 2,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+      "crossUnitImporters": 13,
+      "importingUnits": 1,
+      "reactBound": "direct",
+      "prerequisite": "navbar-delete-map-element",
+      "angular": "none"
+    },
+    {
+      "file": "src/services/restApi/types/IAddCommandPost.ts",
+      "crossUnitImporters": 13,
+      "importingUnits": 3,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/EJunoType.ts",
+      "crossUnitImporters": 13,
+      "importingUnits": 5,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/utils/uuid.ts",
+      "crossUnitImporters": 12,
+      "importingUnits": 3,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/features/Drawing.tsx",
+      "crossUnitImporters": 12,
+      "importingUnits": 4,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/EFeedFenceOffset.ts",
+      "crossUnitImporters": 12,
+      "importingUnits": 2,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/utils/getIcon.ts",
+      "crossUnitImporters": 12,
+      "importingUnits": 2,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/app/providers/LoaderContext.tsx",
+      "crossUnitImporters": 11,
+      "importingUnits": 2,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/detailedDrawerItem/DetailedDrawerItem.tsx",
+      "crossUnitImporters": 11,
+      "importingUnits": 5,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/constants/StatusMessages.tsx",
+      "crossUnitImporters": 11,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/routes/ESpecialAction.ts",
+      "crossUnitImporters": 11,
+      "importingUnits": 2,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/modules/drawlib/routeManager/utils/overviewRouteFeatures.ts",
+      "crossUnitImporters": 10,
+      "importingUnits": 2,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/services/restApi/types/IRouteRisks.ts",
+      "crossUnitImporters": 10,
+      "importingUnits": 4,
+      "reactBound": "none",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/types/Children.ts",
+      "crossUnitImporters": 10,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/ui/DrawerItemNoAction.tsx",
+      "crossUnitImporters": 10,
+      "importingUnits": 3,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/shared/ui/TabList.tsx",
+      "crossUnitImporters": 10,
+      "importingUnits": 5,
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    }
+  ],
+  "slices": [
+    {
+      "flowId": "detail-drawer-line-edit",
+      "files": 5,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/line-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-floor-plan-maker-detail-open",
+          "angular": "none"
+        },
+        {
+          "file": "src/app/providers/useRobotManager.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-robot-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/Text.tsx",
+          "ownedBy": null,
+          "prerequisite": "text",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/icons/Icon.tsx",
+          "ownedBy": null,
+          "prerequisite": "icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonWithIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-with-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "flex-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/LinePositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lineForm/LineForm.functions.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lineForm/LineRiskCard.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lineForm/PointFormFields.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/SetFirstPointIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "set-first-point-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/FullFlexCenter.tsx",
+          "ownedBy": null,
+          "prerequisite": "full-flex-center",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/InfoImage.tsx",
+          "ownedBy": null,
+          "prerequisite": "info-image",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-astronaut-form",
+      "files": 3,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/astronaut-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/AstronautPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-charger-form",
+      "files": 13,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/charger-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-floor-plan-maker-detail-open",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/SwitchButton.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/components/Text.tsx",
+          "ownedBy": null,
+          "prerequisite": "text",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/icons/Icon.tsx",
+          "ownedBy": null,
+          "prerequisite": "icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/notifications/useNotify.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/styled.ts",
+          "ownedBy": null,
+          "prerequisite": "styled",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "flex-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/ObjectRiskCard.tsx",
+          "ownedBy": null,
+          "prerequisite": "object-risk-card",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/ChargerPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/useCoordinateKeyDown.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistancePointApi.ts",
+          "ownedBy": null,
+          "prerequisite": "distance-point-api",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/floorPlanConverter/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-converter",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/ProtectionFrameIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "protection-frame-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/SandFlushIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "sand-flush-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/CheckBoxWithIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "check-box-with-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-corner-strip-form",
+      "files": 3,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/corner-strip-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/Flex.tsx",
+          "ownedBy": null,
+          "prerequisite": "flex",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/Text.tsx",
+          "ownedBy": null,
+          "prerequisite": "text",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/Tooltip.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/components/icons/Icon.tsx",
+          "ownedBy": null,
+          "prerequisite": "icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/styled.ts",
+          "ownedBy": null,
+          "prerequisite": "styled",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/CornerStripPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistancePointApi.ts",
+          "ownedBy": null,
+          "prerequisite": "distance-point-api",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-dump-station-form",
+      "files": 3,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/dump-station-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/styled.ts",
+          "ownedBy": null,
+          "prerequisite": "styled",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/DumpStationPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/ProtectionFrameIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "protection-frame-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/CheckBoxWithIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "check-box-with-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-lidar-form",
+      "files": 2,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/lidar-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/Flex.tsx",
+          "ownedBy": null,
+          "prerequisite": "flex",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/Text.tsx",
+          "ownedBy": null,
+          "prerequisite": "text",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/icons/Icon.tsx",
+          "ownedBy": null,
+          "prerequisite": "icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "flex-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-multiple-objects-form",
+      "files": 1,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/multiple-objects-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-floor-plan-maker-detail-open",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/Text.tsx",
+          "ownedBy": null,
+          "prerequisite": "text",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MultipleObjectsPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+          "ownedBy": null,
+          "prerequisite": "map-maker-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+          "ownedBy": null,
+          "prerequisite": "distance-line-api",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-shapes-form",
+      "files": 3,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/shapes-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-floor-plan-maker-detail-open",
+          "angular": "none"
+        },
+        {
+          "file": "src/app/providers/useRobotManager.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-robot-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/button/index.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/icons/Icon.tsx",
+          "ownedBy": null,
+          "prerequisite": "icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonWithIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-with-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/ObjectRiskCard.tsx",
+          "ownedBy": null,
+          "prerequisite": "object-risk-card",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/ShapePositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+          "ownedBy": null,
+          "prerequisite": "distance-line-api",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/floorPlanConverter/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-converter",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/richRect/RichRectangle.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/sharedApis/eventManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/modules/drawlib/sharedApis/index.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/hooks/useSetSelectMode.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/icons/SetFirstPointIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "set-first-point-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/FullFlexCenter.tsx",
+          "ownedBy": null,
+          "prerequisite": "full-flex-center",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/InfoImage.tsx",
+          "ownedBy": null,
+          "prerequisite": "info-image",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-standalone-protection-frame-form",
+      "files": 4,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/standalone-protection-frame-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/details/Details.tsx",
+          "ownedBy": null,
+          "prerequisite": "details",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/StandaloneProtectionFramePositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-straight-strip-form",
+      "files": 2,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/straight-strip-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "focus-number-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/StraightStripPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-water-station-form",
+      "files": 3,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/water-station-form"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/components/LelyRedRules.tsx",
+          "ownedBy": null,
+          "prerequisite": "lely-red-rules",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/radioButton/RadioButtonGroup.tsx",
+          "ownedBy": null,
+          "prerequisite": "radio-button-group",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-angle-input",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+          "ownedBy": null,
+          "prerequisite": "canvas-object-coordinates-details",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+          "ownedBy": null,
+          "prerequisite": "done-button",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+          "ownedBy": null,
+          "prerequisite": "form-wrapper",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/c2Properties/ToggleWithIcon.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+          "ownedBy": null,
+          "prerequisite": "map-object-distances",
+          "angular": "none"
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/distances/WaterStationPositionable.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+          "ownedBy": null,
+          "prerequisite": "navbar-delete-map-element",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+          "ownedBy": null,
+          "prerequisite": "element-creation-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-maker-facade",
+          "angular": "none"
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+          "ownedBy": null,
+          "prerequisite": "history-types",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/SandFlushIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "sand-flush-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    },
+    {
+      "flowId": "detail-drawer-forms-shell",
+      "files": 2,
+      "missingPaths": [],
+      "angularTargets": [
+        "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer"
+      ],
+      "reactBoundImports": [
+        {
+          "file": "src/app/providers/useFloorPlanCreationMode.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+          "ownedBy": null,
+          "prerequisite": "use-floor-plan-maker-detail-open",
+          "angular": "none"
+        },
+        {
+          "file": "src/components/floatingDrawer/FloatingDrawer.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/components/floatingDrawer/FloatingDrawerStore.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/editPage/annotations/Annotations.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/editPage/rightDrawer/getDrawerControls.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/editPage/risks/Risks.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/astronautForm/index.tsx",
+          "ownedBy": "detail-drawer-astronaut-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/ChargerForm.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/junoChargerForm/JunoChargerForm.tsx",
+          "ownedBy": "detail-drawer-charger-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/cornerStripForm/index.tsx",
+          "ownedBy": "detail-drawer-corner-strip-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/dumpStationForm/index.tsx",
+          "ownedBy": "detail-drawer-dump-station-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lidarForm/LidarForm.tsx",
+          "ownedBy": "detail-drawer-lidar-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lineForm/LineForm.tsx",
+          "ownedBy": "detail-drawer-line-edit",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/lineForm/MultipleLinesForm.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/multipleObjectsForm/index.tsx",
+          "ownedBy": "detail-drawer-multiple-objects-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/shapesForm/ShapeForm.tsx",
+          "ownedBy": "detail-drawer-shapes-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/standaloneProtectionFrameForm/index.tsx",
+          "ownedBy": "detail-drawer-standalone-protection-frame-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/straightStripForm/index.tsx",
+          "ownedBy": "detail-drawer-straight-strip-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/features/floorPlanCreator/detailDrawer/waterStationForm/index.tsx",
+          "ownedBy": "detail-drawer-water-station-form",
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+          "ownedBy": null,
+          "prerequisite": "map-maker-manager",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/hooks/useMoveSelectionWithArrowKeys.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/icons/CornerStripIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/icons/NoSelectionIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/icons/ProtectionFrameIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": "protection-frame-icon",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/icons/RectangleIcon.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/ui/FullFlexCenter.tsx",
+          "ownedBy": null,
+          "prerequisite": "full-flex-center",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/InfoImage.tsx",
+          "ownedBy": null,
+          "prerequisite": "info-image",
+          "angular": "none"
+        },
+        {
+          "file": "src/shared/ui/Scrollbar.tsx",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/shared/utils/risks/Risks.ts",
+          "ownedBy": null,
+          "prerequisite": null,
+          "angular": null
+        },
+        {
+          "file": "src/state/FloorPlanStores.ts",
+          "ownedBy": null,
+          "prerequisite": "floor-plan-stores",
+          "angular": "none"
+        }
+      ]
+    }
+  ],
+  "sharedAcrossSlices": [
+    {
+      "file": "src/state/FloorPlanStores.ts",
+      "sliceCount": 12,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "floor-plan-stores",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+      "sliceCount": 11,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "done-button",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+      "sliceCount": 11,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "form-wrapper",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/navbar/NavbarDeleteMapElement.tsx",
+      "sliceCount": 11,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "navbar-delete-map-element",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+      "sliceCount": 10,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "map-object-distances",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/index.ts",
+      "sliceCount": 10,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "floor-plan-maker-facade",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+      "sliceCount": 10,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "history-types",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/radioButton/RadioButtonGroup.tsx",
+      "sliceCount": 9,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "radio-button-group",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+      "sliceCount": 9,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "element-creation-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/LelyRedRules.tsx",
+      "sliceCount": 8,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "lely-red-rules",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/radioButton/RadioButton.tsx",
+      "sliceCount": 8,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "radio-button",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/details/Details.tsx",
+      "sliceCount": 7,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "details",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+      "sliceCount": 6,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "canvas-object-angle-input",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+      "sliceCount": 6,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "canvas-object-coordinates-details",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+      "sliceCount": 6,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-straight-strip-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "focus-number-input",
+      "angular": "none"
+    },
+    {
+      "file": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+      "sliceCount": 5,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-charger-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "use-floor-plan-maker-detail-open",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/icons/Icon.tsx",
+      "sliceCount": 5,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/Text.tsx",
+      "sliceCount": 5,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "text",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/chargerForm/LabelText.tsx",
+      "sliceCount": 5,
+      "slices": [
+        "detail-drawer-astronaut-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": "detail-drawer-charger-form",
+      "reactBound": "direct",
+      "prerequisite": null,
+      "angular": null
+    },
+    {
+      "file": "src/components/styled.ts",
+      "sliceCount": 3,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "styled",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+      "sliceCount": 3,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-charger-form",
+        "detail-drawer-lidar-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "flex-wrapper",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/icons/ProtectionFrameIcon.tsx",
+      "sliceCount": 3,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "protection-frame-icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/ui/FullFlexCenter.tsx",
+      "sliceCount": 3,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-shapes-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "full-flex-center",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/ui/InfoImage.tsx",
+      "sliceCount": 3,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-shapes-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "info-image",
+      "angular": "none"
+    },
+    {
+      "file": "src/app/providers/useRobotManager.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "use-robot-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/Flex.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-lidar-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "flex",
+      "angular": "none"
+    },
+    {
+      "file": "src/components/radioButton/RadioButtonWithIcon.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "radio-button-with-icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/features/floorPlanCreator/detailDrawer/ObjectRiskCard.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "object-risk-card",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "distance-line-api",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistancePointApi.ts",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "distance-point-api",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-forms-shell"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "map-maker-manager",
+      "angular": "none"
+    },
+    {
+      "file": "src/modules/drawlib/floorPlanMaker/floorPlanConverter/index.ts",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "transitive",
+      "prerequisite": "floor-plan-converter",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/icons/SandFlushIcon.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-water-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "sand-flush-icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/icons/SetFirstPointIcon.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-line-edit",
+        "detail-drawer-shapes-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "set-first-point-icon",
+      "angular": "none"
+    },
+    {
+      "file": "src/shared/ui/CheckBoxWithIcon.tsx",
+      "sliceCount": 2,
+      "slices": [
+        "detail-drawer-charger-form",
+        "detail-drawer-dump-station-form"
+      ],
+      "ownedBy": null,
+      "reactBound": "direct",
+      "prerequisite": "check-box-with-icon",
+      "angular": "none"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "floor-plan-stores",
+      "reactSource": "src/state/FloorPlanStores.ts",
+      "outcome": "move",
+      "target": "src/angular/core/store/floor-plan-stores.store.ts",
+      "drift": false
+    },
+    {
+      "id": "done-button",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/done-button.component.ts",
+      "drift": false
+    },
+    {
+      "id": "form-wrapper",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/form-wrapper.component.ts",
+      "drift": false
+    },
+    {
+      "id": "navbar-delete-map-element",
+      "reactSource": "src/features/navbar/NavbarDeleteMapElement.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/platform/pages/navbar/navbar-delete-map-element.component.ts",
+      "drift": false
+    },
+    {
+      "id": "map-object-distances",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/distances/map-object-distances.component.ts",
+      "drift": false
+    },
+    {
+      "id": "floor-plan-maker-facade",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/index.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/floor-plan-maker.ts",
+      "drift": false
+    },
+    {
+      "id": "history-types",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/undo-redo/models/history-types.model.ts",
+      "drift": false
+    },
+    {
+      "id": "radio-button-group",
+      "reactSource": "src/components/radioButton/RadioButtonGroup.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/radio-button/radio-button-group.component.ts",
+      "drift": false
+    },
+    {
+      "id": "element-creation-manager",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/element-creation-manager/element-creation-manager.component.ts",
+      "drift": false
+    },
+    {
+      "id": "lely-red-rules",
+      "reactSource": "src/components/LelyRedRules.tsx",
+      "outcome": "retire",
+      "target": null,
+      "drift": false
+    },
+    {
+      "id": "radio-button",
+      "reactSource": "src/components/radioButton/RadioButton.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/radio-button/radio-button.component.ts",
+      "drift": false
+    },
+    {
+      "id": "details",
+      "reactSource": "src/components/details/Details.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/details/details.component.ts",
+      "drift": false
+    },
+    {
+      "id": "canvas-object-angle-input",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/canvas-object-angle-input.component.ts",
+      "drift": false
+    },
+    {
+      "id": "canvas-object-coordinates-details",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/canvas-object-coordinates-details.component.ts",
+      "drift": false
+    },
+    {
+      "id": "focus-number-input",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/focus-number-input.component.ts",
+      "drift": false
+    },
+    {
+      "id": "use-floor-plan-maker-detail-open",
+      "reactSource": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/store/floor-plan-maker-detail-open.store.ts",
+      "drift": false
+    },
+    {
+      "id": "icon",
+      "reactSource": "src/components/icons/Icon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/icons/icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "text",
+      "reactSource": "src/components/Text.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/text.component.ts",
+      "drift": false
+    },
+    {
+      "id": "styled",
+      "reactSource": "src/components/styled.ts",
+      "outcome": "retire",
+      "target": null,
+      "drift": false
+    },
+    {
+      "id": "flex-wrapper",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/flex-wrapper.component.ts",
+      "drift": false
+    },
+    {
+      "id": "protection-frame-icon",
+      "reactSource": "src/shared/icons/ProtectionFrameIcon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/icons/protection-frame-icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "full-flex-center",
+      "reactSource": "src/shared/ui/FullFlexCenter.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/full-flex-center.component.ts",
+      "drift": false
+    },
+    {
+      "id": "use-robot-manager",
+      "reactSource": "src/app/providers/useRobotManager.tsx",
+      "outcome": "move",
+      "target": "src/angular/core/store/robot-manager.store.ts",
+      "drift": false
+    },
+    {
+      "id": "flex",
+      "reactSource": "src/components/Flex.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/flex.component.ts",
+      "drift": false
+    },
+    {
+      "id": "radio-button-with-icon",
+      "reactSource": "src/components/radioButton/RadioButtonWithIcon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/radio-button/radio-button-with-icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "object-risk-card",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/ObjectRiskCard.tsx",
+      "outcome": "move",
+      "target": "src/angular/domains/floor-plan/pages/floor-plan-creator/detail-drawer/object-risk-card.component.ts",
+      "drift": false
+    },
+    {
+      "id": "distance-line-api",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/api/distance-api/utils/distance-line-api.ts",
+      "drift": false
+    },
+    {
+      "id": "distance-point-api",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistancePointApi.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/api/distance-api/utils/distance-point-api.ts",
+      "drift": false
+    },
+    {
+      "id": "map-maker-manager",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/api/utils/map-maker-manager.ts",
+      "drift": false
+    },
+    {
+      "id": "floor-plan-converter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/floorPlanConverter/index.ts",
+      "outcome": "move",
+      "target": "src/angular/core/bridges/drawlib/floor-plan-maker/floor-plan-converter/floor-plan-converter.ts",
+      "drift": false
+    },
+    {
+      "id": "sand-flush-icon",
+      "reactSource": "src/shared/icons/SandFlushIcon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/icons/sand-flush-icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "set-first-point-icon",
+      "reactSource": "src/shared/icons/SetFirstPointIcon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/icons/set-first-point-icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "check-box-with-icon",
+      "reactSource": "src/shared/ui/CheckBoxWithIcon.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/check-box-with-icon.component.ts",
+      "drift": false
+    },
+    {
+      "id": "info-image",
+      "reactSource": "src/shared/ui/InfoImage.tsx",
+      "outcome": "move",
+      "target": "src/angular/shared/components/info-image.component.ts",
+      "drift": false
+    }
+  ]
+}

@@ -1,0 +1,1022 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "migration-map",
+  "skill": "flow-plan",
+  "skillVersion": "0.2.0",
+  "runId": "migration-map-2",
+  "repository": {
+    "root": "C:\\Project\\frontend",
+    "revision": "03bb7e90a09b1e56b75801d03d7eb349828f0b59"
+  },
+  "supersedes": {
+    "path": "runs\\2026-09-14-migration-map-1\\migration-map.json",
+    "sha256": "88f1088916083b464eba1f32aebe8818205ab114a3bb9cd3de3824b750e4a396",
+    "runId": "migration-map-1"
+  },
+  "metrics": {
+    "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-metrics.json",
+    "sha256": "60cb64821346c001e984eec143dd3c82a01a293ba6b557c6050ba6882af16df5"
+  },
+  "features": [
+    {
+      "id": "about",
+      "title": "about",
+      "paths": [
+        "src/features/about"
+      ]
+    },
+    {
+      "id": "annotation-popup",
+      "title": "annotationPopup",
+      "paths": [
+        "src/features/annotationPopup"
+      ]
+    },
+    {
+      "id": "bread-crumbs",
+      "title": "breadCrumbs",
+      "paths": [
+        "src/features/breadCrumbs"
+      ]
+    },
+    {
+      "id": "copy",
+      "title": "copy",
+      "paths": [
+        "src/features/copy"
+      ]
+    },
+    {
+      "id": "edit-page",
+      "title": "editPage",
+      "paths": [
+        "src/features/editPage"
+      ]
+    },
+    {
+      "id": "floor-plan-creator",
+      "title": "floorPlanCreator",
+      "paths": [
+        "src/features/floorPlanCreator"
+      ]
+    },
+    {
+      "id": "form-components",
+      "title": "formComponents",
+      "paths": [
+        "src/features/formComponents"
+      ]
+    },
+    {
+      "id": "navbar",
+      "title": "navbar",
+      "paths": [
+        "src/features/navbar"
+      ]
+    },
+    {
+      "id": "new-package-page",
+      "title": "newPackagePage",
+      "paths": [
+        "src/features/newPackagePage"
+      ]
+    },
+    {
+      "id": "overview-page",
+      "title": "overviewPage",
+      "paths": [
+        "src/features/overviewPage"
+      ]
+    },
+    {
+      "id": "recovery-route",
+      "title": "recoveryRoute",
+      "paths": [
+        "src/features/recoveryRoute"
+      ]
+    },
+    {
+      "id": "robot",
+      "title": "robot",
+      "paths": [
+        "src/features/robot"
+      ]
+    },
+    {
+      "id": "side-bar-filled",
+      "title": "sideBarFilled",
+      "paths": [
+        "src/features/sideBarFilled"
+      ]
+    },
+    {
+      "id": "start-page",
+      "title": "startPage",
+      "paths": [
+        "src/features/startPage"
+      ]
+    },
+    {
+      "id": "undo-redo",
+      "title": "undoRedo",
+      "paths": [
+        "src/features/undoRedo"
+      ]
+    }
+  ],
+  "slices": [
+    {
+      "flowId": "detail-drawer-line-edit",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/lineForm — Length/Angle/Fence-offset fields (nested mount)",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/lineForm/LineForm.tsx",
+        "src/features/floorPlanCreator/detailDrawer/lineForm/angular"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "details",
+        "use-floor-plan-maker-detail-open",
+        "icon",
+        "text",
+        "flex-wrapper",
+        "full-flex-center",
+        "use-robot-manager",
+        "radio-button-with-icon",
+        "set-first-point-icon",
+        "info-image"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "flow-baseline recorded this as the migrate set (flow-contract.json scope.allowedWritePaths)."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "FocusNumberInput rebuilt locally under lineForm/angular, per project-constants.md."
+        },
+        "measurableNeighbour": {
+          "verdict": "pass",
+          "note": "Nested mount inside LineForm.tsx, which stays React (partialMount.retainedParent)."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One capability gate (FeedPush) for the fence-offset fields, per flow-contract.json."
+        }
+      },
+      "status": "in-progress"
+    },
+    {
+      "flowId": "detail-drawer-astronaut-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/astronautForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/astronautForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "details",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FormWrapper, CanvasObjectAngleInput/CoordinatesDetails, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (AstronautForm.tsx:37)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-charger-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/chargerForm (incl. junoChargerForm, c2Properties)",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/chargerForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "details",
+        "focus-number-input",
+        "use-floor-plan-maker-detail-open",
+        "icon",
+        "text",
+        "styled",
+        "flex-wrapper",
+        "protection-frame-icon",
+        "object-risk-card",
+        "distance-point-api",
+        "floor-plan-converter",
+        "sand-flush-icon",
+        "check-box-with-icon"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "unknown",
+          "note": "chargerForm/LabelText.tsx is also imported by dumpStationForm (LabelTextWithTopMargin) — a cross-folder dependency to resolve before cutting the write allowlist."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "unknown",
+          "note": "Depends on the LabelText.tsx ownership question above."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Two variants (ChargerForm/JunoChargerForm) selected by isJuno; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "fail",
+          "note": "3 conditional sections (water station, protection frame, isPlaced) plus the Juno/non-Juno switch in the parent (ChargerForm.tsx:50,60,70)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-corner-strip-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/cornerStripForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/cornerStripForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details",
+        "focus-number-input",
+        "icon",
+        "text",
+        "styled",
+        "flex",
+        "distance-point-api"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FormWrapper, CanvasObjectAngleInput/CoordinatesDetails, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (index.tsx:48)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-dump-station-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/dumpStationForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/dumpStationForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "details",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details",
+        "styled",
+        "protection-frame-icon",
+        "check-box-with-icon"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "unknown",
+          "note": "Imports LabelTextWithTopMargin from ../chargerForm/LabelText.tsx (index.tsx:9) — a file outside its own folder."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "unknown",
+          "note": "Same LabelText.tsx cross-folder dependency as detail-drawer-charger-form."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (index.tsx:40)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-lidar-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/lidarForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/lidarForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "lely-red-rules",
+        "radio-button",
+        "focus-number-input",
+        "icon",
+        "text",
+        "flex-wrapper",
+        "flex"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FlexWrapper, FocusNumberInput, FormWrapper)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "Single early-return guard (no image) plus disabled-state props; no nested mode branches (LidarForm.tsx:26)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-multiple-objects-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/multipleObjectsForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/multipleObjectsForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "details",
+        "focus-number-input",
+        "use-floor-plan-maker-detail-open",
+        "text",
+        "distance-line-api",
+        "map-maker-manager"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FocusNumberInput, FormWrapper, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "No render-level conditionals; branching is in event handlers only (index.tsx:30-63)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-shapes-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/shapesForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/shapesForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "element-creation-manager",
+        "radio-button",
+        "details",
+        "focus-number-input",
+        "use-floor-plan-maker-detail-open",
+        "icon",
+        "full-flex-center",
+        "use-robot-manager",
+        "radio-button-with-icon",
+        "object-risk-card",
+        "distance-line-api",
+        "floor-plan-converter",
+        "set-first-point-icon",
+        "info-image"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "unknown",
+          "note": "Not yet checked for external importers of ShapeForm/ShapeRiskCard."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "unknown",
+          "note": "Not yet surveyed in depth."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "fail",
+          "note": "Mode-dependent branching (Rectangle/SlattedFloor/other, ShapeForm.tsx:42-53) with the highest conditional count observed in this feature; likely needs its own decomposition."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-standalone-protection-frame-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/standaloneProtectionFrameForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/standaloneProtectionFrameForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "details",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FormWrapper, CanvasObjectAngleInput/CoordinatesDetails, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (index.tsx:42)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-straight-strip-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/straightStripForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/straightStripForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "element-creation-manager",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details",
+        "focus-number-input"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FormWrapper, CanvasObjectAngleInput/CoordinatesDetails, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (index.tsx:41)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-water-station-form",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/waterStationForm",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/waterStationForm"
+      ],
+      "dependsOn": [],
+      "requires": [
+        "floor-plan-stores",
+        "done-button",
+        "form-wrapper",
+        "navbar-delete-map-element",
+        "map-object-distances",
+        "floor-plan-maker-facade",
+        "history-types",
+        "radio-button-group",
+        "element-creation-manager",
+        "lely-red-rules",
+        "radio-button",
+        "canvas-object-angle-input",
+        "canvas-object-coordinates-details",
+        "sand-flush-icon"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "pass",
+          "note": "Folder is self-contained; no external importers found."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "Only imports shared read-only helpers (DoneButton, FormWrapper, CanvasObjectAngleInput/CoordinatesDetails, distances/MapObjectDistances)."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Whole-form swap vs. partial mount not yet decided; needs flow-baseline survey."
+        },
+        "boundedBranches": {
+          "verdict": "pass",
+          "note": "One conditional gate (properties.isPlaced) around distances/coordinates (index.tsx:36)."
+        }
+      },
+      "status": "candidate"
+    },
+    {
+      "flowId": "detail-drawer-forms-shell",
+      "featureId": "floor-plan-creator",
+      "title": "detailDrawer/index.tsx — form switch (parent)",
+      "paths": [
+        "src/features/floorPlanCreator/detailDrawer/index.tsx",
+        "src/features/floorPlanCreator/detailDrawer/NoSelection.tsx"
+      ],
+      "dependsOn": [
+        "detail-drawer-line-edit",
+        "detail-drawer-astronaut-form",
+        "detail-drawer-charger-form",
+        "detail-drawer-corner-strip-form",
+        "detail-drawer-dump-station-form",
+        "detail-drawer-lidar-form",
+        "detail-drawer-multiple-objects-form",
+        "detail-drawer-shapes-form",
+        "detail-drawer-standalone-protection-frame-form",
+        "detail-drawer-straight-strip-form",
+        "detail-drawer-water-station-form"
+      ],
+      "requires": [
+        "floor-plan-stores",
+        "use-floor-plan-maker-detail-open",
+        "protection-frame-icon",
+        "full-flex-center",
+        "map-maker-manager",
+        "info-image"
+      ],
+      "criteria": {
+        "oneOwner": {
+          "verdict": "unknown",
+          "note": "Also renders Risks/Annotations tab content owned by the editPage feature (index.tsx:336,339), out of this slice's own scope."
+        },
+        "noSharedInfrastructure": {
+          "verdict": "pass",
+          "note": "It only switches between child components; no shared file is written here."
+        },
+        "measurableNeighbour": {
+          "verdict": "unknown",
+          "note": "Needs flow-baseline survey once every dependsOn child has landed."
+        },
+        "boundedBranches": {
+          "verdict": "fail",
+          "note": "12-way getFormConfig switch on selection type (index.tsx:156-292); can't migrate until every dependent child is Angular, per this skill's parent rule."
+        }
+      },
+      "status": "candidate"
+    }
+  ],
+  "prerequisites": [
+    {
+      "id": "floor-plan-stores",
+      "kind": "adapter",
+      "reactSource": "src/state/FloorPlanStores.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "done-button",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/DoneButton.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "form-wrapper",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FormWrapper.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "navbar-delete-map-element",
+      "kind": "shared-component",
+      "reactSource": "src/features/navbar/NavbarDeleteMapElement.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "map-object-distances",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/distances/MapObjectDistances.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "floor-plan-maker-facade",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/index.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "history-types",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/undoRedo/HistoryTypes.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "radio-button-group",
+      "kind": "shared-component",
+      "reactSource": "src/components/radioButton/RadioButtonGroup.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "element-creation-manager",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/elementCreationManager/index.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "lely-red-rules",
+      "kind": "shared-component",
+      "reactSource": "src/components/LelyRedRules.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "radio-button",
+      "kind": "shared-component",
+      "reactSource": "src/components/radioButton/RadioButton.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "details",
+      "kind": "shared-component",
+      "reactSource": "src/components/details/Details.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "canvas-object-angle-input",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/CanvasObjectAngleInput.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "canvas-object-coordinates-details",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/CanvasObjectCoordinatesDetails.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "focus-number-input",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FocusNumberInput.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "use-floor-plan-maker-detail-open",
+      "kind": "adapter",
+      "reactSource": "src/app/providers/useFloorPlanMakerDetailOpen.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "icon",
+      "kind": "shared-component",
+      "reactSource": "src/components/icons/Icon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "text",
+      "kind": "shared-component",
+      "reactSource": "src/components/Text.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "styled",
+      "kind": "shared-component",
+      "reactSource": "src/components/styled.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "flex-wrapper",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/FlexWrapper.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "protection-frame-icon",
+      "kind": "shared-component",
+      "reactSource": "src/shared/icons/ProtectionFrameIcon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "full-flex-center",
+      "kind": "shared-component",
+      "reactSource": "src/shared/ui/FullFlexCenter.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "use-robot-manager",
+      "kind": "adapter",
+      "reactSource": "src/app/providers/useRobotManager.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "flex",
+      "kind": "shared-component",
+      "reactSource": "src/components/Flex.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "radio-button-with-icon",
+      "kind": "shared-component",
+      "reactSource": "src/components/radioButton/RadioButtonWithIcon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "object-risk-card",
+      "kind": "shared-component",
+      "reactSource": "src/features/floorPlanCreator/detailDrawer/ObjectRiskCard.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "distance-line-api",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistanceLineApi.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "distance-point-api",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/distanceApi/DistancePointApi.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "map-maker-manager",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/api/MapMakerManager.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "floor-plan-converter",
+      "kind": "adapter",
+      "reactSource": "src/modules/drawlib/floorPlanMaker/floorPlanConverter/index.ts",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "sand-flush-icon",
+      "kind": "shared-component",
+      "reactSource": "src/shared/icons/SandFlushIcon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "set-first-point-icon",
+      "kind": "shared-component",
+      "reactSource": "src/shared/icons/SetFirstPointIcon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "check-box-with-icon",
+      "kind": "shared-component",
+      "reactSource": "src/shared/ui/CheckBoxWithIcon.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    },
+    {
+      "id": "info-image",
+      "kind": "shared-component",
+      "reactSource": "src/shared/ui/InfoImage.tsx",
+      "angular": {
+        "status": "none"
+      },
+      "copies": []
+    }
+  ],
+  "recommendation": {
+    "options": [
+      {
+        "flowId": "detail-drawer-straight-strip-form",
+        "reason": "Fewest prerequisites left to build (11): floor-plan-stores, done-button, form-wrapper, navbar-delete-map-element, map-object-distances, floor-plan-maker-facade, history-types, element-creation-manager, canvas-object-angle-input, canvas-object-coordinates-details, focus-number-input. 2 files, one bounded conditional (isPlaced), no cross-folder or Juno-style risk."
+      },
+      {
+        "flowId": "detail-drawer-astronaut-form",
+        "reason": "12 prerequisites to build, 7 shared with detail-drawer-straight-strip-form (map-object-distances, canvas-object-angle-input/coordinates-details, floor-plan-stores, done-button, form-wrapper, navbar-delete-map-element, element-creation-manager), so landing either first makes the other cheaper. 3 files, one bounded conditional (isPlaced)."
+      },
+      {
+        "flowId": "detail-drawer-multiple-objects-form",
+        "reason": "Smallest file count (1) though 13 prerequisites to build (includes distance-line-api and map-maker-manager, not needed by the other two options). No render-level conditionals (boundedBranches pass)."
+      }
+    ],
+    "chosen": "detail-drawer-straight-strip-form"
+  },
+  "decisions": [
+    {
+      "topic": "Collector.test.ts naming collision",
+      "decision": "Renamed src/modules/drawlib/routeManager/Collector.test.ts to Collector.positioning.test.ts (git mv, no content change) so it no longer maps to the same Angular target as routeManager/__tests__/Collector.test.ts.",
+      "rationale": "The two files are not duplicates (different mocks and coverage for the same Collector class); user chose a quick, safe rename over merging the suites or changing the structure rule mid-run. Both suites still pass (31/31) after the rename."
+    }
+  ],
+  "openQuestions": [
+    "detailDrawer/lineForm still has surfaces beyond detail-drawer-line-edit's scope (MultipleLinesForm.tsx and the retain-react parts of LineForm.tsx) with no slice cut for them yet; detail-drawer-forms-shell depends only on detail-drawer-line-edit for that folder, which is a known gap.",
+    "chargerForm/LabelText.tsx is imported by both detail-drawer-charger-form and detail-drawer-dump-station-form; needs a flow-baseline decision on whether to extract it as a shared prerequisite before either slice's write allowlist is drawn.",
+    "floorPlanElementsList and the top-level floorPlanCreator files (CreateTab.tsx, MapAdjustment.tsx, UndoRedoButtons.tsx, index.tsx) are not yet cut into slices; left for a later flow-plan run on this feature."
+  ]
+}

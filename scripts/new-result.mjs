@@ -86,7 +86,9 @@ const assertedByStatus = {
   },
 };
 
-const specifications = {
+// Exported so lab-consistency.mjs can hold these two facts against the schemas
+// they were copied from, rather than a third copy of them going stale here.
+export const specifications = {
   "migration-result": {
     schemaVersion: 5,
     skill: "flow-migrate",
@@ -819,9 +821,16 @@ const main = async () => {
   );
 };
 
-try {
-  await main();
-} catch (error) {
-  console.error(error.message);
-  process.exitCode = 1;
+// lab-consistency.mjs imports the specifications to check them against the
+// schemas without running this CLI.
+const isMain = process.argv[1] &&
+  path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase();
+
+if (isMain) {
+  try {
+    await main();
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
 }

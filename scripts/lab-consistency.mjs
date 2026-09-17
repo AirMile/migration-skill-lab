@@ -20,11 +20,14 @@ const usage = `Usage: node scripts/lab-consistency.mjs [options]
 Reports where the lab disagrees with itself. Reads only; never writes.
 
 Checks:
-  versions   each skill's declared version against its acceptance document's
-             targetVersion, heading and file name, and against the README
-  branch     every integration-branch name in the skills and the project
-             constants against integrationBranch in scripts/run-context.mjs
-  scripts    every scripts\\<name>.mjs a skill names exists
+  versions      each skill's declared version against its acceptance document's
+                targetVersion, heading and file name, and against the README
+  branch        every integration-branch name in the skills and the project
+                constants against integrationBranch in scripts/run-context.mjs
+  scripts       every scripts\\<name>.mjs a skill names exists
+  schema-facts  the schemaVersion and statuses new-result.mjs scaffolds with,
+                and the schemaVersion flow-baseline tells a run to write,
+                against the schemas those were copied from
 
 Exits non-zero when anything is out of step, naming the file and line.
 Historical records under audits\\ and runs\\ are left out: they are true of
@@ -277,11 +280,93 @@ const checkScripts = async (root, findings) => {
   }
 };
 
+// A schema's own facts get copied twice: into the scaffold that writes the
+// artifact, and into the one skill line that names the version to write. Both
+// agree today, and neither would say so if a schemaVersion moved.
+const checkSchemaFacts = async (root, findings) => {
+  const schemaOf = async name => {
+    const file = path.join(root, "schemas", `${name}.schema.json`);
+    try {
+      return JSON.parse(await readFile(file, "utf8"));
+    } catch (error) {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    }
+  };
+  const highestVersion = schema => {
+    const version = schema.properties?.schemaVersion;
+    if (!version) return null;
+    return version.enum ? Math.max(...version.enum) : version.const ?? null;
+  };
+
+  const scaffoldPath = path.join(root, "scripts", "new-result.mjs");
+  let specifications = null;
+  try {
+    ({ specifications } = await import(pathToFileURL(scaffoldPath).href));
+  } catch {
+    specifications = null;
+  }
+  if (specifications) {
+    for (const [name, specification] of Object.entries(specifications)) {
+      const schema = await schemaOf(name);
+      // visual-selectors is a spec, not a handoff artifact, so it has no schema.
+      if (!schema) continue;
+      const highest = highestVersion(schema);
+      if (specification.schemaVersion !== undefined && specification.schemaVersion !== highest) {
+        findings.push({
+          check: "schema-facts",
+          file: "scripts\\new-result.mjs",
+          line: 1,
+          message: `scaffolds ${name} at schemaVersion ${specification.schemaVersion}, but the schema's highest is ${highest}.`,
+        });
+      }
+      const allowed = schema.properties?.status?.enum;
+      if (allowed && specification.statuses) {
+        const same = [...allowed].sort().join("|") === [...specification.statuses].sort().join("|");
+        if (!same) {
+          findings.push({
+            check: "schema-facts",
+            file: "scripts\\new-result.mjs",
+            line: 1,
+            message: `offers ${name} statuses ${specification.statuses.join(", ")}, but the schema allows ${allowed.join(", ")}.`,
+          });
+        }
+      }
+    }
+  }
+
+  const contractSchema = await schemaOf("flow-contract");
+  const baselinePath = path.join(root, ".github", "skills", "flow-baseline", "SKILL.md");
+  let baselineLines;
+  try {
+    baselineLines = await readLines(baselinePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    baselineLines = null;
+  }
+  if (contractSchema && baselineLines) {
+    const highest = highestVersion(contractSchema);
+    const index = baselineLines.findIndex(line => /at schemaVersion \d+/.test(line));
+    if (index !== -1) {
+      const named = Number(/at schemaVersion (\d+)/.exec(baselineLines[index])[1]);
+      if (named !== highest) {
+        findings.push({
+          check: "schema-facts",
+          file: path.relative(root, baselinePath),
+          line: index + 1,
+          message: `tells the run to write schemaVersion ${named}, but the flow-contract schema's highest is ${highest}.`,
+        });
+      }
+    }
+  }
+};
+
 const runChecks = async root => {
   const findings = [];
   await checkVersions(root, findings);
   await checkBranch(root, findings);
   await checkScripts(root, findings);
+  await checkSchemaFacts(root, findings);
   findings.sort((left, right) =>
     left.file.localeCompare(right.file) || left.line - right.line);
   return findings;
@@ -339,6 +424,21 @@ const writeFixture = async (directory, overrides = {}) => {
     "README.md": "- experimental `demo-skill` v0.4.0 source skill;\n",
     "docs/project-constants.md": "- `migration/angular` is the integration branch.\n",
     "scripts/run-context.mjs": "export const integrationBranch = \"migration/angular\";\n",
+    "schemas/migration-result.schema.json": JSON.stringify({
+      properties: {
+        schemaVersion: { enum: [4, 5] },
+        status: { enum: ["completed", "failed", "blocked"] },
+      },
+    }, null, 2),
+    "scripts/new-result.mjs": [
+      "export const specifications = {",
+      "  \"migration-result\": {",
+      "    schemaVersion: 5,",
+      "    statuses: [\"completed\", \"failed\", \"blocked\"],",
+      "  },",
+      "};",
+      "",
+    ].join("\n"),
     ...overrides,
   };
   for (const [relative, content] of Object.entries(files)) {
@@ -443,6 +543,51 @@ const runSelfTest = async () => {
     });
     assert(orphan.some(finding => /no acceptance document/.test(finding.message)),
       "a skill without an acceptance document is not reported");
+
+    // A schema moves and the scaffold keeps writing the version before it.
+    const behindSchema = await caseOf("scaffold-behind", {
+      "schemas/migration-result.schema.json": JSON.stringify({
+        properties: {
+          schemaVersion: { enum: [4, 5, 6] },
+          status: { enum: ["completed", "failed", "blocked"] },
+        },
+      }, null, 2),
+    });
+    assert(behindSchema.some(finding => finding.check === "schema-facts" &&
+      /scaffolds migration-result at schemaVersion 5.*highest is 6/.test(finding.message)),
+    "a scaffold left behind by a schemaVersion is not reported");
+
+    const statusDrift = await caseOf("status-drift", {
+      "schemas/migration-result.schema.json": JSON.stringify({
+        properties: {
+          schemaVersion: { enum: [4, 5] },
+          status: { enum: ["completed", "failed", "blocked", "parked"] },
+        },
+      }, null, 2),
+    });
+    assert(statusDrift.some(finding => finding.check === "schema-facts" &&
+      /statuses completed, failed, blocked.*schema allows .*parked/.test(finding.message)),
+    "a status the schema gained is not reported");
+
+    // The one skill line that names the version a run writes.
+    const proseVersion = await caseOf("prose-schema-version", {
+      "schemas/flow-contract.schema.json": JSON.stringify({
+        properties: { schemaVersion: { enum: [7, 8, 9] } },
+      }, null, 2),
+      ".github/skills/flow-baseline/SKILL.md": [
+        "# Flow Baseline", "", "Skill version: `0.4.0`.", "",
+        "7. Write `flow-contract.json` at schemaVersion 8 in the run directory,",
+        "   off `migration/angular`.", "",
+      ].join("\n"),
+      "docs/flow-baseline-v0.4-acceptance.md": [
+        "---", "skill: flow-baseline", "targetVersion: 0.4.0", "---", "",
+        "# `flow-baseline` v0.4.0 acceptance criteria", "",
+      ].join("\n"),
+      "README.md": "- `demo-skill` v0.4.0;\n- `flow-baseline` v0.4.0;\n",
+    });
+    assert(proseVersion.some(finding => finding.check === "schema-facts" &&
+      /write schemaVersion 8.*highest is 9/.test(finding.message)),
+    "a skill line naming a schemaVersion the schema has moved past is not reported");
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
@@ -467,7 +612,9 @@ const main = async () => {
   if (options.json) {
     console.log(JSON.stringify({ root, findings }, null, 2));
   } else if (findings.length === 0) {
-    console.log("The lab agrees with itself: versions, branch name and named scripts.");
+    console.log(
+      "The lab agrees with itself: versions, branch name, named scripts and schema facts.",
+    );
   } else {
     console.log(`${findings.length} disagreement(s):`);
     for (const finding of findings) {

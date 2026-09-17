@@ -1704,9 +1704,37 @@ const observationExamplePath = path.join(
   "demo-line-drawer",
   "migrate-flow-observations.json",
 );
+// The chain the flow skills copy their shapes from, at the versions in force.
+// The demo chain above is older and smaller, so it exercises no planSlice,
+// userStory, styleSources or characterization. A break in the canonical example
+// used to surface only in another script's self-test, which is not where anyone
+// would look for it.
+const canonicalDirectory = path.join(
+  rootDirectory,
+  "examples",
+  "handoff",
+  "detail-drawer-astronaut-form",
+);
+const canonicalFile = name => path.join(canonicalDirectory, name);
+const canonicalPassFiles = [
+  canonicalFile("flow-contract.json"),
+  canonicalFile("migration-result.json"),
+  canonicalFile("verification-result-2.json"),
+  canonicalFile("debug-result.json"),
+];
+const canonicalRepairFiles = [
+  canonicalFile("flow-contract.json"),
+  canonicalFile("migration-result.json"),
+  canonicalFile("verification-result.json"),
+  canonicalFile("debug-handoff.json"),
+  canonicalFile("debug-result.json"),
+];
 
 const runSelfTest = async () => {
   const artifacts = await validateFiles(exampleFiles);
+  // Both branches: the repair that answered the first attempt, and the PASS.
+  await validateFiles(canonicalRepairFiles);
+  await validateFiles(canonicalPassFiles);
   const debugArtifacts = await validateFiles(debugSourceFiles);
   const reverifyArtifacts = await validateFiles(debugReverifyFiles);
   const observationArtifact = await loadArtifact(observationExamplePath);

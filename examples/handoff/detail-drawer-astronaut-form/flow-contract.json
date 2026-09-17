@@ -11,8 +11,8 @@
   },
   "planSlice": {
     "map": {
-      "path": "runs\\2026-09-14-migration-map-2\\migration-map.json",
-      "sha256": "8c940e16ffaafd090cfcc19732869abcc2aff675d49357e8a23a60f2acbaae84",
+      "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-map.json",
+      "sha256": "0c2719e4638d5701c08201408f2e54fe9139cc663d4c8eef3f0d4a414461c1f5",
       "runId": "migration-map-2"
     },
     "flowId": "detail-drawer-astronaut-form",

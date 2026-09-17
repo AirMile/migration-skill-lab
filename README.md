@@ -18,7 +18,9 @@ This lab contains:
 - versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-astronaut-form`:
   a complete chain from a run that passed and landed, at the versions in force,
-  which is the shape reference every skill copies from. The older
+  which is the shape reference every skill copies from. It carries the migration
+  map and metrics its contract cites, so it validates on a fresh clone rather
+  than only where that run happened to leave its files. The older
   `examples\handoff\detail-drawer-line-edit` chain is kept for the runs that
   cite it, but it sits two schemaVersions back and is no longer the reference;
 - `scripts\hash-artifact.mjs`, which prints the path-and-sha256 pointer block

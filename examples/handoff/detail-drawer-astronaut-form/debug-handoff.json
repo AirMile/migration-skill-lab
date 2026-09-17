@@ -8,15 +8,15 @@
   "status": "repairable",
   "flowContract": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\flow-contract.json",
-    "sha256": "64090bc9ddc433c2010d6a21f095d82ede0db12f44e5da52361027b279d2ecc9"
+    "sha256": "905e6c7d28cd27fff235e37e1abeb1bfa96ba7856e98d934de06328b5a5d848e"
   },
   "migrationResult": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\migration-result.json",
-    "sha256": "e8f2868faaef546121fdf8cad407016a46e02e40bb6a9a3e932454ce05230192"
+    "sha256": "a3592a233e99ea832c6ef222561b23def922f64e2b8658bd01d49ea48ac88df5"
   },
   "verificationResult": {
     "path": "examples\\handoff\\detail-drawer-astronaut-form\\verification-result.json",
-    "sha256": "5af56d2f1a999e014ba7ac9df557eb8ffe979cfc03265233762d4d146b37d893"
+    "sha256": "ee187e19175664281d707362380a2d24448bd470a56b45196158699cc0d14c15"
   },
   "failures": [
     {
