@@ -53,8 +53,11 @@ This lab contains:
   with every field that follows from the artifacts it consumes and a `TODO`
   wherever the run has to say what it found), `migration-map.mjs` (a first or seeded
   migration map, and the product's value-import graph measured against it)
-  and `angular-structure.mjs` (the library that applies the Angular target
-  structure, which `migration-map.mjs --measure` uses);
+  `angular-structure.mjs` (the library that applies the Angular target
+  structure, which `migration-map.mjs --measure` uses)
+  and `lab-consistency.mjs` (where the lab disagrees with itself: a skill
+  version written in three places, the integration branch named in prose, a
+  script a skill names that is gone);
 - `docs\flow-observation-capture.md`, the step the flow skills share and read
   only when they reach it;
 - dependency-free sprint-backlog Markdown rendering and scoped checkpoint
