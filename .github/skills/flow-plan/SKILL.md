@@ -11,7 +11,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 This skill holds the overview: it decides nothing about one slice's behavior,
 only which slices go next and what they can build on.
 
-Skill version: `0.4.0`.
+Skill version: `0.5.0`.
 
 Recommended model: Claude Sonnet 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.

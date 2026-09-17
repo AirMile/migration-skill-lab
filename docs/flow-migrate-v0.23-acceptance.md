@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.22.0
+targetVersion: 0.23.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-migrate` v0.22.0 acceptance criteria
+# `flow-migrate` v0.23.0 acceptance criteria
 
 ## Hard gates
 

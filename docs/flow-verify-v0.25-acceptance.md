@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.22.0
+targetVersion: 0.25.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-verify` v0.22.0 acceptance criteria
+# `flow-verify` v0.25.0 acceptance criteria
 
 ## Hard gates
 

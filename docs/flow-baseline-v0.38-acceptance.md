@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.33.0
+targetVersion: 0.38.0
 status: experimental
 date: 2026-09-17
 ---
 
-# `flow-baseline` v0.33.0 acceptance criteria
+# `flow-baseline` v0.38.0 acceptance criteria
 
 ## Hard gates
 

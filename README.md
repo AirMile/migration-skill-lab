@@ -11,9 +11,9 @@ This lab contains:
 - experimental `flow-plan` v0.5.0 source skill, which keeps the migration map
   of features, candidate slices and shared prerequisites and queues the next
   slices;
-- experimental `flow-baseline` v0.33.0, `flow-migrate` v0.22.0 and
-  `flow-verify` v0.22.0 source skills;
-- experimental `flow-debug` v0.11.0 source skill;
+- experimental `flow-baseline` v0.38.0, `flow-migrate` v0.23.0 and
+  `flow-verify` v0.25.0 source skills;
+- experimental `flow-debug` v0.12.0 source skill;
 - experimental `migration-skill-audit` v0.1.0 source skill;
 - versioned handoff schemas, examples and a
   dependency-free validator, including `examples\handoff\detail-drawer-line-edit`:
