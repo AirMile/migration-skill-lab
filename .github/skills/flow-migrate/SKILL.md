@@ -65,7 +65,15 @@ as an established Lely standard.
 
 1. Take the product revision and status from `run-context.mjs` and preserve
    every pre-existing change. Confirm each planned file change is inside
-   `allowedWritePaths`.
+   `allowedWritePaths`. Then check the baseline still describes today's React
+   with
+   `node "<lab>\scripts\baseline-freshness.mjs" --contract <run-dir>\flow-contract.json --product-root <product> [--run-dir <run-dir>]`.
+   On `STALE` someone changed a React source this contract relies on after the
+   baseline was measured: stop and report which paths, because building against
+   a description of code that no longer exists produces a `PASS` about the wrong
+   thing. `INVALID` means the check could not be made at all and is equally a
+   stop. Only `FRESH` continues. This runs here, before any Angular is written,
+   so a stale contract costs a report rather than a migration.
 2. **Compare the inventory with the render tree** before replacing anything.
    Read the cited source for each `renderedSurfaceInventory` surface: the
    inventory says which surfaces this slice owns, the source says how they

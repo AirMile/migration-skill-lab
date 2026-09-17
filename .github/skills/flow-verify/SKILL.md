@@ -71,7 +71,18 @@ outcome, a diagnosis and the next action.
 
 ## Workflow
 
-1. Take the product status from `run-context.mjs`; change nothing.
+1. Take the product status from `run-context.mjs`; change nothing. Then run
+   `node "<lab>\scripts\baseline-freshness.mjs" --contract <run-dir>\flow-contract.json --product-root <product> --run-dir <run-dir>`.
+   This repeats `flow-migrate`'s first step on purpose: the integration branch
+   can move while a migration is in progress, and this skill judges against the
+   contract, so it must know the contract still describes today's React. On
+   `STALE` the contract's React sources changed after the baseline was
+   measured, so both the scenarios and the visual baseline describe code that
+   no longer exists; the result is `BLOCKED` with the changed paths named, never
+   a `PASS` and never a `FAIL`, because the migration is not what went wrong.
+   `INVALID` is `BLOCKED` too: an unanswerable freshness question is not a
+   fresh baseline. Pass `--run-dir` so an already-landed slice is recognized as
+   a call made out of order rather than measured.
 2. **Automated evidence.** Run the declared targeted test, typecheck and build;
    expand only with a reason recorded in the result. Take the allowlist check
    from `allowlist.outside` in the `run-context.mjs` output, never by hand: a
