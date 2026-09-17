@@ -29,6 +29,10 @@ This lab contains:
   can check in Angular files, which `run-context.mjs --contract` uses),
   `style-sources.mjs` (the styled templates and shared components a surface
   renders, which a contract's visual parity cites),
+  `visual-measure.mjs` (the computed styles and element screenshots a
+  `visualParity` surface actually paints in the running host, read over CDP so
+  `flow-baseline` records a before and `flow-verify` compares numbers instead
+  of recollections),
   `print-shape.mjs` (a compact skeleton of an example artifact instead of the
   whole file), `render-user-story.mjs` (the slice's User Story from a
   validated contract, then its review facts),

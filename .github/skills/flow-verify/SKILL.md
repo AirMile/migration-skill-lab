@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.21.0`.
+Skill version: `0.22.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
 flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
@@ -120,7 +120,23 @@ outcome, a diagnosis and the next action.
      but I want it different) or cannot test. A bare "yes it works" earns one
      clarifying question, not a pass, and an item that already has a verdict is
      never asked again, so an interrupted walkthrough resumes where it stopped.
-5. **Visual evidence.** Write one `visualCriteria` entry per `visualParity`
+5. **Visual evidence.** Measure before you judge. When the run directory holds
+   a `visual-selectors.json`, run
+   `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label after --out <run-dir> [--port <n>]`
+   against the real host, then, when `visual-measurement-before.json` exists
+   too, `node "<lab>\scripts\visual-measure.mjs" --compare <run-dir>\visual-measurement-before.json <run-dir>\visual-measurement-after.json`.
+   Its `evidence` strings are already written for this field: paste the ones
+   for a surface into that surface's `evidence` verbatim rather than
+   summarizing them, because a number a reader can check is the point. Read
+   `fingerprint.status` first: on `drifted` the two runs saw different window
+   sizes, so treat every before/after difference as indicative and say so in
+   `diagnosis` instead of failing the surface on it; differences against the
+   retained counterpart in the same run stay authoritative. A missing
+   before-measurement is not a blocker here — the counterpart comparison still
+   measures — but say in `diagnosis` that it was absent. When no host answers,
+   the measurement was not performed, and a surface that needed it is
+   `BLOCKED`, never a `PASS` from reading the code.
+   Write one `visualCriteria` entry per `visualParity`
    surface with its own status, evidence source, evidence and diagnosis,
    measured against that surface's declared `appearance` and `layout`, not
    against a fresh reading of the React source. The verdict is assigned here,
@@ -128,6 +144,9 @@ outcome, a diagnosis and the next action.
    evidence or observed layout values from the actual drawer, including a
    migrated field's width, alignment and spacing against its retained
    siblings; a field-presence check alone is not a `PASS`.
+   Report every deviation the pass found, not the first: a measured run that
+   names one difference and stops sends `flow-debug` back for a second round it
+   could have avoided.
    Write `browserValidation.evidenceSource` as what you actually did. Under
    `scope.partialMount.nested` only `real-host-layout`, the real drawer reached
    through the product's own navigation, supports a `PASS`; an isolated fixture

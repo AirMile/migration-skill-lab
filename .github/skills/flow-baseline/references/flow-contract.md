@@ -102,7 +102,13 @@ the contract.
   trailing unit, design tokens rather than literal values), the `layout`
   requirements (width, alignment and spacing against the retained sibling
   sections, drawer insets, input containment) and a `reference` citing the
-  counterpart. Add a reference screenshot when one is available. A surface
+  counterpart. Add a reference screenshot when one is available. Write each
+  `appearance` and `layout` requirement as something a machine can read back
+  where the surface allows it — `paddingLeft: 16px`, or `paddingLeft matches
+  counterpart` when the value belongs to a token rather than the surface —
+  because step 8 measures those exact property names in the running host and
+  `flow-verify` compares the numbers. Prose such as "aligns neatly" survives
+  as a note, never as the whole requirement. A surface
   that is not declared here can never fail downstream, so anything a user
   would notice belongs here. `appearance` and `layout` say what a tester
   compares; `styleSources` and `sharedComponents` say where the rules live,

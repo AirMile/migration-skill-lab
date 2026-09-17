@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.34.0`.
+Skill version: `0.35.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -210,24 +210,42 @@ about this workflow.
    `targetArchitecture.status`, no draft state and no approval gate. When the
    host already runs in plan mode, write the artifacts after the user has
    exited it; a skill never enters or leaves plan mode.
-8. **Worktree check.** Run
+8. **Visual baseline.** React still owns the surface here, and only here, so
+   this is the one phase that can record what the host paints before the
+   migration. Write `visual-selectors.json` in the run directory: `flowId`,
+   then one `surfaces` entry per `visualParity` id, each with that `id` as
+   `visualParityId`, the `selector` that finds the surface in the running host
+   and the `counterpartSelector` of the retained sibling the entry already
+   names in `counterpart`. Prefer a `data-testid` over a generated class, which
+   changes between builds. Then run
+   `node "<lab>\scripts\visual-measure.mjs" --spec <run-dir>\visual-selectors.json --label before --out <run-dir> [--port <n>]`
+   with the manual verification environment running, and check each surface
+   came back `found: true`: a selector that matches nothing is a selector to
+   fix now, not a measurement. The sidecar and its
+   `visual-measurement-before.json` are found by name in the run directory,
+   not by a contract pointer, because the contract schema is closed.
+   When no host answers, say so in one line and continue. The contract does not
+   wait for it: `flow-verify` then compares the migrated surface against its
+   retained counterpart alone and records that the before-measurement was
+   never taken, which is weaker evidence but still measured.
+9. **Worktree check.** Run
    `node "<lab>\scripts\run-context.mjs" --product-root <product> --compare`.
    If anything changed, stop and report the delta; do not revert it or
    attribute it without evidence.
-9. **User Story and review summary.** Run
-   `node "<lab>\scripts\render-user-story.mjs" <flow-contract.json>`. Your next
-   chat message pastes its whole output verbatim, the Story the user copies
-   onto the board followed by the review facts, because the host collapses
-   tool output and a run once showed neither. Paraphrasing drifts from what
-   `flow-verify` checks. When the output is too large for inline display and
-   is instead saved to a file, open that file and copy its exact text into the
-   chat message; never substitute a summary, a translation or a bullet recap
-   for it, in that message or a later one — a run once did, and the User Story
-   never reached the user at all. After it, add in your own words only the
-   `targetArchitecture` boundary and adapter in a few lines, and end by naming
-   what would need a new run to change: the boundary, the write allowlist or a
-   scenario. Neither part is a gate, asks for anything or changes the board.
-10. **Continuation.** Build the invocation with
+10. **User Story and review summary.** Run
+    `node "<lab>\scripts\render-user-story.mjs" <flow-contract.json>`. Your next
+    chat message pastes its whole output verbatim, the Story the user copies
+    onto the board followed by the review facts, because the host collapses
+    tool output and a run once showed neither. Paraphrasing drifts from what
+    `flow-verify` checks. When the output is too large for inline display and
+    is instead saved to a file, open that file and copy its exact text into the
+    chat message; never substitute a summary, a translation or a bullet recap
+    for it, in that message or a later one — a run once did, and the User Story
+    never reached the user at all. After it, add in your own words only the
+    `targetArchitecture` boundary and adapter in a few lines, and end by naming
+    what would need a new run to change: the boundary, the write allowlist or a
+    scenario. Neither part is a gate, asks for anything or changes the board.
+11. **Continuation.** Build the invocation with
     `node "<lab>\scripts\continuation.mjs" --next flow-migrate --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
