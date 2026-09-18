@@ -9,7 +9,7 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is out of band: it repairs a failure and hands back to verification.
 
-Skill version: `0.13.0`.
+Skill version: `0.14.0`.
 
 Recommended model: Claude Sonnet 5 or GPT-5.3-Codex.
 
@@ -140,7 +140,11 @@ Report `BLOCKED` before any product write when:
    `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json> <debug-result.json>`,
    then offer exactly three routes and perform only the chosen one:
    1. a fresh chat opened now through the host's own mechanism, carrying only
-      the invocation. Never start a second terminal window;
+      the invocation. Open it as an `independent` session with
+      `flow-verify`'s recommended model set explicitly, since a same-session
+      chat only offers this chat's own provider's models and `flow-verify`
+      needs a different model family than `flow-migrate` used, not
+      necessarily this repair chat's. Never start a second terminal window;
    2. the invocation shown here, to paste into a chat the user opens;
    3. the same command with `--save`, a checkpoint rather than an
       abandonment, since every phase reads only artifacts.

@@ -9,9 +9,13 @@ Pipeline: `/flow-baseline` -> `/flow-migrate` -> `/flow-verify`, with
 `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the second stage and the only one that writes product code.
 
-Skill version: `0.23.0`.
+Skill version: `0.24.0`.
 
-Recommended model: Claude Sonnet 5.
+Recommended model: Gemini 3.8 Flash, for cost, executing against the
+contract's write allowlist and this file's conventions. Fall back to Claude
+Sonnet 5 or GPT-5.3-Codex for a slice whose verification keeps failing under
+Flash; record that switch in `migration-result.json`'s `limitations` so a
+later slice starts with it already known.
 
 Implement one bounded Angular migration inside the paths its Flow Contract
 allows. That allowlist is the boundary: write no file outside it, and stop
@@ -152,7 +156,12 @@ as an established Lely standard.
     `node "<lab>\scripts\continuation.mjs" --next flow-verify --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json> <migration-result.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
-       the invocation. Never start a second terminal window;
+       the invocation. Open it as an `independent` session with
+       `flow-verify`'s recommended model set explicitly, since a
+       same-session chat only offers this chat's own provider's models and
+       `flow-verify` needs a different model family than this run used, to
+       not inherit this run's blind spot. Never start a second terminal
+       window;
     2. the invocation shown here, to paste into a chat the user opens;
     3. the same command with `--save`, a checkpoint rather than an
        abandonment, since every phase reads only artifacts.

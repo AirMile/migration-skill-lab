@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-migrate
-targetVersion: 0.23.0
+targetVersion: 0.24.0
 status: experimental
-date: 2026-09-17
+date: 2026-09-18
 ---
 
-# `flow-migrate` v0.23.0 acceptance criteria
+# `flow-migrate` v0.24.0 acceptance criteria
 
 ## Hard gates
 
@@ -154,3 +154,9 @@ The source is acceptable when:
     `STALE` or `INVALID` result stops the run with the changed paths reported,
     because building against a contract whose React sources have moved spends
     the migration on a description of code that no longer exists.
+51. the fresh `flow-verify` chat opened now is an `independent` session with
+    its recommended model set explicitly, since `flow-verify` needs a
+    different model family than this run used and a same-session chat can
+    only offer this chat's own provider's models; a model switch away from
+    this skill's own recommendation is recorded in `migration-result.json`'s
+    `limitations`.

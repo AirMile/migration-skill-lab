@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-plan
-targetVersion: 0.5.0
+targetVersion: 0.6.0
 status: experimental
-date: 2026-09-17
+date: 2026-09-18
 ---
 
-# `flow-plan` v0.5.0 acceptance criteria
+# `flow-plan` v0.6.0 acceptance criteria
 
 ## Hard gates
 
@@ -22,8 +22,10 @@ chat or modifies skill source during its own run.
   with `validate-handoff.mjs`, seeded from the previous map when one exists.
 - The `migration-metrics.json` it points to, written by
   `migration-map.mjs --measure` after the map's last change.
-- A recommendation of up to five options with the queue the user approved
-  recorded, in order.
+- A recommendation of up to five ranked options recorded, with the queue the
+  user approved, in order; the user-facing offer itself leads with the
+  top-ranked pick and at most two runner-ups, each with its reason, never a
+  flat list of every recorded option.
 - One review summary rendered from the validated map.
 - A continuation into fresh `/flow-baseline` chats carrying the map and no
   slice, through the three routes the other flow skills offer.
@@ -60,7 +62,10 @@ The source is acceptable when:
    build, size and risk, robot dependence included, and names every
    prerequisite the option would build and every unbuilt one it shares with an
    active or another offered slice, and says which robots differ for a
-   robot-dependent option;
+   robot-dependent option; up to five ranked candidates are recorded in
+   `options`, but the question put to the user leads with the top-ranked pick
+   and at most two runner-ups, each with its reason stated in the question,
+   and names any further candidates only as available on request;
 8. a flow the user names instead of an offered one joins the map as a slice
    and the queue;
 9. it records no board ID for a feature and asks for none;

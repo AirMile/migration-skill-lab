@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-debug
-targetVersion: 0.13.0
+targetVersion: 0.14.0
 status: experimental
-date: 2026-09-17
+date: 2026-09-18
 ---
 
-# `flow-debug` v0.13.0 acceptance criteria
+# `flow-debug` v0.14.0 acceptance criteria
 
 ## Hard gates
 
@@ -140,3 +140,6 @@ The source is acceptable when:
     intact, and the spec's `expectedRobot` therefore refuses a host showing a
     robot the baseline did not use; the human confirmation stays the route
     when no host answers, not the first resort.
+36. the fresh `flow-verify` chat opened now is an `independent` session with
+    its recommended model set explicitly, since a same-session chat can only
+    offer this chat's own provider's models.

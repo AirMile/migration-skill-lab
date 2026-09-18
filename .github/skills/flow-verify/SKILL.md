@@ -10,11 +10,11 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 `PASS` back into `/flow-plan`.
 This skill is the third stage and judges the second one's work independently.
 
-Skill version: `0.26.0`.
+Skill version: `0.27.0`.
 
 Recommended model: a different model family than `flow-migrate` used for this
-flow, for example GPT-6 Astra or GPT-5.5, so the verifier does not inherit the
-migrator's blind spot.
+flow, for example GPT-5.6-Terra or GPT-5.5 when `flow-migrate` ran on Gemini
+or Claude, so the verifier does not inherit the migrator's blind spot.
 
 Independently verify one bounded migration against the same contract that
 constrained `flow-migrate`. Never repair product code, alter skill source or
@@ -234,7 +234,12 @@ outcome, a diagnosis and the next action.
     itself.
     Offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
-       the invocation. Never start a second terminal window;
+       the invocation. Open `flow-debug` as an `independent` session with its
+       recommended model set explicitly when it differs in provider from this
+       chat's, since a same-session chat only offers this chat's own
+       provider's models; `flow-plan` can stay in this chat's provider, since
+       its own recommendation (Claude Sonnet 5) is reasoning-, not
+       family-diversity-driven. Never start a second terminal window;
     2. the invocation shown here, to paste into a chat the user opens;
     3. the same command with `--save`, a checkpoint rather than an
        abandonment, since every phase reads only artifacts.

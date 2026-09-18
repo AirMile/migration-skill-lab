@@ -11,7 +11,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`, and a
 This skill holds the overview: it decides nothing about one slice's behavior,
 only which slices go next and what they can build on.
 
-Skill version: `0.5.0`.
+Skill version: `0.6.0`.
 
 Recommended model: Claude Sonnet 5. Cutting candidate slices and weighing them is
 judgement every later chain inherits.
@@ -127,13 +127,17 @@ Derive everything else, state each value in one line and continue:
    equivalent neutral one because its before and after have to be measured
    under the same robot, which `visual-measure` enforces and a reader has to
    arrange; say which robots differ when you offer it, so the user chooses
-   with that cost in view rather than meeting it at verification. Put up to five to the user as
-   plain text, each with the unbuilt prerequisites it shares with an `active`
-   slice or, from `unbuiltSharedByAvailable`, with another one offered, since
-   two baselines that build one counterpart side by side collide at its
-   target. The user approves an ordered queue of one or more; record
-   `options` and `queue`. A flow the user names instead is added as a slice
-   and joins the queue.
+   with that cost in view rather than meeting it at verification. Record up
+   to five ranked candidates in `options`, each with the unbuilt
+   prerequisites it shares with an `active` slice or, from
+   `unbuiltSharedByAvailable`, with another one offered, since two baselines
+   that build one counterpart side by side collide at its target. Put only
+   the top-ranked candidate to the user as the recommended pick, its reason
+   stated plainly in the question itself, plus at most two runner-ups the
+   same way; name any remaining ranked candidates as available on request,
+   never as one flat list of up to five. The user approves an ordered queue
+   of one or more; record `queue`. A flow the user names instead is added as
+   a slice and joins the queue.
 8. **Write and validate.** Copy any block's shape from
    `node "<lab>\scripts\print-shape.mjs" "<lab>\examples\migration-map\demo\migration-map.json" [--block <name>]`
    and read `references/migration-map.md` for what each field carries. Measure,

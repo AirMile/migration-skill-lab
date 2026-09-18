@@ -62,12 +62,14 @@ measured again on every run.
     first slice's local rebuild. A slice that builds the shared counterpart
     leaves each copy for a later consolidation, so no landed slice changes
     without its own verification.
-- `recommendation`: the options this run put to the user, up to five with a
-  reason each, and the `queue` the user approved from them, in order. Each
-  `flow-baseline` chat claims the first queued slice still available, so a
-  queue lets baselines run side by side. `--seed` empties both, because a
-  ranking describes the map it was made from. Before schemaVersion 2 one
-  `chosen` slice stood where the queue is.
+- `recommendation`: the options this run recorded, up to five with a reason
+  each, and the `queue` the user approved from them, in order. The question
+  put to the user leads with the top-ranked option and at most two runner-ups,
+  each with its reason stated inline, and names any further recorded option
+  only as available on request. Each `flow-baseline` chat claims the first
+  queued slice still available, so a queue lets baselines run side by side.
+  `--seed` empties both, because a ranking describes the map it was made
+  from. Before schemaVersion 2 one `chosen` slice stood where the queue is.
 - `decisions`: a choice that shapes the map, such as why a boundary was cut
   where it was or why a copy is left for later.
 - `openQuestions`: only what this run could not settle.

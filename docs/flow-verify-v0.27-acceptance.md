@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-verify
-targetVersion: 0.26.0
+targetVersion: 0.27.0
 status: experimental
-date: 2026-09-17
+date: 2026-09-18
 ---
 
-# `flow-verify` v0.26.0 acceptance criteria
+# `flow-verify` v0.27.0 acceptance criteria
 
 ## Hard gates
 
@@ -158,3 +158,8 @@ The source is acceptable when:
 53. attempt N from 2 on measures as `--label after-<N>` and compares that file
     against the one `before`, so a re-verification does not overwrite the
     measurement and the screenshots the attempt it answers failed on.
+54. a fresh `flow-debug` chat opened now on `FAIL` or repairable `BLOCKED` is
+    an `independent` session with its recommended model set explicitly when
+    it differs in provider from this chat's; a fresh `flow-plan` chat on
+    `PASS` may stay in this chat's provider, since `flow-plan`'s
+    recommendation is reasoning-, not family-diversity-driven.

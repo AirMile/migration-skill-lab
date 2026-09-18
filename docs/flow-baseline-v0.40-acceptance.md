@@ -1,12 +1,12 @@
 ---
 document: skill-acceptance-criteria
 skill: flow-baseline
-targetVersion: 0.39.0
+targetVersion: 0.40.0
 status: experimental
-date: 2026-09-17
+date: 2026-09-18
 ---
 
-# `flow-baseline` v0.39.0 acceptance criteria
+# `flow-baseline` v0.40.0 acceptance criteria
 
 ## Hard gates
 
@@ -380,3 +380,7 @@ The source is acceptable when:
     downstream notices a surface that is simply never measured. Both selectors
     of every surface are replaced before the measurement, and `expectedRobot`
     is still added afterwards from the robot the running host showed.
+42. the fresh `flow-migrate` chat opened now is an `independent` session with
+    its recommended model set explicitly whenever that model's provider
+    differs from this chat's, since a same-session chat can only offer this
+    chat's own provider's models.

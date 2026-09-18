@@ -10,7 +10,7 @@ with `/flow-debug` as the repair loop back into a fresh `/flow-verify`.
 This skill is the first stage of a slice's chain: it produces the contract
 every later stage reads.
 
-Skill version: `0.39.0`.
+Skill version: `0.40.0`.
 
 Recommended model: Claude Sonnet 5. This phase writes the contract that every
 later phase depends on.
@@ -281,8 +281,12 @@ about this workflow.
     `node "<lab>\scripts\continuation.mjs" --next flow-migrate --lab-root <lab> --product-root <product> --run-dir <run-dir> <flow-contract.json>`,
     then offer exactly three routes and perform only the chosen one:
     1. a fresh chat opened now through the host's own mechanism, carrying only
-       the invocation. Never start a second terminal window: a skill cannot
-       start a terminal, and `wt.exe` cannot start `copilot.cmd`;
+       the invocation. Open it as an `independent` session with
+       `flow-migrate`'s recommended model set explicitly when it differs in
+       provider from this chat's, since a same-session chat only offers this
+       chat's own provider's models. Never start a second terminal window: a
+       skill cannot start a terminal, and `wt.exe` cannot start
+       `copilot.cmd`;
     2. the invocation shown here, to paste into a chat the user opens;
     3. the same command with `--save`, which writes
        `<flowId>-flow-migrate-prompt.md` in the run directory. Say that this is
